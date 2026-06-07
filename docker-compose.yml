@@ -1,0 +1,30 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: nutrisense-frontend:prod
+    container_name: nutrisense-frontend
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-https://nutrisense-i.eu}
+      BACKEND_URL: ${BACKEND_URL:-http://localhost:4028}
+    depends_on:
+      - backend
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: nutrisense-backend:prod
+    container_name: nutrisense-backend
+    environment:
+      NODE_ENV: production
+      PORT: 4028
+    ports:
+      - "4028:4028"
+    restart: unless-stopped

@@ -1,0 +1,317 @@
+'use client';
+import React, { useState } from 'react';
+import { toast } from 'sonner';
+import GuidanceContextSummary from './GuidanceContextSummary';
+import GuidanceResults from './GuidanceResults';
+
+export type GuidanceData = {
+  generatedAt: string;
+  diet_preference: string;
+  intolerance_count: number;
+  recommended_foods: { id: string; name: string; reason: string; category: string }[];
+  foods_to_avoid: {
+    id: string;
+    name: string;
+    reason: string;
+    severity: 'high' | 'medium' | 'low';
+  }[];
+  sample_meals: {
+    id: string;
+    name: string;
+    description: string;
+    tags: string[];
+    prep_time: string;
+  }[];
+  disclaimer: string;
+};
+
+const MOCK_GUIDANCE: GuidanceData = {
+  generatedAt: '2026-06-07T13:15:00',
+  diet_preference: 'low-carb',
+  intolerance_count: 7,
+  recommended_foods: [
+    {
+      id: 'rec-001',
+      name: 'Wild Salmon',
+      reason: 'Rich in omega-3, naturally low-carb, no common intolerance triggers',
+      category: 'Protein',
+    },
+    {
+      id: 'rec-002',
+      name: 'Avocado',
+      reason: 'Healthy fats, low glycaemic, fructose-free',
+      category: 'Fats',
+    },
+    {
+      id: 'rec-003',
+      name: 'Spinach',
+      reason: 'Low FODMAP, no nightshades, anti-inflammatory',
+      category: 'Vegetables',
+    },
+    {
+      id: 'rec-004',
+      name: 'Chicken Thigh',
+      reason: 'Lean protein, versatile, zero intolerances triggered',
+      category: 'Protein',
+    },
+    {
+      id: 'rec-005',
+      name: 'Zucchini',
+      reason: 'Very low carb, low FODMAP, mild flavour',
+      category: 'Vegetables',
+    },
+    {
+      id: 'rec-006',
+      name: 'Coconut Oil',
+      reason: 'Dairy-free fat source, stable at high heat',
+      category: 'Fats',
+    },
+    {
+      id: 'rec-007',
+      name: 'Blueberries',
+      reason: 'Low fructose load, antioxidant-rich, gluten-free',
+      category: 'Fruit',
+    },
+    {
+      id: 'rec-008',
+      name: 'Almond Butter',
+      reason: 'Good fat profile, low carb — confirm tree nut tolerance before use',
+      category: 'Nuts',
+    },
+  ],
+  foods_to_avoid: [
+    {
+      id: 'avoid-001',
+      name: 'Wheat Bread',
+      reason: 'Contains gluten and wheat — two active intolerances',
+      severity: 'high',
+    },
+    {
+      id: 'avoid-002',
+      name: 'Cow Milk',
+      reason: 'High lactose and casein content',
+      severity: 'high',
+    },
+    {
+      id: 'avoid-003',
+      name: 'Pasta',
+      reason: 'Gluten and wheat — significant intolerance risk',
+      severity: 'high',
+    },
+    {
+      id: 'avoid-004',
+      name: 'Aged Cheese',
+      reason: 'High histamine and tyramine levels',
+      severity: 'medium',
+    },
+    {
+      id: 'avoid-005',
+      name: 'Soy Sauce',
+      reason: 'Contains soy and wheat — double intolerance trigger',
+      severity: 'high',
+    },
+    {
+      id: 'avoid-006',
+      name: 'Scrambled Eggs',
+      reason: 'Egg intolerance flagged — monitor reaction carefully',
+      severity: 'medium',
+    },
+    {
+      id: 'avoid-007',
+      name: 'Fermented Foods',
+      reason: 'High histamine content — avoid with histamine intolerance',
+      severity: 'medium',
+    },
+    {
+      id: 'avoid-008',
+      name: 'Apples & Pears',
+      reason: 'High fructose and sorbitol — FODMAP intolerance risk',
+      severity: 'medium',
+    },
+    {
+      id: 'avoid-009',
+      name: 'Cashews',
+      reason: 'Tree nut intolerance — high cross-reactivity risk',
+      severity: 'low',
+    },
+  ],
+  sample_meals: [
+    {
+      id: 'meal-001',
+      name: 'Pan-Seared Salmon with Spinach',
+      description:
+        'Wild salmon fillet seared in coconut oil, served on a bed of wilted garlic spinach with a lemon wedge.',
+      tags: ['Low-carb', 'Dairy-free', 'Gluten-free', 'High protein'],
+      prep_time: '15 min',
+    },
+    {
+      id: 'meal-002',
+      name: 'Zucchini Noodles with Chicken',
+      description:
+        'Spiralised zucchini tossed with shredded chicken thigh, olive oil, cherry tomatoes, and fresh basil.',
+      tags: ['Low-carb', 'Gluten-free', 'Egg-free', 'Soy-free'],
+      prep_time: '20 min',
+    },
+    {
+      id: 'meal-003',
+      name: 'Avocado & Blueberry Breakfast Bowl',
+      description:
+        'Sliced avocado with fresh blueberries, pumpkin seeds, and a drizzle of coconut cream.',
+      tags: ['Vegan-friendly', 'Low-carb', 'Dairy-free', 'Gluten-free'],
+      prep_time: '5 min',
+    },
+    {
+      id: 'meal-004',
+      name: 'Grilled Chicken Lettuce Wraps',
+      description:
+        'Grilled chicken strips in butter lettuce cups with cucumber, spring onion, and coconut aminos dressing.',
+      tags: ['Low-carb', 'Soy-free', 'Gluten-free', 'Dairy-free'],
+      prep_time: '25 min',
+    },
+    {
+      id: 'meal-005',
+      name: 'Baked Salmon with Roasted Zucchini',
+      description:
+        'Oven-baked salmon fillet with herb-roasted zucchini slices and a side of avocado salsa.',
+      tags: ['Keto-friendly', 'Dairy-free', 'Gluten-free', 'Omega-3 rich'],
+      prep_time: '30 min',
+    },
+    {
+      id: 'meal-006',
+      name: 'Spinach & Chicken Stir-fry',
+      description:
+        'Diced chicken thigh stir-fried in coconut oil with fresh spinach, ginger, and garlic. Served with cauliflower rice.',
+      tags: ['Low-carb', 'Gluten-free', 'Egg-free', 'Soy-free'],
+      prep_time: '18 min',
+    },
+  ],
+  disclaimer:
+    'These recommendations are generated by AI based on your reported intolerances and dietary preferences. They are not a substitute for medical advice. Always consult a qualified healthcare professional or registered dietitian before making significant dietary changes, especially if you have diagnosed conditions or take medication.',
+};
+
+export default function GuidanceContent() {
+  const [state, setState] = useState<'idle' | 'loading' | 'results'>('results');
+  const [guidance, setGuidance] = useState<GuidanceData | null>(MOCK_GUIDANCE);
+
+  const handleGenerate = async () => {
+    setState('loading');
+    setGuidance(null);
+    // BACKEND INTEGRATION: POST /guidance/generate — send user context, receive AI recommendations
+    await new Promise((r) => setTimeout(r, 2800));
+    setGuidance(MOCK_GUIDANCE);
+    setState('results');
+    toast.success('New guidance generated based on your current intolerance profile');
+  };
+
+  return (
+    <div className="space-y-8">
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="page-title">AI Dietary Guidance</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Personalised food recommendations based on your intolerances and diet preference
+          </p>
+        </div>
+        <button onClick={handleGenerate} disabled={state === 'loading'} className="btn-primary">
+          {state === 'loading' ? (
+            <>
+              <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                />
+              </svg>
+              Generating…
+            </>
+          ) : (
+            <>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
+                />
+              </svg>
+              {state === 'results' ? 'Regenerate Guidance' : 'Generate Guidance'}
+            </>
+          )}
+        </button>
+      </div>
+
+      <GuidanceContextSummary />
+
+      {state === 'loading' && (
+        <div className="card p-10 flex flex-col items-center justify-center gap-4">
+          <div className="w-16 h-16 rounded-2xl bg-secondary flex items-center justify-center">
+            <svg
+              className="w-8 h-8 text-primary animate-pulse"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
+              />
+            </svg>
+          </div>
+          <div className="text-center">
+            <p className="text-base font-semibold text-foreground">
+              Analysing your intolerance profile…
+            </p>
+            <p className="text-sm text-muted-foreground mt-1">
+              Cross-referencing 7 intolerances with low-carb dietary requirements
+            </p>
+          </div>
+          <div className="w-48 bg-muted rounded-full h-1.5 overflow-hidden">
+            <div
+              className="h-full bg-primary rounded-full animate-pulse"
+              style={{ width: '65%' }}
+            />
+          </div>
+        </div>
+      )}
+
+      {state === 'results' && guidance && <GuidanceResults guidance={guidance} />}
+
+      {state === 'idle' && (
+        <div className="card p-12 flex flex-col items-center justify-center gap-4 text-center">
+          <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center">
+            <svg
+              className="w-8 h-8 text-muted-foreground"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
+              />
+            </svg>
+          </div>
+          <div>
+            <h3 className="text-base font-semibold text-foreground">No guidance generated yet</h3>
+            <p className="text-sm text-muted-foreground mt-1 max-w-sm">
+              Click Generate Guidance to receive AI-powered food recommendations tailored to your
+              intolerances and diet preference.
+            </p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
