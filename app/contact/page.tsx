@@ -10,7 +10,7 @@ const copy = {
       "Ai o intrebare, o problema sau o sugestie? Scrie-ne si revenim rapid cu un raspuns.",
     infoTitle: "Detalii de contact",
     emailLabel: "Email suport",
-    emailValue: "contact@nutriaid.ro",
+    emailValue: "contact@nutriaid.eu",
     hoursLabel: "Program suport",
     hoursValue: "Luni - Vineri, 09:00 - 18:00",
     responseLabel: "Timp de raspuns",
