@@ -99,6 +99,25 @@ export type AIExecutionLog = {
   createdAt: string;
 };
 
+export type AILogSource = 'frontend' | 'orchestrator' | 'worker' | 'ai' | 'system';
+export type AILogLevel = 'info' | 'warning' | 'error';
+
+export type AILogRecord = {
+  id: string;
+  timestamp: string;
+  sessionId: string;
+  userId: string | null;
+  source: AILogSource;
+  level: AILogLevel;
+  intent: string | null;
+  worker: string | null;
+  model: string | null;
+  input: Record<string, unknown>;
+  output: Record<string, unknown>;
+  error: Record<string, unknown> | null;
+  metadata: Record<string, unknown>;
+};
+
 export type PlatformSettings = {
   stripe: {
     publishableKeyMasked: string;
@@ -135,5 +154,6 @@ export type SuperadminDb = {
   auditEvents: AuditEvent[];
   securityEvents: SecurityEvent[];
   aiLogs: AIExecutionLog[];
+  AI_Logs: AILogRecord[];
   settings: PlatformSettings;
 };

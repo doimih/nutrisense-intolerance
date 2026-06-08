@@ -385,7 +385,7 @@ export default function TrustPage() {
           <div className="absolute -top-12 right-0 h-64 w-64 rounded-full bg-cyan-300/30 blur-3xl" />
           <div className="absolute -bottom-16 left-0 h-72 w-72 rounded-full bg-emerald-300/20 blur-3xl" />
         </div>
-        <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-20">
+        <div className="relative mx-auto w-full max-w-6xl px-4 py-24 sm:px-6 lg:px-8 lg:py-28 flex flex-col items-start text-left">
           <div className="inline-flex items-center gap-2 rounded-full bg-cyan-600/10 text-cyan-700 dark:text-cyan-300 px-4 py-1.5 text-sm font-semibold mb-6">
             <ShieldCheck className="h-4 w-4" />
             Transparenta. Siguranta. Profesionalism. Empatie.
@@ -567,7 +567,7 @@ export default function TrustPage() {
           </h2>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
-              href="/auth/register"
+              href="/dashboard"
               className="inline-flex items-center gap-2 rounded-xl bg-white px-7 py-3.5 text-base font-semibold text-cyan-700 transition hover:bg-cyan-50"
             >
               {t.section9.primaryCta}

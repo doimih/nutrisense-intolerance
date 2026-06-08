@@ -47,7 +47,9 @@
     "format": "prettier --write \"src/**/*.{ts,tsx,css,md,json}\"",
     "serve": "cross-env PORT=4028 node .next/standalone/server.js",
     "type-check": "tsc --noEmit",
-    "test:e2e:superadmin": "node scripts/superadmin-e2e.mjs"
+    "test:e2e:superadmin": "node scripts/superadmin-e2e.mjs",
+    "test:supervisor": "node --test --experimental-transform-types tests/ai/supervisor/supervisor.test.ts",
+    "test:master": "node --test --experimental-transform-types tests/master/master.test.ts"
   },
   "dependencies": {
     "@dhiwise/component-tagger": "^1.0.15",
@@ -56,6 +58,7 @@
     "@tailwindcss/typography": "^0.5.16",
     "lucide-react": "^1.7.0",
     "next": "15.5.18",
+    "nutriaid-intolerances": "file:..",
     "react": "19.0.3",
     "react-dom": "19.0.3",
     "react-hook-form": "^7.77.0",
@@ -76,7 +79,7 @@
     "eslint-config-next": "^15.2.4",
     "eslint-config-prettier": "^10.1.1",
     "eslint-plugin-prettier": "^5.2.6",
-    "postcss": "8.4.8",
+    "postcss": "^8.5.15",
     "prettier": "^3.5.3",
     "tailwindcss": "3.4.6",
     "tailwindcss-animate": "^1.0.7",

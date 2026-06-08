@@ -3,6 +3,7 @@ import { mkdirSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { createPasswordHash } from '@/lib/server/superadmin/auth';
 import type {
+  AILogRecord,
   AIExecutionLog,
   AuditEvent,
   LogRecord,
@@ -95,6 +96,7 @@ function seedDb(): SuperadminDb {
         createdAt: ts,
       },
     ],
+    AI_Logs: [],
     settings: {
       stripe: {
         publishableKeyMasked: 'pk_live_************',
@@ -154,6 +156,9 @@ export function readDb(): SuperadminDb {
       },
     },
   };
+  if (!Array.isArray(parsed.AI_Logs)) {
+    parsed.AI_Logs = [];
+  }
   return parsed;
 }
 
@@ -212,5 +217,12 @@ export function appendAiLog(log: Omit<AIExecutionLog, 'id' | 'createdAt'>): void
   mutateDb((db) => {
     db.aiLogs.unshift({ ...log, id: id('ai'), createdAt: nowIso() });
     db.aiLogs = db.aiLogs.slice(0, 1000);
+  });
+}
+
+export function appendAISystemLog(log: AILogRecord): void {
+  mutateDb((db) => {
+    db.AI_Logs.unshift(log);
+    db.AI_Logs = db.AI_Logs.slice(0, 10000);
   });
 }

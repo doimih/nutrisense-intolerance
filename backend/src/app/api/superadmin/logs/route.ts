@@ -2,10 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { appendAuditEvent, appendLog, readDb } from '@/lib/server/superadmin/store';
 import { getClientIp } from '@/lib/server/superadmin/rbac';
 import { requireSuperadmin } from '@/lib/server/superadmin/rbac';
+import { withRequestLogging } from '@/lib/server/superadmin/requestLogger';
 
 export const runtime = 'nodejs';
+const withSystemLogging = withRequestLogging('system');
 
-export async function GET(request: NextRequest) {
+async function getHandler(request: NextRequest) {
   const auth = await requireSuperadmin(request);
   if (auth.error) return auth.error;
 
@@ -16,7 +18,7 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({ logs });
 }
 
-export async function POST(request: NextRequest) {
+async function postHandler(request: NextRequest) {
   const auth = await requireSuperadmin(request);
   if (auth.error) return auth.error;
 
@@ -50,3 +52,6 @@ export async function POST(request: NextRequest) {
 
   return NextResponse.json({ ok: true }, { status: 201 });
 }
+
+export const GET = withSystemLogging(getHandler);
+export const POST = withSystemLogging(postHandler);

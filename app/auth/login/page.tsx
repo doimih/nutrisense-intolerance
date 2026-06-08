@@ -18,6 +18,11 @@ export default function LoginPage() {
   const copy = getUiCopy(lang);
   const router = useRouter();
   const searchParams = useSearchParams();
+  const redirectPath = searchParams.get("redirect");
+  const registerHref =
+    redirectPath && redirectPath.startsWith("/dashboard")
+      ? `/auth/register?redirect=${encodeURIComponent(redirectPath)}`
+      : "/auth/register";
   const [form, setForm] = useState({ email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -65,7 +70,7 @@ export default function LoginPage() {
         <>
           {copy.auth.login.noAccountYet}
           <Link
-            href="/auth/register"
+            href={registerHref}
             className="text-green-600 dark:text-green-400 font-medium hover:underline"
           >
             {copy.auth.login.createOneFree}

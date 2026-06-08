@@ -11,8 +11,8 @@
       "status": "active",
       "plan": "enterprise",
       "createdAt": "2026-06-08T10:17:14.288Z",
-      "updatedAt": "2026-06-08T11:41:59.400Z",
-      "lastLoginAt": "2026-06-08T11:41:47.946Z",
+      "updatedAt": "2026-06-08T13:40:16.521Z",
+      "lastLoginAt": "2026-06-08T13:40:16.521Z",
       "sessionVersion": 10,
       "sessionInvalidBefore": 1780918919,
       "twoFactorSecret": "HXP233Q77PRQSLMF6H73IVSKH44NYYKM"
@@ -125,6 +125,28 @@
     }
   ],
   "logs": [
+    {
+      "id": "log_1780926016523_f9glw0",
+      "source": "audit",
+      "level": "info",
+      "message": "login on auth",
+      "metadata": {
+        "actorEmail": "design@doimih.net",
+        "resourceId": null
+      },
+      "createdAt": "2026-06-08T13:40:16.523Z"
+    },
+    {
+      "id": "log_1780926016522_uynmcf",
+      "source": "security",
+      "level": "info",
+      "message": "Superadmin login successful",
+      "metadata": {
+        "ip": "::1",
+        "email": "design@doimih.net"
+      },
+      "createdAt": "2026-06-08T13:40:16.522Z"
+    },
     {
       "id": "log_1780918956311_ks6k8n",
       "source": "audit",
@@ -1503,6 +1525,16 @@
     {
       "actorUserId": "adm_superadmin_001",
       "actorEmail": "design@doimih.net",
+      "action": "login",
+      "resource": "auth",
+      "resourceId": null,
+      "ip": "::1",
+      "id": "audit_1780926016523_2g7a6k",
+      "createdAt": "2026-06-08T13:40:16.523Z"
+    },
+    {
+      "actorUserId": "adm_superadmin_001",
+      "actorEmail": "design@doimih.net",
       "action": "logout",
       "resource": "auth",
       "resourceId": null,
@@ -2610,6 +2642,15 @@
       "email": "design@doimih.net",
       "userId": "adm_superadmin_001",
       "message": "Superadmin login successful",
+      "id": "sec_1780926016522_j7kyfp",
+      "createdAt": "2026-06-08T13:40:16.522Z"
+    },
+    {
+      "type": "login_success",
+      "ip": "::1",
+      "email": "design@doimih.net",
+      "userId": "adm_superadmin_001",
+      "message": "Superadmin login successful",
       "id": "sec_1780918907948_zqgb6b",
       "createdAt": "2026-06-08T11:41:47.948Z"
     },
@@ -2966,5 +3007,81 @@
         "email": false
       }
     }
-  }
+  },
+  "AI_Logs": [
+    {
+      "id": "ab3bee59-966d-4dc9-8700-e678fc9c59d2",
+      "timestamp": "2026-06-08T14:29:11.844Z",
+      "sessionId": "unknown",
+      "userId": "adm_superadmin_001",
+      "source": "worker",
+      "level": "warning",
+      "intent": null,
+      "worker": "Profile Analyzer Worker",
+      "model": null,
+      "input": {},
+      "output": {
+        "worker": "Profile Analyzer Worker",
+        "status": "warning",
+        "data": {},
+        "notes": [
+          "Auto-correction applied on 2026-06-08T14:29:11.844Z",
+          "[schema] Schema violation: missing field \"profile\" (expected type: [object Object]).",
+          "[logical] Logical error: \"data\" field is present but empty."
+        ],
+        "profile": null
+      },
+      "error": null,
+      "metadata": {
+        "executionMs": 1,
+        "status": "warning",
+        "validationErrors": [
+          "Schema violation: missing field \"profile\" (expected type: [object Object]).",
+          "Logical error: \"data\" field is present but empty."
+        ],
+        "safetyFlags": [],
+        "schema_valid": false,
+        "logical_valid": false,
+        "safety_valid": true,
+        "corrected": true
+      }
+    },
+    {
+      "id": "ee1b0c21-f4c7-4487-aa8d-7f9ea1aeeb75",
+      "timestamp": "2026-06-08T14:28:39.803Z",
+      "sessionId": "unknown",
+      "userId": "adm_superadmin_001",
+      "source": "worker",
+      "level": "warning",
+      "intent": null,
+      "worker": "Profile Analyzer Worker",
+      "model": null,
+      "input": {},
+      "output": {
+        "worker": "Profile Analyzer Worker",
+        "status": "warning",
+        "data": {},
+        "notes": [
+          "Auto-correction applied on 2026-06-08T14:28:39.802Z",
+          "[schema] Schema violation: missing field \"profile\" (expected type: [object Object]).",
+          "[logical] Logical error: \"data\" field is present but empty."
+        ],
+        "profile": null
+      },
+      "error": null,
+      "metadata": {
+        "executionMs": 0,
+        "status": "warning",
+        "validationErrors": [
+          "Schema violation: missing field \"profile\" (expected type: [object Object]).",
+          "Logical error: \"data\" field is present but empty."
+        ],
+        "safetyFlags": [],
+        "schema_valid": false,
+        "logical_valid": false,
+        "safety_valid": true,
+        "corrected": true
+      }
+    }
+  ]
 }

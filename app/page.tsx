@@ -588,7 +588,7 @@ export default function HomePage() {
           </div>
           <div className="mt-10 flex flex-col gap-3 sm:flex-row">
             <Link
-              href="/auth/register"
+              href="/dashboard"
               className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-400 px-7 py-3.5 text-base font-semibold text-slate-900 transition hover:bg-emerald-300"
             >
               {t.hero.primaryCta}
@@ -797,7 +797,7 @@ export default function HomePage() {
           </h2>
           <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link
-              href="/auth/register"
+              href="/dashboard"
               className="inline-flex items-center gap-2 rounded-xl bg-white px-7 py-3.5 text-base font-semibold text-emerald-700 transition hover:bg-emerald-50"
             >
               {t.finalCta.primary}
