@@ -17,9 +17,11 @@ export interface MonitoringEntry {
   id: string;
   userId: string;
   date: string;
+  mealTime?: string;
   consumedFoods: string[];
   symptoms: Symptom[];
   symptomsIntensity: number; // 1-10
+  reactionLatencyMinutes?: number | null;
   wellbeing: WellbeingLevel;
   notes: string;
   createdAt: string;
@@ -27,9 +29,11 @@ export interface MonitoringEntry {
 
 export interface CreateMonitoringEntryRequest {
   date: string;
+  mealTime?: string;
   consumedFoods: string[];
   symptoms: Symptom[];
   symptomsIntensity: number;
+  reactionLatencyMinutes?: number | null;
   wellbeing: WellbeingLevel;
   notes: string;
 }

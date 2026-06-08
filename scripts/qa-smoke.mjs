@@ -150,11 +150,11 @@ async function run() {
     await withProcessGuard(waitForUrl(BACKEND_URL, STARTUP_TIMEOUT_MS), guards);
 
     await withProcessGuard(assertPage(`${FRONTEND_URL}/?lang=en`, {
-      mustContain: ["NutriSense Intolerances", "Sign in"],
+      mustContain: ["NutriAID Intolerances", "Sign in"],
     }), guards);
 
     await withProcessGuard(assertPage(`${FRONTEND_URL}/?lang=ro`, {
-      mustContain: ["NutriSense Intolerances", "Autentificare"],
+      mustContain: ["NutriAID Intolerances", "Autentificare"],
     }), guards);
 
     await withProcessGuard(assertPage(`${FRONTEND_URL}/auth/login?lang=en`, {
@@ -180,7 +180,7 @@ async function run() {
     }), guards);
 
     await withProcessGuard(assertPage(`${BACKEND_URL}/`, {
-      mustContain: ["NutriSense", "Sign in to your account"],
+      mustContain: ["NutriAID", "Sign in to your account"],
       mustNotContain: ["Application error", "Unhandled Runtime Error"],
     }), guards);
 

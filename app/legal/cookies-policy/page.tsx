@@ -9,7 +9,7 @@ export default function CookiesPolicyPage() {
     <LegalLayout title="Politica de Cookies" lastUpdated="1 ianuarie 2025">
       <p>
         Această politică explică ce sunt cookie-urile, cum le utilizăm în
-        aplicația NutriSense Intolerances și ce opțiuni ai în privința lor.
+        aplicația NutriAID Intolerances și ce opțiuni ai în privința lor.
       </p>
 
       <h2>1. Ce sunt cookie-urile?</h2>
@@ -100,7 +100,7 @@ export default function CookiesPolicyPage() {
 
       <h2>7. Contact</h2>
       <p>
-        Întrebări despre utilizarea cookie-urilor: contact@nutrisense.ro
+        Întrebări despre utilizarea cookie-urilor: contact@nutriaid.ro
       </p>
     </LegalLayout>
   );

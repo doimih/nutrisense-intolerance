@@ -3,12 +3,12 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: nutrisense-frontend:prod
-    container_name: nutrisense-frontend
+    image: nutriaid-frontend:prod
+    container_name: nutriaid-frontend
     environment:
       NODE_ENV: production
       PORT: 3000
-      NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-https://nutrisense-i.eu}
+      NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-https://nutriaid-i.eu}
       BACKEND_URL: ${BACKEND_URL:-http://localhost:4028}
     depends_on:
       - backend
@@ -20,8 +20,8 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    image: nutrisense-backend:prod
-    container_name: nutrisense-backend
+    image: nutriaid-backend:prod
+    container_name: nutriaid-backend
     environment:
       NODE_ENV: production
       PORT: 4028

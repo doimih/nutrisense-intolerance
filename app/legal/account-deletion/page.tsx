@@ -9,7 +9,7 @@ export default function AccountDeletionPage() {
   return (
     <LegalLayout title="Politica de Ștergere a Contului" lastUpdated="1 ianuarie 2025">
       <p>
-        Ai dreptul de a-ți șterge contul NutriSense Intolerances oricând,
+        Ai dreptul de a-ți șterge contul NutriAID Intolerances oricând,
         fără nicio justificare și fără costuri. Această politică descrie
         procesul de ștergere și consecințele acestuia.
       </p>
@@ -18,7 +18,7 @@ export default function AccountDeletionPage() {
       <p>
         În conformitate cu Regulamentul General privind Protecția Datelor
         (GDPR), art. 17, ai dreptul de a solicita ștergerea completă a
-        datelor tale personale. NutriSense Intolerances respectă și
+        datelor tale personale. NutriAID Intolerances respectă și
         facilitează exercitarea acestui drept.
       </p>
 
@@ -35,7 +35,7 @@ export default function AccountDeletionPage() {
 
       <h3>Metoda 2: Prin email</h3>
       <ul>
-        <li>Trimite un email la contact@nutrisense.ro cu subiectul: &quot;Cerere ștergere cont&quot;.</li>
+        <li>Trimite un email la contact@nutriaid.ro cu subiectul: &quot;Cerere ștergere cont&quot;.</li>
         <li>Include în email adresa de email a contului de șters.</li>
         <li>Vom procesa cererea în termen de 30 de zile calendaristice.</li>
         <li>Vei primi confirmare la adresa furnizată.</li>
@@ -80,7 +80,7 @@ export default function AccountDeletionPage() {
         în format JSON sau CSV:
       </p>
       <ul>
-        <li>Trimite cerere la contact@nutrisense.ro cu subiectul &quot;Export date cont&quot;.</li>
+        <li>Trimite cerere la contact@nutriaid.ro cu subiectul &quot;Export date cont&quot;.</li>
         <li>Furnizăm exportul în termen de 30 de zile.</li>
         <li>Datele exportate includ: profilul, jurnalul și istoricul de recomandări.</li>
       </ul>
@@ -96,7 +96,7 @@ export default function AccountDeletionPage() {
       <h2>8. Contact</h2>
       <p>
         Pentru orice nedumeriri legate de ștergerea contului:
-        contact@nutrisense.ro
+        contact@nutriaid.ro
       </p>
     </LegalLayout>
   );

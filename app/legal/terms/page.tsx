@@ -9,14 +9,14 @@ export default function TermsPage() {
     <LegalLayout title="Termeni și Condiții de Utilizare" lastUpdated="1 ianuarie 2025">
       <p>
         Acești Termeni și Condiții (&quot;Termenii&quot;) guvernează utilizarea aplicației
-        web NutriSense Intolerances (&quot;Aplicația&quot;, &quot;Serviciul&quot;). Prin crearea
+        web NutriAID Intolerances (&quot;Aplicația&quot;, &quot;Serviciul&quot;). Prin crearea
         unui cont sau utilizarea Aplicației, accepți integral acești Termeni.
         Dacă nu ești de acord, nu utiliza Aplicația.
       </p>
 
       <h2>1. Descrierea serviciului</h2>
       <p>
-        NutriSense Intolerances este o aplicație web gratuită destinată
+        NutriAID Intolerances este o aplicație web gratuită destinată
         persoanelor cu intoleranțe alimentare, care permite:
       </p>
       <ul>
@@ -81,7 +81,7 @@ export default function TermsPage() {
       <h2>6. Disclaimer medical — precizare esențială</h2>
       <p>
         <strong>
-          NutriSense Intolerances nu este o aplicație medicală și nu furnizează
+          NutriAID Intolerances nu este o aplicație medicală și nu furnizează
           sfaturi medicale.
         </strong>{" "}
         Orice recomandare generată are caracter general și informativ. Nu
@@ -96,7 +96,7 @@ export default function TermsPage() {
       <p>
         Toate drepturile de proprietate intelectuală asupra Aplicației,
         inclusiv codul sursă, designul, mărcile și conținutul, aparțin
-        NutriSense Intolerances sau licențiatorilor săi. Ești autorizat să
+        NutriAID Intolerances sau licențiatorilor săi. Ești autorizat să
         utilizezi Aplicația exclusiv pentru uz personal, necomercial.
       </p>
       <p>
@@ -135,7 +135,7 @@ export default function TermsPage() {
 
       <h2>12. Contact</h2>
       <p>
-        Întrebări despre acești Termeni: contact@nutrisense.ro
+        Întrebări despre acești Termeni: contact@nutriaid.ro
       </p>
     </LegalLayout>
   );

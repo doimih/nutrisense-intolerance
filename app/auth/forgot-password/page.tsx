@@ -20,9 +20,26 @@ export default function ForgotPasswordPage() {
     e.preventDefault();
     if (!email) { setError(isRo ? "Introdu adresa de email." : "Enter your email address."); return; }
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 800));
-    setLoading(false);
-    setSent(true);
+    try {
+      const response = await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      if (!response.ok) {
+        const payload = (await response.json()) as { error?: string };
+        throw new Error(payload.error ?? "Reset request failed.");
+      }
+
+      setSent(true);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : (isRo ? "A aparut o eroare." : "An error occurred."));
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

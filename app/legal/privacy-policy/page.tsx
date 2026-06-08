@@ -10,10 +10,10 @@ export default function PrivacyPolicyPage() {
   return (
     <LegalLayout title="Politica de Confidențialitate" lastUpdated="1 ianuarie 2025">
       <p>
-        Această Politică de Confidențialitate descrie modul în care NutriSense
+        Această Politică de Confidențialitate descrie modul în care NutriAID
         Intolerances (&quot;noi&quot;, &quot;al nostru&quot;) colectează, utilizează și protejează
         datele personale ale utilizatorilor (&quot;tu&quot;, &quot;utilizatorul&quot;) în cadrul
-        aplicației web disponibile la nutrisense-intolerances.ro.
+        aplicației web disponibile la nutriaid-intolerances.ro.
       </p>
       <p>
         Prin crearea unui cont și utilizarea aplicației, ești de acord cu
@@ -95,7 +95,7 @@ export default function PrivacyPolicyPage() {
       </ul>
       <p>
         Pentru exercitarea acestor drepturi, contactează-ne la
-        contact@nutrisense.ro. Răspundem în termen de 30 de zile.
+        contact@nutriaid.ro. Răspundem în termen de 30 de zile.
       </p>
 
       <h2>8. Cookie-uri</h2>
@@ -127,7 +127,7 @@ export default function PrivacyPolicyPage() {
         Pentru orice întrebări privind confidențialitatea datelor, contactează-ne:
       </p>
       <ul>
-        <li>Email: contact@nutrisense.ro</li>
+        <li>Email: contact@nutriaid.ro</li>
         <li>Adresă: [Adresa operatorului de date]</li>
       </ul>
       <p>

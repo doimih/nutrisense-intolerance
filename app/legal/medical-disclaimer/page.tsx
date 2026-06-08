@@ -12,16 +12,16 @@ export default function MedicalDisclaimerPage() {
           ⚠️ Precizare importantă — citește cu atenție
         </p>
         <p className="text-orange-700 dark:text-orange-400 text-sm mt-2">
-          NutriSense Intolerances nu este o aplicație medicală și nu furnizează
+          NutriAID Intolerances nu este o aplicație medicală și nu furnizează
           sfaturi medicale, nutriționale sau de tratament. Informațiile
           disponibile în această aplicație au exclusiv caracter general și
           informativ.
         </p>
       </div>
 
-      <h2>1. Ce este NutriSense Intolerances</h2>
+      <h2>1. Ce este NutriAID Intolerances</h2>
       <p>
-        NutriSense Intolerances este un instrument digital de organizare
+        NutriAID Intolerances este un instrument digital de organizare
         personală, destinat să ajute utilizatorii să:
       </p>
       <ul>
@@ -103,13 +103,13 @@ export default function MedicalDisclaimerPage() {
       <ul>
         <li>Ești responsabil pentru deciziile alimentare pe care le iei.</li>
         <li>Informațiile din aplicație nu înlocuiesc consultul medical.</li>
-        <li>NutriSense Intolerances nu este răspunzător pentru consecințele unor decizii alimentare luate exclusiv pe baza informațiilor din aplicație.</li>
+        <li>NutriAID Intolerances nu este răspunzător pentru consecințele unor decizii alimentare luate exclusiv pe baza informațiilor din aplicație.</li>
         <li>Jurnalul de monitorizare este un instrument de uz personal, nu un document medical.</li>
       </ul>
 
       <h2>7. Limitarea răspunderii</h2>
       <p>
-        În măsura permisă de legea aplicabilă, NutriSense Intolerances, echipa
+        În măsura permisă de legea aplicabilă, NutriAID Intolerances, echipa
         sa și furnizorii săi nu sunt răspunzători pentru orice prejudicii
         de sănătate, directe sau indirecte, rezultate din utilizarea
         informațiilor disponibile în aplicație în locul consultului medical

@@ -2,9 +2,9 @@ import { describe, expect, it } from "vitest";
 import { DEFAULT_LANGUAGE, ROMANIA_LANGUAGE, isAppLanguage } from "../../lib/i18n/config";
 
 describe("i18n config", () => {
-  it("accepts supported app languages", () => {
+  it("accepts only Romanian app language", () => {
     expect(isAppLanguage("ro")).toBe(true);
-    expect(isAppLanguage("en")).toBe(true);
+    expect(isAppLanguage("en")).toBe(false);
   });
 
   it("rejects unsupported app languages", () => {
@@ -13,8 +13,8 @@ describe("i18n config", () => {
     expect(isAppLanguage(null)).toBe(false);
   });
 
-  it("keeps default and Romania language constants stable", () => {
-    expect(DEFAULT_LANGUAGE).toBe("en");
+  it("keeps Romanian defaults stable", () => {
+    expect(DEFAULT_LANGUAGE).toBe("ro");
     expect(ROMANIA_LANGUAGE).toBe("ro");
   });
 });

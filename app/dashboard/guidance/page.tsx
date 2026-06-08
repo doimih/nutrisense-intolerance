@@ -71,7 +71,10 @@ export default function GuidancePage() {
       const res = await generateGuidance(form);
       setResult(res);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : isRo ? "Generare esuata." : "Generation failed.");
+      const fallbackMessage = isRo
+        ? "Nu am putut procesa analiza acum, încearcă din nou."
+        : "We could not process the analysis right now. Please try again.";
+      setError(err instanceof Error ? err.message : fallbackMessage);
     } finally {
       setGenerating(false);
     }

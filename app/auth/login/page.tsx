@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
 import AuthCard from "@/components/AuthCard";
 import FormField, { Input } from "@/components/FormField";
@@ -10,11 +10,19 @@ import Button from "@/components/Button";
 import ErrorAlert from "@/components/ErrorAlert";
 import { login } from "@/lib/api/auth";
 import { useLanguage } from "@/components/LanguageProvider";
+import { getUiCopy } from "@/lib/i18n/ui";
 
 export default function LoginPage() {
   const { lang } = useLanguage();
   const isRo = lang === "ro";
+  const copy = getUiCopy(lang);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectPath = searchParams.get("redirect");
+  const registerHref =
+    redirectPath && redirectPath.startsWith("/dashboard")
+      ? `/auth/register?redirect=${encodeURIComponent(redirectPath)}`
+      : "/auth/register";
   const [form, setForm] = useState({ email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -23,10 +31,10 @@ export default function LoginPage() {
 
   const validate = () => {
     const errors: Record<string, string> = {};
-    if (!form.email) errors.email = "Email-ul este obligatoriu.";
+    if (!form.email) errors.email = isRo ? "Email-ul este obligatoriu." : "Email is required.";
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
-      errors.email = "Introdu un email valid.";
-    if (!form.password) errors.password = "Parola este obligatorie.";
+      errors.email = isRo ? "Introdu un email valid." : "Enter a valid email.";
+    if (!form.password) errors.password = isRo ? "Parola este obligatorie." : "Password is required.";
     return errors;
   };
 
@@ -42,7 +50,10 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await login({ email: form.email, password: form.password });
-      router.push("/dashboard");
+      const redirectPath = searchParams.get("redirect");
+      const safeRedirect =
+        redirectPath && redirectPath.startsWith("/dashboard") ? redirectPath : "/dashboard";
+      router.push(safeRedirect);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : isRo ? "Autentificare esuata." : "Sign in failed.");
     } finally {
@@ -52,21 +63,17 @@ export default function LoginPage() {
 
   return (
     <AuthCard
-      title={isRo ? "Autentificare" : "Sign in"}
-      subtitle={isRo ? "Acceseaza-ti contul NutriSense Intolerances" : "Access your NutriSense Intolerances account"}
-      description={
-        isRo
-          ? "Autentifica-te pentru a accesa profilul tau, jurnalul de monitorizare si recomandarile salvate."
-          : "Sign in to access your profile, monitoring journal and saved guidance."
-      }
+      title={copy.auth.login.title}
+      subtitle={copy.auth.login.subtitle}
+      description={copy.auth.login.description}
       footer={
         <>
-          {isRo ? "Nu ai cont? " : "No account yet? "}
+          {copy.auth.login.noAccountYet}
           <Link
-            href="/auth/register"
+            href={registerHref}
             className="text-green-600 dark:text-green-400 font-medium hover:underline"
           >
-            {isRo ? "Creeaza unul gratuit" : "Create one for free"}
+            {copy.auth.login.createOneFree}
           </Link>
         </>
       }
@@ -77,7 +84,7 @@ export default function LoginPage() {
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <FormField
-          label={isRo ? "Adresa de email" : "Email address"}
+          label={copy.auth.login.email}
           required
           error={fieldErrors.email}
           inputId="login-email"
@@ -97,7 +104,7 @@ export default function LoginPage() {
         </FormField>
 
         <FormField
-          label={isRo ? "Parola" : "Password"}
+          label={copy.auth.login.password}
           required
           error={fieldErrors.password}
           inputId="login-password"
@@ -120,7 +127,6 @@ export default function LoginPage() {
               type="button"
               onClick={() => setShowPassword(!showPassword)}
               aria-label={showPassword ? (isRo ? "Ascunde parola" : "Hide password") : isRo ? "Arata parola" : "Show password"}
-              aria-pressed={showPassword}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
             >
               {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -133,24 +139,24 @@ export default function LoginPage() {
             href="/auth/forgot-password"
             className="text-xs text-slate-500 dark:text-slate-400 hover:text-green-600 dark:hover:text-green-400 transition-colors"
           >
-            {isRo ? "Ai uitat parola?" : "Forgot password?"}
+            {copy.auth.login.forgotPassword}
           </Link>
         </div>
 
         <Button type="submit" loading={loading} fullWidth size="lg">
-          {loading ? (isRo ? "Se autentifica..." : "Signing in...") : isRo ? "Autentificare" : "Sign in"}
+          {loading ? copy.auth.login.signingIn : copy.auth.login.signIn}
         </Button>
       </form>
 
       <div className="mt-4 pt-4 border-t border-gray-100 dark:border-slate-700">
         <p className="text-xs text-center text-slate-500 dark:text-slate-400">
-          {isRo ? "Prin autentificare, accepti " : "By signing in, you agree to the "}
+          {copy.auth.login.termsIntro}
           <Link href="/legal/terms" className="underline hover:text-slate-700 dark:hover:text-slate-200">
-            {isRo ? "Termenii de utilizare" : "Terms of Use"}
+            {copy.auth.login.terms}
           </Link>{" "}
-          {isRo ? "si " : "and "}
+          {copy.auth.login.and}
           <Link href="/legal/privacy-policy" className="underline hover:text-slate-700 dark:hover:text-slate-200">
-            {isRo ? "Politica de Confidentialitate" : "Privacy Policy"}
+            {copy.auth.login.privacy}
           </Link>
           .
         </p>

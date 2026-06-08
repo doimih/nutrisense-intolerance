@@ -33,6 +33,21 @@ function formatDate(iso: string, locale: string) {
   });
 }
 
+function withTimeout<T>(promise: Promise<T>, timeoutMs = 8000): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error("Request timeout")), timeoutMs);
+    promise
+      .then((value) => {
+        clearTimeout(timer);
+        resolve(value);
+      })
+      .catch((err) => {
+        clearTimeout(timer);
+        reject(err);
+      });
+  });
+}
+
 export default function DashboardPage() {
   const { lang } = useLanguage();
   const isRo = lang === "ro";
@@ -45,26 +60,28 @@ export default function DashboardPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    Promise.all([
-      me(),
-      getProfile(),
-      getHistory(),
-      listMonitoringEntries(),
+    Promise.allSettled([
+      withTimeout(me()),
+      withTimeout(getProfile()),
+      withTimeout(getHistory()),
+      withTimeout(listMonitoringEntries()),
     ])
-      .then(([u, p, hist, entries]) => {
-        setUser(u);
-        setProfile(p);
-        setLastGuidance(hist[0] ?? null);
-        setLastEntry(entries[0] ?? null);
-      })
-      .catch((err: unknown) => {
-        setError(
-          err instanceof Error
-            ? err.message
-            : isRo
-              ? "Nu am putut incarca datele dashboard-ului."
-              : "Could not load dashboard data."
-        );
+      .then((results) => {
+        const [uRes, pRes, hRes, mRes] = results;
+
+        if (uRes.status === "fulfilled") setUser(uRes.value);
+        if (pRes.status === "fulfilled") setProfile(pRes.value);
+        if (hRes.status === "fulfilled") setLastGuidance(hRes.value[0] ?? null);
+        if (mRes.status === "fulfilled") setLastEntry(mRes.value[0] ?? null);
+
+        const hasFailure = results.some((result) => result.status === "rejected");
+        if (hasFailure) {
+          setError(
+            isRo
+              ? "Unele date din dashboard nu au putut fi incarcate."
+              : "Some dashboard data could not be loaded."
+          );
+        }
       })
       .finally(() => setLoading(false));
   }, [isRo]);
@@ -86,7 +103,7 @@ export default function DashboardPage() {
           {isRo ? "Bun venit" : "Welcome"}, {user?.name?.split(" ")[0] ?? (isRo ? "utilizator" : "user")} 👋
         </h1>
         <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
-          {isRo ? "Iata un rezumat al contului tau NutriSense." : "Here is a summary of your NutriSense account."}
+          {isRo ? "Iata un rezumat al contului tau NutriAID." : "Here is a summary of your NutriAID account."}
         </p>
       </div>
 

@@ -27,18 +27,37 @@ export default function HistoryPage() {
   const locale = isRo ? "ro-RO" : "en-US";
   const [entries, setEntries] = useState<GuidanceHistoryEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    getHistory().then((h) => {
-      setEntries(h);
-      setLoading(false);
-    });
-  }, []);
+    getHistory()
+      .then((h) => {
+        setEntries(h);
+      })
+      .catch((err: unknown) => {
+        void err;
+        setError(isRo ? "Nu am putut incarca istoricul." : "Could not load history.");
+      })
+      .finally(() => setLoading(false));
+  }, [isRo]);
 
   if (loading) return <PageLoader />;
 
+  const getEntrySummary = (entry: GuidanceHistoryEntry) => {
+    const labels = entry.intolerances.map((intol) => getIntoleranceLabel(intol, lang));
+    if (labels.length === 0) {
+      return isRo ? "Recomandari fara restrictii specifice" : "Guidance with no specific restrictions";
+    }
+    return isRo ? `Recomandari pentru: ${labels.join(", ")}` : `Guidance for: ${labels.join(", ")}`;
+  };
+
   return (
     <div className="space-y-6 max-w-3xl">
+      {error && (
+        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300">
+          {error}
+        </div>
+      )}
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 bg-teal-100 dark:bg-teal-900/30 rounded-xl flex items-center justify-center">
           <History className="w-5 h-5 text-teal-600 dark:text-teal-400" />
@@ -86,7 +105,7 @@ export default function HistoryPage() {
                   <div className="flex items-center gap-2 mb-2">
                     <Sparkles className="w-4 h-4 text-green-500 flex-shrink-0" />
                     <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">
-                      {entry.summary}
+                      {getEntrySummary(entry)}
                     </p>
                   </div>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">

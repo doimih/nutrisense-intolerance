@@ -17,10 +17,10 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://nutrisense-i.eu'),
-  title: 'NutriSense — Personalized Food Intolerance Management',
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://nutriaid-i.eu'),
+  title: 'NutriAID — Personalized Food Intolerance Management',
   description:
-    'NutriSense helps you manage food intolerances with AI-powered dietary guidance, symptom tracking, and personalized meal recommendations.',
+    'NutriAID helps you manage food intolerances with AI-powered dietary guidance, symptom tracking, and personalized meal recommendations.',
   alternates: {
     canonical: '/',
   },

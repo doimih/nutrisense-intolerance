@@ -1,51 +1,65 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
-  DEFAULT_LANGUAGE,
-  isAppLanguage,
   LANGUAGE_COOKIE,
   ROMANIA_LANGUAGE,
 } from "@/lib/i18n/config";
+import { AUTH_COOKIE_NAME } from "@/lib/auth/session";
+import { readSessionToken } from "@/lib/auth/sessionToken";
 
 export function inferLanguageFromCountry(countryCode: string | null): "ro" | "en" {
-  if (!countryCode) return DEFAULT_LANGUAGE;
-  return countryCode.toUpperCase() === "RO" ? ROMANIA_LANGUAGE : DEFAULT_LANGUAGE;
+  void countryCode;
+  return ROMANIA_LANGUAGE;
 }
 
-function getCountryCode(request: NextRequest): string | null {
+function isProtectedPath(pathname: string): boolean {
+  return pathname === "/dashboard" || pathname.startsWith("/dashboard/");
+}
+
+function isSuperadminPath(pathname: string): boolean {
   return (
-    request.headers.get("x-vercel-ip-country") ||
-    request.headers.get("cf-ipcountry") ||
-    request.headers.get("x-country-code")
+    pathname === "/superadmin" ||
+    pathname.startsWith("/superadmin/")
   );
 }
 
-export function middleware(request: NextRequest) {
-  const response = NextResponse.next();
-
-  const langFromQuery = request.nextUrl.searchParams.get("lang");
-  if (isAppLanguage(langFromQuery)) {
-    response.cookies.set(LANGUAGE_COOKIE, langFromQuery, {
-      path: "/",
-      maxAge: 60 * 60 * 24 * 365,
-      sameSite: "lax",
-    });
-    return response;
-  }
-
-  const currentCookie = request.cookies.get(LANGUAGE_COOKIE)?.value;
-  if (isAppLanguage(currentCookie)) {
-    return response;
-  }
-
-  const inferredLanguage = inferLanguageFromCountry(getCountryCode(request));
-
-  response.cookies.set(LANGUAGE_COOKIE, inferredLanguage, {
+function applyLanguageCookie(request: NextRequest, response: NextResponse): NextResponse {
+  void request;
+  response.cookies.set(LANGUAGE_COOKIE, ROMANIA_LANGUAGE, {
     path: "/",
     maxAge: 60 * 60 * 24 * 365,
     sameSite: "lax",
   });
 
   return response;
+}
+
+export async function middleware(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+  const superadminEmail =
+    process.env.FRONTEND_SUPERADMIN_EMAIL?.trim().toLowerCase() || "design@doimih.net";
+  const token = request.cookies.get(AUTH_COOKIE_NAME)?.value;
+  const session = token ? await readSessionToken(token) : null;
+
+  if (isProtectedPath(pathname)) {
+    if (!session) {
+      const loginUrl = new URL("/auth/login", request.url);
+      loginUrl.searchParams.set("redirect", pathname);
+      return applyLanguageCookie(request, NextResponse.redirect(loginUrl));
+    }
+  }
+
+  if (isSuperadminPath(pathname)) {
+    const email = session?.user.email?.toLowerCase() ?? "";
+    const isSuperadmin = session?.user.role === "superadmin" || email === superadminEmail;
+
+    if (!isSuperadmin) {
+      const loginUrl = new URL("/auth/login", request.url);
+      loginUrl.searchParams.set("redirect", "/backend");
+      return applyLanguageCookie(request, NextResponse.redirect(loginUrl));
+    }
+  }
+
+  return applyLanguageCookie(request, NextResponse.next());
 }
 
 export const config = {

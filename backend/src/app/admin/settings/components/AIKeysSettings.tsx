@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 interface AIKey {
   id: string;
@@ -45,6 +45,30 @@ export default function AIKeysSettings() {
   const [visible, setVisible] = useState<Record<string, boolean>>({});
   const [saved, setSaved] = useState(false);
 
+  useEffect(() => {
+    fetch('/api/superadmin/settings')
+      .then((response) => (response.ok ? response.json() : null))
+      .then(
+        (payload: { settings?: { ai?: { provider?: string; apiKeyMasked?: string } } } | null) => {
+          if (!payload?.settings?.ai?.apiKeyMasked) return;
+          setKeys((prev) =>
+            prev.map((k, idx) =>
+              idx === 0
+                ? {
+                    ...k,
+                    provider: payload.settings?.ai?.provider || k.provider,
+                    value: payload.settings?.ai?.apiKeyMasked || k.value,
+                  }
+                : k
+            )
+          );
+        }
+      )
+      .catch(() => {
+        // keep defaults
+      });
+  }, []);
+
   const updateKey = (id: string, value: string) => {
     setKeys((prev) => prev.map((k) => (k.id === id ? { ...k, value } : k)));
   };
@@ -53,7 +77,20 @@ export default function AIKeysSettings() {
     setVisible((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    const primary = keys[0];
+    await fetch('/api/superadmin/settings', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ai: {
+          provider: primary?.provider || 'OpenAI',
+          apiKeyMasked: primary?.value || '',
+          model: 'gpt-4o-mini',
+        },
+      }),
+    });
+
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
   };

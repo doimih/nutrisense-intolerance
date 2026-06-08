@@ -11,6 +11,13 @@ const nextConfig = {
   output: 'standalone',
   outputFileTracingRoot: __dirname,
 
+  webpack(config, { dev }) {
+    if (dev) {
+      config.cache = false;
+    }
+    return config;
+  },
+
   typescript: {
     ignoreBuildErrors: false,
   },

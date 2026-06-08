@@ -1,45 +1,38 @@
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import StructuredData from "@/components/StructuredData";
 import { LanguageProvider } from "@/components/LanguageProvider";
-import { AppLanguage } from "@/lib/i18n/config";
 import { getServerLanguage } from "@/lib/i18n/server";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://nutrisense-i.eu";
-const siteTitle = "NutriSense Intolerances";
-const descriptions: Record<AppLanguage, string> = {
-  ro: "Un loc sigur pentru a intelege mai bine intolerantele alimentare si reactiile tale. Jurnal de monitorizare si recomandari generale.",
-  en: "A safe place to better understand food intolerances and your reactions. Monitoring journal and general guidance.",
-};
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://nutriaid-i.eu";
+const siteTitle = "NutriAID Intolerances";
+const THEME_STORAGE_KEY = "ns_theme";
+const siteDescription =
+  "Un loc sigur pentru a intelege mai bine intolerantele alimentare si reactiile tale. Jurnal de monitorizare si recomandari generale.";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const lang = getServerLanguage();
-  const siteDescription = descriptions[lang];
-
   return {
     metadataBase: new URL(siteUrl),
     title: {
       default: siteTitle,
-      template: "%s | NutriSense Intolerances",
+      template: "%s | NutriAID Intolerances",
     },
     description: siteDescription,
-    keywords:
-      lang === "ro"
-        ? [
-            "intolerante alimentare",
-            "lactoza",
-            "gluten",
-            "jurnal alimentar",
-            "nutritie",
-            "sanatate",
-          ]
-        : ["food intolerances", "lactose", "gluten", "food journal", "nutrition", "health"],
-    authors: [{ name: "NutriSense Team" }],
+    keywords: [
+      "intolerante alimentare",
+      "lactoza",
+      "gluten",
+      "jurnal alimentar",
+      "nutritie",
+      "sanatate",
+    ],
+    authors: [{ name: "NutriAID Team" }],
     openGraph: {
       type: "website",
-      locale: lang === "ro" ? "ro_RO" : "en_US",
+      locale: "ro_RO",
       url: siteUrl,
       title: siteTitle,
       description: siteDescription,
@@ -49,7 +42,7 @@ export async function generateMetadata(): Promise<Metadata> {
           url: "/og-image.png",
           width: 1200,
           height: 630,
-          alt: "NutriSense Intolerances",
+          alt: "NutriAID Intolerances",
         },
       ],
     },
@@ -88,12 +81,22 @@ export default function RootLayout({
     "@type": "WebSite",
     name: siteTitle,
     url: siteUrl,
-    inLanguage: lang === "ro" ? "ro-RO" : "en-US",
+    inLanguage: "ro-RO",
   };
 
   return (
-    <html lang={lang}>
+    <html lang={lang} suppressHydrationWarning>
       <body className="min-h-screen flex flex-col">
+        <Script id="theme-init" strategy="beforeInteractive">
+          {`
+            try {
+              const storedTheme = window.localStorage.getItem("${THEME_STORAGE_KEY}");
+              document.documentElement.classList.toggle("dark", storedTheme === "dark");
+            } catch {
+              document.documentElement.classList.remove("dark");
+            }
+          `}
+        </Script>
         <LanguageProvider initialLang={lang}>
           <StructuredData data={organizationSchema} />
           <StructuredData data={websiteSchema} />

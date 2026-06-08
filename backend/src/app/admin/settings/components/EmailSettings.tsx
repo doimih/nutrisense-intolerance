@@ -7,8 +7,8 @@ export default function EmailSettings() {
     smtpPort: '587',
     smtpUser: 'apikey',
     smtpPass: '',
-    fromEmail: 'noreply@nutrisense.app',
-    fromName: 'NutriSense',
+    fromEmail: 'noreply@nutriaid.app',
+    fromName: 'NutriAID',
     encryption: 'tls',
   });
   const [saved, setSaved] = useState(false);
@@ -86,6 +86,8 @@ export default function EmailSettings() {
           <label className="label-text">Encryption</label>
           <select
             className="input-field"
+            aria-label="Encryption"
+            title="Encryption"
             value={form?.encryption}
             onChange={(e) => setForm({ ...form, encryption: e?.target?.value })}
           >

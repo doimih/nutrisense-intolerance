@@ -4,10 +4,12 @@ import React from "react";
 import Link from "next/link";
 import { Leaf, Heart, Shield } from "lucide-react";
 import { useLanguage } from "@/components/LanguageProvider";
+import { getUiCopy } from "@/lib/i18n/ui";
 
 export default function Footer() {
   const { lang } = useLanguage();
   const isRo = lang === "ro";
+  const copy = getUiCopy(lang);
   const currentYear = new Date().getFullYear();
 
   const legalLinks = [
@@ -21,12 +23,12 @@ export default function Footer() {
   ];
 
   const appLinks = [
-    { href: "/", label: isRo ? "Acasa" : "Home" },
-    { href: "/about", label: isRo ? "Despre" : "About" },
-    { href: "/faq", label: isRo ? "Intrebari frecvente" : "FAQ" },
-    { href: "/contact", label: "Contact" },
-    { href: "/auth/register", label: isRo ? "Creeaza cont" : "Create account" },
-    { href: "/auth/login", label: isRo ? "Autentificare" : "Sign in" },
+    { href: "/", label: copy.nav.home },
+    { href: "/about", label: copy.nav.about },
+    { href: "/faq", label: copy.nav.faq },
+    { href: "/contact", label: copy.nav.contact },
+    { href: "/auth/register", label: copy.nav.signUp },
+    { href: "/auth/login", label: copy.nav.signIn },
   ];
 
   return (
@@ -40,7 +42,7 @@ export default function Footer() {
               <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
                 <Leaf className="w-4 h-4 text-white" />
               </div>
-              <span className="font-bold text-white text-lg">NutriSense</span>
+              <span className="font-bold text-white text-lg">NutriAID</span>
             </Link>
             <p className="text-sm leading-relaxed text-slate-400 mb-4">
               {isRo
@@ -49,13 +51,13 @@ export default function Footer() {
             </p>
             <div className="flex items-center gap-1.5 text-xs text-slate-500">
               <Shield className="w-3.5 h-3.5 text-green-500" />
-              <span>{isRo ? "Datele tale sunt in siguranta" : "Your data is secure"}</span>
+              <span>{copy.footer.secure}</span>
             </div>
           </div>
 
           {/* App links */}
           <div>
-            <h3 className="text-white font-semibold text-sm mb-4">{isRo ? "Aplicatie" : "App"}</h3>
+            <h3 className="text-white font-semibold text-sm mb-4">{copy.footer.app}</h3>
             <ul className="space-y-2">
               {appLinks.map((link) => (
                 <li key={link.href}>
@@ -72,7 +74,7 @@ export default function Footer() {
 
           {/* Legal links */}
           <div>
-            <h3 className="text-white font-semibold text-sm mb-4">Legal</h3>
+            <h3 className="text-white font-semibold text-sm mb-4">{copy.footer.legal}</h3>
             <ul className="space-y-2">
               {legalLinks.map((link) => (
                 <li key={link.href}>
@@ -93,10 +95,7 @@ export default function Footer() {
           <div className="flex items-start gap-2 p-3 rounded-lg bg-slate-800/50 border border-slate-700/50">
             <Shield className="w-4 h-4 text-yellow-400 flex-shrink-0 mt-0.5" />
             <p className="text-xs text-slate-400 leading-relaxed">
-              <strong className="text-slate-300">{isRo ? "Disclaimer medical:" : "Medical disclaimer:"}</strong>{" "}
-              {isRo
-                ? "NutriSense Intolerances nu ofera sfaturi medicale. Informatiile sunt generale si nu inlocuiesc consultul unui medic sau nutritionist."
-                : "NutriSense Intolerances does not provide medical advice. Information is general and does not replace consultation with a doctor or dietitian."}
+              <strong className="text-slate-300">{copy.footer.disclaimerTitle}</strong> {copy.footer.disclaimerBody}
             </p>
           </div>
         </div>
@@ -104,10 +103,10 @@ export default function Footer() {
         {/* Bottom bar */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500">
           <span>
-            © {currentYear} NutriSense Intolerances. {isRo ? "Toate drepturile rezervate." : "All rights reserved."}
+            © {currentYear} NutriAID Intolerances. {copy.footer.copyright}
           </span>
           <span className="flex items-center gap-1">
-            {isRo ? "Facut cu" : "Made with"} <Heart className="w-3 h-3 text-red-400 fill-red-400" /> {isRo ? "pentru sanatatea ta" : "for your health"}
+            {copy.footer.madeWith} <Heart className="w-3 h-3 text-red-400 fill-red-400" /> {copy.footer.forYourHealth}
           </span>
         </div>
       </div>
