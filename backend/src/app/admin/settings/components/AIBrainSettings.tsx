@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import WorkerDiagnosticPanel from './WorkerDiagnosticPanel';
 
 type WorkerDefinition = {
@@ -12,7 +12,24 @@ type WorkerDefinition = {
   enabled: boolean;
 };
 
-const defaultSystemPrompt = `You are NutriAID AI, the central orchestrator of a modular nutrition intelligence system.
+type AIBrainConfig = {
+  defaultModel: string;
+  fallbackModel: string;
+  temperature: string;
+  maxTokens: string;
+  orchestratorUrl: string;
+  systemPrompt: string;
+  enableStreaming: boolean;
+  enableCache: boolean;
+};
+
+type SettingsPayload = {
+  settings?: {
+    aiBrain?: Partial<AIBrainConfig> & { workers?: WorkerDefinition[] };
+  };
+};
+
+const DEFAULT_SYSTEM_PROMPT = `You are NutriAID AI, the central orchestrator of a modular nutrition intelligence system.
 Your role is to:
 - generate, manage and orchestrate specialized AI workers
 - route user requests to the correct worker
@@ -65,6 +82,17 @@ Style and Behavior Rules:
 Always append this disclaimer:
 "NutriAID provides general nutrition guidance. This is not medical advice. Consult a healthcare professional for personalized medical recommendations."`;
 
+const DEFAULT_CONFIG: AIBrainConfig = {
+  defaultModel: 'gpt-4o',
+  fallbackModel: 'gpt-4o-mini',
+  temperature: '0.4',
+  maxTokens: '1024',
+  orchestratorUrl: '',
+  systemPrompt: DEFAULT_SYSTEM_PROMPT,
+  enableStreaming: false,
+  enableCache: true,
+};
+
 const outputSchema = `{
   "worker": "WorkerName",
   "status": "success | warning | error",
@@ -72,7 +100,7 @@ const outputSchema = `{
   "notes": []
 }`;
 
-const initialWorkers: WorkerDefinition[] = [
+const DEFAULT_WORKERS: WorkerDefinition[] = [
   {
     id: 'profile-analyzer',
     name: 'Profile Analyzer Worker',
@@ -261,45 +289,70 @@ const initialWorkers: WorkerDefinition[] = [
 ];
 
 export default function AIBrainSettings() {
-  const [config, setConfig] = useState({
-    defaultModel: 'gpt-4o',
-    temperature: '0.7',
-    maxTokens: '2048',
-    systemPrompt: defaultSystemPrompt,
-    orchestratorUrl: 'https://api.nutriaid.app/ai/orchestrate',
-    fallbackModel: 'gemini-1.5-pro',
-    enableStreaming: true,
-    enableCache: true,
-  });
+  const [config, setConfig] = useState<AIBrainConfig>(DEFAULT_CONFIG);
+  const [workers, setWorkers] = useState<WorkerDefinition[]>(DEFAULT_WORKERS);
   const [activeTab, setActiveTab] = useState<'brain' | 'workers' | 'diagnostic'>('brain');
-  const [workers, setWorkers] = useState<WorkerDefinition[]>(initialWorkers);
-  const [activeWorkerId, setActiveWorkerId] = useState<string>(initialWorkers[0].id);
+  const [activeWorkerId, setActiveWorkerId] = useState<string>(DEFAULT_WORKERS[0].id);
   const [workerTestMessage, setWorkerTestMessage] = useState('');
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const activeWorker = workers.find((worker) => worker.id === activeWorkerId) ?? workers[0];
+  useEffect(() => {
+    fetch('/api/superadmin/settings')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((payload: SettingsPayload | null) => {
+        const brain = payload?.settings?.aiBrain;
+        if (!brain) return;
+        setConfig((prev) => ({
+          defaultModel: brain.defaultModel ?? prev.defaultModel,
+          fallbackModel: brain.fallbackModel ?? prev.fallbackModel,
+          temperature: brain.temperature ?? prev.temperature,
+          maxTokens: brain.maxTokens ?? prev.maxTokens,
+          orchestratorUrl: brain.orchestratorUrl ?? prev.orchestratorUrl,
+          systemPrompt: brain.systemPrompt ?? prev.systemPrompt,
+          enableStreaming: brain.enableStreaming ?? prev.enableStreaming,
+          enableCache: brain.enableCache ?? prev.enableCache,
+        }));
+        if (Array.isArray(brain.workers) && brain.workers.length > 0) {
+          setWorkers(brain.workers);
+          setActiveWorkerId(brain.workers[0].id);
+        }
+      })
+      .catch(() => setError('Could not load AI brain settings.'));
+  }, []);
 
-  const handleSave = () => {
+  const activeWorker = workers.find((w) => w.id === activeWorkerId) ?? workers[0];
+
+  const handleSave = async () => {
+    setSaving(true);
+    setError(null);
+    const res = await fetch('/api/superadmin/settings', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        aiBrain: { ...config, workers },
+      }),
+    });
+    const payload = (await res.json().catch(() => ({}))) as { error?: string };
+    setSaving(false);
+    if (!res.ok) {
+      setError(payload.error || 'Could not save AI brain settings.');
+      return;
+    }
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
   };
 
   const updateActiveWorker = (patch: Partial<WorkerDefinition>) => {
     setWorkers((current) =>
-      current.map((worker) =>
-        worker.id === activeWorkerId
-          ? {
-              ...worker,
-              ...patch,
-            }
-          : worker,
-      ),
+      current.map((w) => (w.id === activeWorkerId ? { ...w, ...patch } : w)),
     );
   };
 
   const handleTestWorker = () => {
     if (!activeWorker) return;
-    setWorkerTestMessage(`${activeWorker.name}: schema and prompt test passed.`);
+    setWorkerTestMessage(`${activeWorker.name}: schema and prompt validated.`);
     setTimeout(() => setWorkerTestMessage(''), 3000);
   };
 
@@ -311,31 +364,25 @@ export default function AIBrainSettings() {
           Configure AI model behavior and orchestration settings
         </p>
       </div>
+
+      {error && (
+        <p className="text-sm rounded-lg border border-negative/30 bg-negative-bg text-negative px-3 py-2">
+          {error}
+        </p>
+      )}
+
       <div className="flex items-center gap-2 border-b border-border pb-3">
-        <button
-          onClick={() => setActiveTab('brain')}
-          className={`px-3 py-1.5 rounded-md text-sm font-medium ${
-            activeTab === 'brain' ? 'bg-secondary text-primary' : 'text-muted-foreground hover:bg-muted'
-          }`}
-        >
-          AI Brain
-        </button>
-        <button
-          onClick={() => setActiveTab('workers')}
-          className={`px-3 py-1.5 rounded-md text-sm font-medium ${
-            activeTab === 'workers' ? 'bg-secondary text-primary' : 'text-muted-foreground hover:bg-muted'
-          }`}
-        >
-          Workers
-        </button>
-        <button
-          onClick={() => setActiveTab('diagnostic')}
-          className={`px-3 py-1.5 rounded-md text-sm font-medium ${
-            activeTab === 'diagnostic' ? 'bg-secondary text-primary' : 'text-muted-foreground hover:bg-muted'
-          }`}
-        >
-          Diagnostic
-        </button>
+        {(['brain', 'workers', 'diagnostic'] as const).map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`px-3 py-1.5 rounded-md text-sm font-medium capitalize ${
+              activeTab === tab ? 'bg-secondary text-primary' : 'text-muted-foreground hover:bg-muted'
+            }`}
+          >
+            {tab === 'brain' ? 'AI Brain' : tab.charAt(0).toUpperCase() + tab.slice(1)}
+          </button>
+        ))}
       </div>
 
       {activeTab === 'brain' ? (
@@ -347,10 +394,11 @@ export default function AIBrainSettings() {
                 className="input-field"
                 aria-label="Default Model"
                 title="Default Model"
-                value={config?.defaultModel}
-                onChange={(e) => setConfig({ ...config, defaultModel: e?.target?.value })}
+                value={config.defaultModel}
+                onChange={(e) => setConfig({ ...config, defaultModel: e.target.value })}
               >
                 <option value="gpt-4o">GPT-4o (OpenAI)</option>
+                <option value="gpt-4o-mini">GPT-4o Mini (OpenAI)</option>
                 <option value="gpt-4-turbo">GPT-4 Turbo (OpenAI)</option>
                 <option value="gemini-1.5-pro">Gemini 1.5 Pro (Google)</option>
                 <option value="claude-3-5-sonnet">Claude 3.5 Sonnet (Anthropic)</option>
@@ -363,9 +411,10 @@ export default function AIBrainSettings() {
                 className="input-field"
                 aria-label="Fallback Model"
                 title="Fallback Model"
-                value={config?.fallbackModel}
-                onChange={(e) => setConfig({ ...config, fallbackModel: e?.target?.value })}
+                value={config.fallbackModel}
+                onChange={(e) => setConfig({ ...config, fallbackModel: e.target.value })}
               >
+                <option value="gpt-4o-mini">GPT-4o Mini (OpenAI)</option>
                 <option value="gemini-1.5-pro">Gemini 1.5 Pro (Google)</option>
                 <option value="gpt-4o">GPT-4o (OpenAI)</option>
                 <option value="claude-3-5-sonnet">Claude 3.5 Sonnet (Anthropic)</option>
@@ -374,7 +423,7 @@ export default function AIBrainSettings() {
             <div>
               <label className="label-text">
                 Temperature{' '}
-                <span className="text-muted-foreground font-normal">({config?.temperature})</span>
+                <span className="text-muted-foreground font-normal">({config.temperature})</span>
               </label>
               <input
                 className="w-full accent-primary"
@@ -384,8 +433,8 @@ export default function AIBrainSettings() {
                 min="0"
                 max="1"
                 step="0.1"
-                value={config?.temperature}
-                onChange={(e) => setConfig({ ...config, temperature: e?.target?.value })}
+                value={config.temperature}
+                onChange={(e) => setConfig({ ...config, temperature: e.target.value })}
               />
               <div className="flex justify-between text-xs text-muted-foreground mt-1">
                 <span>Precise (0)</span>
@@ -399,22 +448,25 @@ export default function AIBrainSettings() {
                 type="number"
                 aria-label="Max Tokens"
                 title="Max Tokens"
-                value={config?.maxTokens}
-                onChange={(e) => setConfig({ ...config, maxTokens: e?.target?.value })}
+                value={config.maxTokens}
+                onChange={(e) => setConfig({ ...config, maxTokens: e.target.value })}
                 min="256"
                 max="8192"
                 step="256"
               />
             </div>
             <div className="col-span-2">
-              <label className="label-text">Orchestrator URL</label>
+              <label className="label-text">Orchestrator URL (extern, opțional)</label>
               <input
                 className="input-field font-mono text-xs"
-                value={config?.orchestratorUrl}
-                onChange={(e) => setConfig({ ...config, orchestratorUrl: e?.target?.value })}
-                placeholder="https://..."
+                value={config.orchestratorUrl}
+                onChange={(e) => setConfig({ ...config, orchestratorUrl: e.target.value })}
+                placeholder="https://... (lasă gol pentru LLM direct)"
               />
-              <p className="helper-text">External AI orchestrator endpoint (AI_ORCHESTRATOR_URL)</p>
+              <p className="helper-text">
+                Lasă gol pentru a folosi LLM direct (recomandat). Completează doar dacă ai un
+                orchestrator extern — valoarea va fi citită prin env var <code>AI_ORCHESTRATOR_URL</code>.
+              </p>
             </div>
             <div className="col-span-2">
               <label className="label-text">System Prompt</label>
@@ -423,8 +475,8 @@ export default function AIBrainSettings() {
                 aria-label="System Prompt"
                 title="System Prompt"
                 rows={16}
-                value={config?.systemPrompt}
-                onChange={(e) => setConfig({ ...config, systemPrompt: e?.target?.value })}
+                value={config.systemPrompt}
+                onChange={(e) => setConfig({ ...config, systemPrompt: e.target.value })}
               />
               <p className="helper-text">Base instructions sent to the AI model for every request</p>
             </div>
@@ -434,8 +486,8 @@ export default function AIBrainSettings() {
               <input
                 type="checkbox"
                 className="w-4 h-4 accent-primary"
-                checked={config?.enableStreaming}
-                onChange={(e) => setConfig({ ...config, enableStreaming: e?.target?.checked })}
+                checked={config.enableStreaming}
+                onChange={(e) => setConfig({ ...config, enableStreaming: e.target.checked })}
               />
               <span className="text-sm font-medium text-foreground">Enable Streaming</span>
             </label>
@@ -443,8 +495,8 @@ export default function AIBrainSettings() {
               <input
                 type="checkbox"
                 className="w-4 h-4 accent-primary"
-                checked={config?.enableCache}
-                onChange={(e) => setConfig({ ...config, enableCache: e?.target?.checked })}
+                checked={config.enableCache}
+                onChange={(e) => setConfig({ ...config, enableCache: e.target.checked })}
               />
               <span className="text-sm font-medium text-foreground">Enable Response Cache</span>
             </label>
@@ -541,8 +593,8 @@ export default function AIBrainSettings() {
       )}
 
       <div className="pt-2">
-        <button onClick={handleSave} className="btn-primary">
-          {saved ? '✓ Saved' : 'Save AI Configuration'}
+        <button onClick={() => void handleSave()} disabled={saving} className="btn-primary">
+          {saved ? '✓ Saved' : saving ? 'Saving…' : 'Save AI Configuration'}
         </button>
       </div>
     </div>

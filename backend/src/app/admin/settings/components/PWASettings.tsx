@@ -1,26 +1,105 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+
+type PWAConfig = {
+  enabled: boolean;
+  appName: string;
+  appShortName: string;
+  themeColor: string;
+  backgroundColor: string;
+  vapidPublicKey: string;
+};
+
+type NotificationConfig = {
+  dailyReminder: boolean;
+  weeklyReport: boolean;
+  guidanceReady: boolean;
+  systemAlerts: boolean;
+  reminderTime: string;
+};
+
+type SettingsPayload = {
+  settings?: {
+    pwa?: Partial<PWAConfig> & { notifications?: Partial<NotificationConfig> };
+  };
+};
+
+const DEFAULT_CONFIG: PWAConfig = {
+  enabled: false,
+  appName: 'NutriAID',
+  appShortName: 'NutriAID',
+  themeColor: '#16a34a',
+  backgroundColor: '#f8faf8',
+  vapidPublicKey: '',
+};
+
+const DEFAULT_NOTIFICATIONS: NotificationConfig = {
+  dailyReminder: false,
+  weeklyReport: false,
+  guidanceReady: false,
+  systemAlerts: false,
+  reminderTime: '08:00',
+};
 
 export default function PWASettings() {
-  const [config, setConfig] = useState({
-    enabled: true,
-    vapidPublicKey: '',
-    vapidPrivateKey: '',
-    appName: 'NutriAID',
-    appShortName: 'NutriAID',
-    themeColor: '#16a34a',
-    backgroundColor: '#f8faf8',
-  });
-  const [notifications, setNotifications] = useState({
-    dailyReminder: true,
-    weeklyReport: true,
-    guidanceReady: true,
-    systemAlerts: true,
-    reminderTime: '08:00',
-  });
+  const [config, setConfig] = useState<PWAConfig>(DEFAULT_CONFIG);
+  const [vapidPrivateKey, setVapidPrivateKey] = useState('');
+  const [notifications, setNotifications] = useState<NotificationConfig>(DEFAULT_NOTIFICATIONS);
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSave = () => {
+  useEffect(() => {
+    fetch('/api/superadmin/settings')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((payload: SettingsPayload | null) => {
+        const pwa = payload?.settings?.pwa;
+        if (!pwa) return;
+        setConfig((prev) => ({
+          enabled: pwa.enabled ?? prev.enabled,
+          appName: pwa.appName ?? prev.appName,
+          appShortName: pwa.appShortName ?? prev.appShortName,
+          themeColor: pwa.themeColor ?? prev.themeColor,
+          backgroundColor: pwa.backgroundColor ?? prev.backgroundColor,
+          vapidPublicKey: pwa.vapidPublicKey ?? prev.vapidPublicKey,
+        }));
+        if (pwa.notifications) {
+          setNotifications((prev) => ({
+            dailyReminder: pwa.notifications?.dailyReminder ?? prev.dailyReminder,
+            weeklyReport: pwa.notifications?.weeklyReport ?? prev.weeklyReport,
+            guidanceReady: pwa.notifications?.guidanceReady ?? prev.guidanceReady,
+            systemAlerts: pwa.notifications?.systemAlerts ?? prev.systemAlerts,
+            reminderTime: pwa.notifications?.reminderTime ?? prev.reminderTime,
+          }));
+        }
+      })
+      .catch(() => setError('Could not load PWA settings.'));
+  }, []);
+
+  const handleSave = async () => {
+    setSaving(true);
+    setError(null);
+    const res = await fetch('/api/superadmin/settings', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        pwa: {
+          enabled: config.enabled,
+          appName: config.appName,
+          appShortName: config.appShortName,
+          themeColor: config.themeColor,
+          backgroundColor: config.backgroundColor,
+          vapidPublicKey: config.vapidPublicKey,
+          notifications,
+        },
+      }),
+    });
+    const payload = (await res.json().catch(() => ({}))) as { error?: string };
+    setSaving(false);
+    if (!res.ok) {
+      setError(payload.error || 'Could not save PWA settings.');
+      return;
+    }
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
   };
@@ -34,6 +113,12 @@ export default function PWASettings() {
             Configure Progressive Web App and push notification settings
           </p>
         </div>
+
+        {error && (
+          <p className="text-sm rounded-lg border border-negative/30 bg-negative-bg text-negative px-3 py-2">
+            {error}
+          </p>
+        )}
 
         <div className="flex items-center justify-between p-4 rounded-lg border border-border bg-muted/20">
           <div>
@@ -135,10 +220,12 @@ export default function PWASettings() {
             <input
               className="input-field font-mono text-xs"
               type="password"
-              value={config.vapidPrivateKey}
-              onChange={(e) => setConfig({ ...config, vapidPrivateKey: e.target.value })}
+              value={vapidPrivateKey}
+              onChange={(e) => setVapidPrivateKey(e.target.value)}
               placeholder="••••••••••••••••"
+              autoComplete="new-password"
             />
+            <p className="helper-text">Not stored in DB — set via VAPID_PRIVATE_KEY env var.</p>
           </div>
         </div>
       </div>
@@ -148,22 +235,22 @@ export default function PWASettings() {
         <div className="space-y-3">
           {[
             {
-              key: 'dailyReminder',
+              key: 'dailyReminder' as const,
               label: 'Daily Journal Reminder',
               desc: 'Remind users to log their daily food & symptoms',
             },
             {
-              key: 'weeklyReport',
+              key: 'weeklyReport' as const,
               label: 'Weekly Health Report',
               desc: 'Send a weekly summary of health trends',
             },
             {
-              key: 'guidanceReady',
+              key: 'guidanceReady' as const,
               label: 'AI Guidance Ready',
               desc: 'Notify when new AI recommendations are available',
             },
             {
-              key: 'systemAlerts',
+              key: 'systemAlerts' as const,
               label: 'System Alerts',
               desc: 'Critical system and maintenance notifications',
             },
@@ -179,7 +266,7 @@ export default function PWASettings() {
               <input
                 type="checkbox"
                 className="w-4 h-4 accent-primary"
-                checked={notifications[key as keyof typeof notifications] as boolean}
+                checked={notifications[key]}
                 onChange={(e) => setNotifications({ ...notifications, [key]: e.target.checked })}
               />
             </label>
@@ -200,8 +287,8 @@ export default function PWASettings() {
       </div>
 
       <div className="pt-1">
-        <button onClick={handleSave} className="btn-primary">
-          {saved ? '✓ Saved' : 'Save PWA Settings'}
+        <button onClick={() => void handleSave()} disabled={saving} className="btn-primary">
+          {saved ? '✓ Saved' : saving ? 'Saving…' : 'Save PWA Settings'}
         </button>
       </div>
     </div>

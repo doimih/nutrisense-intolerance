@@ -1,63 +1,169 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
-interface BackupEntry {
-  id: string;
-  date: string;
-  size: string;
-  type: string;
-  status: 'success' | 'failed';
-}
+type BackupConfig = {
+  schedule: string;
+  retention: string;
+  destination: string;
+};
 
-const mockBackups: BackupEntry[] = [
-  { id: '1', date: '2026-06-07 03:00', size: '142 MB', type: 'Full', status: 'success' },
-  { id: '2', date: '2026-06-06 03:00', size: '139 MB', type: 'Full', status: 'success' },
-  { id: '3', date: '2026-06-05 03:00', size: '137 MB', type: 'Full', status: 'failed' },
-  { id: '4', date: '2026-06-04 03:00', size: '135 MB', type: 'Full', status: 'success' },
-];
+type HetznerConfig = {
+  region: string;
+  endpoint: string;
+  bucket: string;
+  accessKey: string;
+};
+
+type SettingsPayload = {
+  settings?: {
+    backup?: BackupConfig & { hetzner?: HetznerConfig };
+  };
+};
+
+const DEFAULT_CONFIG: BackupConfig = {
+  schedule: 'daily',
+  retention: '30',
+  destination: 'local',
+};
+
+const DEFAULT_HETZNER: HetznerConfig = {
+  region: 'eu-central',
+  endpoint: '',
+  bucket: '',
+  accessKey: '',
+};
 
 export default function BackupSettings() {
-  const [schedule, setSchedule] = useState('daily');
-  const [retention, setRetention] = useState('30');
-  const [destination, setDestination] = useState('s3');
-  const [saved, setSaved] = useState(false);
-  const [running, setRunning] = useState(false);
-
-  const [hetznerRegion, setHetznerRegion] = useState('eu-central');
-  const [hetznerEndpoint, setHetznerEndpoint] = useState('');
-  const [hetznerBucket, setHetznerBucket] = useState('');
-  const [hetznerAccessKey, setHetznerAccessKey] = useState('');
+  const [config, setConfig] = useState<BackupConfig>(DEFAULT_CONFIG);
+  const [hetzner, setHetzner] = useState<HetznerConfig>(DEFAULT_HETZNER);
   const [hetznerSecretKey, setHetznerSecretKey] = useState('');
   const [hetznerShowSecretKey, setHetznerShowSecretKey] = useState(false);
   const [hetznerEditing, setHetznerEditing] = useState(false);
-  const [hetznerSaved, setHetznerSaved] = useState(false);
-  const [hetznerTesting, setHetznerTesting] = useState(false);
-  const [hetznerTestResult, setHetznerTestResult] = useState<'success' | 'failed' | null>(null);
 
-  const handleSave = () => {
+  const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [hetznerSaved, setHetznerSaved] = useState(false);
+  const [hetznerSaving, setHetznerSaving] = useState(false);
+
+  const [running, setRunning] = useState(false);
+  const [runResult, setRunResult] = useState<{ ok: boolean; message: string } | null>(null);
+
+  const [hetznerTesting, setHetznerTesting] = useState(false);
+  const [hetznerTestResult, setHetznerTestResult] = useState<{ ok: boolean; message: string } | null>(null);
+
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch('/api/superadmin/settings')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((payload: SettingsPayload | null) => {
+        const b = payload?.settings?.backup;
+        if (!b) return;
+        setConfig({
+          schedule: b.schedule ?? DEFAULT_CONFIG.schedule,
+          retention: b.retention ?? DEFAULT_CONFIG.retention,
+          destination: b.destination ?? DEFAULT_CONFIG.destination,
+        });
+        if (b.hetzner) {
+          setHetzner({
+            region: b.hetzner.region ?? DEFAULT_HETZNER.region,
+            endpoint: b.hetzner.endpoint ?? DEFAULT_HETZNER.endpoint,
+            bucket: b.hetzner.bucket ?? DEFAULT_HETZNER.bucket,
+            accessKey: b.hetzner.accessKey ?? DEFAULT_HETZNER.accessKey,
+          });
+        }
+      })
+      .catch(() => setError('Could not load backup settings.'));
+  }, []);
+
+  const handleSave = async () => {
+    setSaving(true);
+    setError(null);
+    const res = await fetch('/api/superadmin/settings', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        backup: {
+          ...config,
+          hetzner,
+        },
+      }),
+    });
+    const payload = (await res.json().catch(() => ({}))) as { error?: string };
+    setSaving(false);
+    if (!res.ok) {
+      setError(payload.error || 'Could not save backup settings.');
+      return;
+    }
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
   };
 
-  const handleBackupNow = () => {
-    setRunning(true);
-    setTimeout(() => setRunning(false), 3000);
-  };
-
-  const handleHetznerSave = () => {
+  const handleHetznerSave = async () => {
+    setHetznerSaving(true);
+    setError(null);
+    const res = await fetch('/api/superadmin/settings', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        backup: {
+          ...config,
+          hetzner,
+        },
+      }),
+    });
+    const payload = (await res.json().catch(() => ({}))) as { error?: string };
+    setHetznerSaving(false);
+    if (!res.ok) {
+      setError(payload.error || 'Could not save storage settings.');
+      return;
+    }
     setHetznerSaved(true);
     setHetznerEditing(false);
     setTimeout(() => setHetznerSaved(false), 2500);
   };
 
-  const handleHetznerTest = () => {
+  const handleBackupNow = async () => {
+    setRunning(true);
+    setRunResult(null);
+    const res = await fetch('/api/superadmin/backup/run', {
+      method: 'POST',
+    }).catch(() => null);
+    setRunning(false);
+    if (!res) {
+      setRunResult({ ok: false, message: 'Request failed.' });
+    } else {
+      const data = (await res.json().catch(() => ({}))) as { ok?: boolean; message?: string };
+      setRunResult({ ok: res.ok, message: data.message || (res.ok ? 'Backup requested.' : 'Backup failed.') });
+    }
+    setTimeout(() => setRunResult(null), 6000);
+  };
+
+  const handleHetznerTest = async () => {
     setHetznerTesting(true);
     setHetznerTestResult(null);
-    setTimeout(() => {
+
+    if (!hetzner.endpoint || !hetzner.bucket || !hetzner.accessKey) {
       setHetznerTesting(false);
-      setHetznerTestResult('success');
-      setTimeout(() => setHetznerTestResult(null), 4000);
-    }, 2000);
+      setHetznerTestResult({ ok: false, message: 'Completeaza endpoint, bucket si access key inainte de a testa.' });
+      setTimeout(() => setHetznerTestResult(null), 5000);
+      return;
+    }
+
+    const res = await fetch('/api/superadmin/backup/test-connection', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...hetzner }),
+    }).catch(() => null);
+
+    setHetznerTesting(false);
+    if (!res) {
+      setHetznerTestResult({ ok: false, message: 'Request failed — verifica endpoint-ul.' });
+    } else {
+      const data = (await res.json().catch(() => ({}))) as { ok?: boolean; message?: string };
+      setHetznerTestResult({ ok: res.ok && data.ok !== false, message: data.message || (res.ok ? 'Conexiune reusita.' : 'Conexiune esuata.') });
+    }
+    setTimeout(() => setHetznerTestResult(null), 5000);
   };
 
   return (
@@ -70,6 +176,12 @@ export default function BackupSettings() {
           </p>
         </div>
 
+        {error && (
+          <p className="text-sm rounded-lg border border-negative/30 bg-negative-bg text-negative px-3 py-2">
+            {error}
+          </p>
+        )}
+
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="label-text">Backup Schedule</label>
@@ -77,8 +189,8 @@ export default function BackupSettings() {
               className="input-field"
               title="Backup schedule"
               aria-label="Backup schedule"
-              value={schedule}
-              onChange={(e) => setSchedule(e.target.value)}
+              value={config.schedule}
+              onChange={(e) => setConfig({ ...config, schedule: e.target.value })}
             >
               <option value="hourly">Every Hour</option>
               <option value="daily">Daily (3:00 AM)</option>
@@ -93,8 +205,8 @@ export default function BackupSettings() {
               type="number"
               title="Retention period"
               aria-label="Retention period"
-              value={retention}
-              onChange={(e) => setRetention(e.target.value)}
+              value={config.retention}
+              onChange={(e) => setConfig({ ...config, retention: e.target.value })}
               min="1"
               max="365"
             />
@@ -105,23 +217,34 @@ export default function BackupSettings() {
               className="input-field"
               title="Storage destination"
               aria-label="Storage destination"
-              value={destination}
-              onChange={(e) => setDestination(e.target.value)}
+              value={config.destination}
+              onChange={(e) => setConfig({ ...config, destination: e.target.value })}
             >
+              <option value="local">Local Storage</option>
+              <option value="hetzner">Hetzner Object Storage</option>
               <option value="s3">Amazon S3</option>
               <option value="gcs">Google Cloud Storage</option>
-              <option value="local">Local Storage</option>
-              <option value="supabase">Supabase Storage</option>
-              <option value="hetzner">Hetzner Object Storage</option>
             </select>
           </div>
         </div>
 
+        {runResult && (
+          <div
+            className={`rounded-lg p-3 flex items-center gap-2 text-sm font-medium ${
+              runResult.ok
+                ? 'bg-green-50 border border-green-200 text-green-700'
+                : 'bg-red-50 border border-red-200 text-red-700'
+            }`}
+          >
+            {runResult.ok ? '✓' : '✗'} {runResult.message}
+          </div>
+        )}
+
         <div className="flex items-center gap-3 pt-2">
-          <button onClick={handleSave} className="btn-primary">
-            {saved ? '✓ Saved' : 'Save Settings'}
+          <button onClick={() => void handleSave()} disabled={saving} className="btn-primary">
+            {saved ? '✓ Saved' : saving ? 'Saving…' : 'Save Settings'}
           </button>
-          <button onClick={handleBackupNow} className="btn-secondary" disabled={running}>
+          <button onClick={() => void handleBackupNow()} className="btn-secondary" disabled={running}>
             {running ? 'Running backup…' : 'Backup Now'}
           </button>
         </div>
@@ -179,8 +302,8 @@ export default function BackupSettings() {
               className="input-field"
               type="text"
               placeholder="eu-central"
-              value={hetznerRegion}
-              onChange={(e) => setHetznerRegion(e.target.value)}
+              value={hetzner.region}
+              onChange={(e) => setHetzner({ ...hetzner, region: e.target.value })}
               disabled={!hetznerEditing}
               readOnly={!hetznerEditing}
             />
@@ -192,8 +315,8 @@ export default function BackupSettings() {
               className="input-field"
               type="text"
               placeholder="https://fsn1.your-objectstorage.com"
-              value={hetznerEndpoint}
-              onChange={(e) => setHetznerEndpoint(e.target.value)}
+              value={hetzner.endpoint}
+              onChange={(e) => setHetzner({ ...hetzner, endpoint: e.target.value })}
               disabled={!hetznerEditing}
               readOnly={!hetznerEditing}
             />
@@ -205,8 +328,8 @@ export default function BackupSettings() {
               className="input-field"
               type="text"
               placeholder="numele-bucket-ului"
-              value={hetznerBucket}
-              onChange={(e) => setHetznerBucket(e.target.value)}
+              value={hetzner.bucket}
+              onChange={(e) => setHetzner({ ...hetzner, bucket: e.target.value })}
               disabled={!hetznerEditing}
               readOnly={!hetznerEditing}
             />
@@ -218,8 +341,8 @@ export default function BackupSettings() {
               className="input-field"
               type="text"
               placeholder="Access Key din Hetzner Console"
-              value={hetznerAccessKey}
-              onChange={(e) => setHetznerAccessKey(e.target.value)}
+              value={hetzner.accessKey}
+              onChange={(e) => setHetzner({ ...hetzner, accessKey: e.target.value })}
               disabled={!hetznerEditing}
               readOnly={!hetznerEditing}
             />
@@ -246,85 +369,36 @@ export default function BackupSettings() {
                 aria-label="Arata sau ascunde Secret Key"
               >
                 {hetznerShowSecretKey ? (
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
-                    />
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
                   </svg>
                 ) : (
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                    />
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                    />
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                   </svg>
                 )}
               </button>
             </div>
+            <p className="helper-text">Secret Key nu este stocat în DB — seteaza HETZNER_SECRET_KEY în env.</p>
           </div>
         </div>
 
         <p className="text-xs text-muted-foreground">
           {hetznerEditing
             ? 'Campurile pot fi editate. Completeaza endpoint, bucket, access key, secret key si regiunea.'
-            : 'Campurile sunt blocate. Apasa „Editeaza setari storage” pentru a modifica valorile.'}
+            : 'Campurile sunt blocate. Apasa „Editeaza setari storage" pentru a modifica valorile.'}
         </p>
 
         {hetznerTestResult && (
           <div
             className={`rounded-lg p-3 flex items-center gap-2 text-sm font-medium ${
-              hetznerTestResult === 'success'
+              hetznerTestResult.ok
                 ? 'bg-green-50 border border-green-200 text-green-700'
                 : 'bg-red-50 border border-red-200 text-red-700'
             }`}
           >
-            {hetznerTestResult === 'success' ? (
-              <>
-                <svg
-                  className="w-4 h-4 flex-shrink-0"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                </svg>
-                Conexiune reusita — Hetzner Object Storage este accesibil.
-              </>
-            ) : (
-              <>
-                <svg
-                  className="w-4 h-4 flex-shrink-0"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-                Conexiune esuata — verifica endpoint-ul, bucket-ul si cheile de acces.
-              </>
-            )}
+            {hetznerTestResult.ok ? '✓' : '✗'} {hetznerTestResult.message}
           </div>
         )}
 
@@ -339,11 +413,15 @@ export default function BackupSettings() {
           >
             {hetznerEditing ? 'Anuleaza editarea' : 'Editeaza setari storage'}
           </button>
-          <button onClick={handleHetznerSave} className="btn-primary" disabled={!hetznerEditing}>
-            {hetznerSaved ? '✓ Setari salvate' : 'Salveaza setari storage'}
+          <button
+            onClick={() => void handleHetznerSave()}
+            className="btn-primary"
+            disabled={!hetznerEditing || hetznerSaving}
+          >
+            {hetznerSaved ? '✓ Setari salvate' : hetznerSaving ? 'Salvand…' : 'Salveaza setari storage'}
           </button>
           <button
-            onClick={handleHetznerTest}
+            onClick={() => void handleHetznerTest()}
             className="btn-secondary"
             disabled={!hetznerEditing || hetznerTesting}
           >
@@ -353,37 +431,10 @@ export default function BackupSettings() {
       </div>
 
       <div className="card p-6">
-        <h3 className="text-sm font-semibold text-foreground mb-4">Recent Backups</h3>
-        <div className="space-y-2">
-          {mockBackups.map((b) => (
-            <div
-              key={b.id}
-              className="flex items-center justify-between py-2.5 px-3 rounded-lg bg-muted/40"
-            >
-              <div className="flex items-center gap-3">
-                <span
-                  className={`w-2 h-2 rounded-full flex-shrink-0 ${
-                    b.status === 'success' ? 'bg-positive' : 'bg-negative'
-                  }`}
-                />
-                <div>
-                  <p className="text-sm font-medium text-foreground">{b.date}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {b.type} · {b.size}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className={b.status === 'success' ? 'badge badge-green' : 'badge badge-red'}>
-                  {b.status === 'success' ? 'Success' : 'Failed'}
-                </span>
-                {b.status === 'success' && (
-                  <button className="btn-ghost text-xs py-1 px-2">Restore</button>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
+        <h3 className="text-sm font-semibold text-foreground mb-4">Backup History</h3>
+        <p className="text-sm text-muted-foreground text-center py-6">
+          No backup history available. Backup infrastructure not yet configured.
+        </p>
       </div>
     </div>
   );

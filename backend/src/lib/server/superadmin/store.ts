@@ -98,6 +98,11 @@ function seedDb(): SuperadminDb {
     ],
     AI_Logs: [],
     settings: {
+      app: {
+        siteUrl: 'https://nutrisense-i.eu',
+        backendUrl: 'https://backend.nutrisense-i.eu',
+        adminConsoleUrl: 'https://backend.nutrisense-i.eu',
+      },
       stripe: {
         publishableKeyMasked: 'pk_live_************',
         secretKeyMasked: 'sk_live_************',
@@ -145,6 +150,12 @@ export function readDb(): SuperadminDb {
   }));
   parsed.settings = {
     ...parsed.settings,
+    app: {
+      siteUrl: parsed.settings?.app?.siteUrl || 'https://nutrisense-i.eu',
+      backendUrl: parsed.settings?.app?.backendUrl || 'https://backend.nutrisense-i.eu',
+      adminConsoleUrl:
+        parsed.settings?.app?.adminConsoleUrl || parsed.settings?.app?.backendUrl || 'https://backend.nutrisense-i.eu',
+    },
     twoFactor: {
       globalEnabled: parsed.settings?.twoFactor?.globalEnabled || false,
       enforceAdmin: parsed.settings?.twoFactor?.enforceAdmin ?? true,
@@ -154,6 +165,45 @@ export function readDb(): SuperadminDb {
         sms: parsed.settings?.twoFactor?.methods?.sms || false,
         email: parsed.settings?.twoFactor?.methods?.email || false,
       },
+    },
+    email: parsed.settings?.email ?? {
+      smtpHost: '',
+      smtpPort: '587',
+      smtpUser: '',
+      fromEmail: '',
+      fromName: 'NutriAID',
+      encryption: 'tls',
+    },
+    aiBrain: parsed.settings?.aiBrain ?? {
+      defaultModel: process.env.AI_PRIMARY_MODEL || 'gpt-4o',
+      fallbackModel: process.env.AI_FALLBACK_MODEL || 'gpt-4o-mini',
+      temperature: process.env.AI_TEMPERATURE || '0.4',
+      maxTokens: process.env.AI_MAX_TOKENS || '1024',
+      orchestratorUrl: '',
+      systemPrompt: '',
+      enableStreaming: false,
+      enableCache: true,
+      workers: [],
+    },
+    pwa: parsed.settings?.pwa ?? {
+      enabled: false,
+      appName: 'NutriAID',
+      appShortName: 'NutriAID',
+      themeColor: '#16a34a',
+      backgroundColor: '#f8faf8',
+      vapidPublicKey: '',
+      notifications: {
+        dailyReminder: false,
+        weeklyReport: false,
+        guidanceReady: false,
+        systemAlerts: false,
+        reminderTime: '08:00',
+      },
+    },
+    backup: parsed.settings?.backup ?? {
+      schedule: 'daily',
+      retention: '30',
+      destination: 'local',
     },
   };
   if (!Array.isArray(parsed.AI_Logs)) {

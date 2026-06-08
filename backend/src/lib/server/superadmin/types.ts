@@ -119,11 +119,18 @@ export type AILogRecord = {
 };
 
 export type PlatformSettings = {
+  app: {
+    siteUrl: string;
+    backendUrl: string;
+    adminConsoleUrl: string;
+  };
   stripe: {
     publishableKeyMasked: string;
     secretKeyMasked: string;
     webhookSecretMasked: string;
     billingMode: 'subscription' | 'one-time' | 'usage';
+    currency?: string;
+    trialDays?: string;
   };
   ai: {
     provider: string;
@@ -142,6 +149,59 @@ export type PlatformSettings = {
       totp: boolean;
       sms: boolean;
       email: boolean;
+    };
+  };
+  email?: {
+    smtpHost: string;
+    smtpPort: string;
+    smtpUser: string;
+    fromEmail: string;
+    fromName: string;
+    encryption: 'tls' | 'ssl' | 'none';
+  };
+  aiBrain?: {
+    defaultModel: string;
+    fallbackModel: string;
+    temperature: string;
+    maxTokens: string;
+    orchestratorUrl: string;
+    systemPrompt: string;
+    enableStreaming: boolean;
+    enableCache: boolean;
+    workers?: Array<{
+      id: string;
+      name: string;
+      description: string;
+      prompt: string;
+      inputSchema: string;
+      outputSchema: string;
+      enabled: boolean;
+    }>;
+  };
+  pwa?: {
+    enabled: boolean;
+    appName: string;
+    appShortName: string;
+    themeColor: string;
+    backgroundColor: string;
+    vapidPublicKey: string;
+    notifications: {
+      dailyReminder: boolean;
+      weeklyReport: boolean;
+      guidanceReady: boolean;
+      systemAlerts: boolean;
+      reminderTime: string;
+    };
+  };
+  backup?: {
+    schedule: string;
+    retention: string;
+    destination: string;
+    hetzner?: {
+      region: string;
+      endpoint: string;
+      bucket: string;
+      accessKey: string;
     };
   };
 };
