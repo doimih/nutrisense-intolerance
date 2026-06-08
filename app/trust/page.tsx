@@ -66,9 +66,9 @@ type TrustCopy = {
 const copy: Record<"ro" | "en", TrustCopy> = {
   ro: {
     metaDescription:
-      "De ce sa ai incredere in NutriSense Intolerances: transparenta, siguranta, profesionalism si empatie.",
+      "De ce sa ai incredere in NutriAID Intolerances: transparenta, siguranta, profesionalism si empatie.",
     hero: {
-      title: "De ce sa ai incredere in NutriSense Intolerances?",
+      title: "De ce sa ai incredere in NutriAID Intolerances?",
       subtitle: [
         "Pentru ca stim prin ce treci.",
         "Pentru ca am construit aceasta platforma pentru oameni ca tine.",
@@ -90,12 +90,12 @@ const copy: Record<"ro" | "en", TrustCopy> = {
         "Stim cat de greu este.",
         "Stim cat de singur te poti simti.",
         "Stim cat de mult iti doresti un raspuns real.",
-        "De aceea am creat NutriSense Intolerances.",
+        "De aceea am creat NutriAID Intolerances.",
       ],
     },
     section2: {
       title: "Nu suntem o aplicatie generica. Suntem un sistem construit pentru oameni bolnavi.",
-      intro: "NutriSense Intolerances este construit special pentru:",
+      intro: "NutriAID Intolerances este construit special pentru:",
       bullets: [
         "oameni cu simptome digestive",
         "oameni cu migrene",
@@ -163,7 +163,7 @@ const copy: Record<"ro" | "en", TrustCopy> = {
         "Nu iti spunem ca e doar stres",
       ],
       ending:
-        "NutriSense Intolerances este construit pentru oameni reali, cu vieti reale, cu probleme reale.",
+        "NutriAID Intolerances este construit pentru oameni reali, cu vieti reale, cu probleme reale.",
     },
     section6: {
       title: "De ce functioneaza?",
@@ -209,14 +209,14 @@ const copy: Record<"ro" | "en", TrustCopy> = {
     section9: {
       title: ["Poti avea incredere in noi.", "Dar cel mai important: poti avea incredere in tine."],
       primaryCta: "Incepe analiza intolerantelor tale",
-      secondaryCta: "Vezi cum functioneaza NutriSense",
+      secondaryCta: "Vezi cum functioneaza NutriAID",
     },
   },
   en: {
     metaDescription:
-      "Why trust NutriSense Intolerances: transparency, safety, professionalism, and empathy.",
+      "Why trust NutriAID Intolerances: transparency, safety, professionalism, and empathy.",
     hero: {
-      title: "Why trust NutriSense Intolerances?",
+      title: "Why trust NutriAID Intolerances?",
       subtitle: [
         "Because we know what you are going through.",
         "Because we built this platform for people like you.",
@@ -238,12 +238,12 @@ const copy: Record<"ro" | "en", TrustCopy> = {
         "We know how hard it is.",
         "We know how lonely it can feel.",
         "We know how much you want real answers.",
-        "That is why we created NutriSense Intolerances.",
+        "That is why we created NutriAID Intolerances.",
       ],
     },
     section2: {
       title: "We are not a generic app. We are a system built for people who suffer.",
-      intro: "NutriSense Intolerances is built specifically for:",
+      intro: "NutriAID Intolerances is built specifically for:",
       bullets: [
         "people with digestive symptoms",
         "people with migraines",
@@ -310,7 +310,7 @@ const copy: Record<"ro" | "en", TrustCopy> = {
         "We do not ask you to guess",
         "We do not tell you it is just stress",
       ],
-      ending: "NutriSense Intolerances is built for real people with real lives and real problems.",
+      ending: "NutriAID Intolerances is built for real people with real lives and real problems.",
     },
     section6: {
       title: "Why does it work?",
@@ -356,7 +356,7 @@ const copy: Record<"ro" | "en", TrustCopy> = {
     section9: {
       title: ["You can trust us.", "But most importantly: you can trust yourself."],
       primaryCta: "Start your intolerance analysis",
-      secondaryCta: "See how NutriSense works",
+      secondaryCta: "See how NutriAID works",
     },
   },
 };
@@ -556,7 +556,7 @@ export default function TrustPage() {
         <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
           <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5 text-sm font-semibold text-white/90 mb-5">
             <Sparkles className="h-4 w-4" />
-            NutriSense Intolerances
+            NutriAID Intolerances
           </div>
           <h2 className="text-3xl sm:text-5xl font-extrabold leading-tight text-white mb-8">
             {t.section9.title.map((line) => (

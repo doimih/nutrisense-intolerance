@@ -7,8 +7,8 @@ export function generateMetadata(): Metadata {
   return {
     title: isRo ? "Contact" : "Contact",
     description: isRo
-      ? "Contact NutriSense Intolerances: email, program suport si formular de contact."
-      : "Contact NutriSense Intolerances: support email, support hours, and contact form.",
+      ? "Contact NutriAID Intolerances: email, program suport si formular de contact."
+      : "Contact NutriAID Intolerances: support email, support hours, and contact form.",
     alternates: {
       canonical: "/contact",
     },

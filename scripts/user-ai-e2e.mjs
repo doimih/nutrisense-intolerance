@@ -2,7 +2,7 @@
 const base = process.env.FRONTEND_BASE_URL || "http://localhost:3000";
 
 function randomEmail(tag) {
-  return `qa+${tag}+${Date.now()}@nutrisense.local`;
+  return `qa+${tag}+${Date.now()}@nutriaid.local`;
 }
 
 function createJar() {

@@ -4,13 +4,13 @@ import { getServerLanguage } from "@/lib/i18n/server";
 
 const copy = {
   ro: {
-    badge: "Contact NutriSense",
+    badge: "Contact NutriAID",
     title: "Contacteaza-ne",
     subtitle:
       "Ai o intrebare, o problema sau o sugestie? Scrie-ne si revenim rapid cu un raspuns.",
     infoTitle: "Detalii de contact",
     emailLabel: "Email suport",
-    emailValue: "contact@nutrisense.ro",
+    emailValue: "contact@nutriaid.ro",
     hoursLabel: "Program suport",
     hoursValue: "Luni - Vineri, 09:00 - 18:00",
     responseLabel: "Timp de raspuns",
@@ -26,13 +26,13 @@ const copy = {
     dailyPlanCta: "Vezi Planul tau zilnic",
   },
   en: {
-    badge: "Contact NutriSense",
+    badge: "Contact NutriAID",
     title: "Get in touch",
     subtitle:
       "Have a question, issue, or suggestion? Send us a message and we will reply quickly.",
     infoTitle: "Contact details",
     emailLabel: "Support email",
-    emailValue: "contact@nutrisense.ro",
+    emailValue: "contact@nutriaid.ro",
     hoursLabel: "Support hours",
     hoursValue: "Monday - Friday, 09:00 - 18:00",
     responseLabel: "Response time",

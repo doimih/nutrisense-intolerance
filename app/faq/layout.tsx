@@ -7,8 +7,8 @@ export function generateMetadata(): Metadata {
   return {
     title: isRo ? "Intrebari frecvente" : "Frequently Asked Questions",
     description: isRo
-      ? "Claritate, siguranta si incredere. Tot ce trebuie sa stii despre NutriSense Intolerances, explicat simplu si uman."
-      : "Clarity, safety, and trust. Everything you need to know about NutriSense Intolerances, explained simply and clearly.",
+      ? "Claritate, siguranta si incredere. Tot ce trebuie sa stii despre NutriAID Intolerances, explicat simplu si uman."
+      : "Clarity, safety, and trust. Everything you need to know about NutriAID Intolerances, explained simply and clearly.",
     alternates: {
       canonical: "/faq",
     },

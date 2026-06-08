@@ -7,8 +7,8 @@ import StructuredData from "@/components/StructuredData";
 import { LanguageProvider } from "@/components/LanguageProvider";
 import { getServerLanguage } from "@/lib/i18n/server";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://nutrisense-i.eu";
-const siteTitle = "NutriSense Intolerances";
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://nutriaid-i.eu";
+const siteTitle = "NutriAID Intolerances";
 const THEME_STORAGE_KEY = "ns_theme";
 const siteDescription =
   "Un loc sigur pentru a intelege mai bine intolerantele alimentare si reactiile tale. Jurnal de monitorizare si recomandari generale.";
@@ -18,7 +18,7 @@ export async function generateMetadata(): Promise<Metadata> {
     metadataBase: new URL(siteUrl),
     title: {
       default: siteTitle,
-      template: "%s | NutriSense Intolerances",
+      template: "%s | NutriAID Intolerances",
     },
     description: siteDescription,
     keywords: [
@@ -29,7 +29,7 @@ export async function generateMetadata(): Promise<Metadata> {
       "nutritie",
       "sanatate",
     ],
-    authors: [{ name: "NutriSense Team" }],
+    authors: [{ name: "NutriAID Team" }],
     openGraph: {
       type: "website",
       locale: "ro_RO",
@@ -42,7 +42,7 @@ export async function generateMetadata(): Promise<Metadata> {
           url: "/og-image.png",
           width: 1200,
           height: 630,
-          alt: "NutriSense Intolerances",
+          alt: "NutriAID Intolerances",
         },
       ],
     },

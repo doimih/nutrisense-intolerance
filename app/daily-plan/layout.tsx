@@ -7,8 +7,8 @@ export function generateMetadata(): Metadata {
   return {
     title: isRo ? "Planul tau zilnic" : "Your Daily Plan",
     description: isRo
-      ? "Planul zilnic NutriSense: rutina simpla de 5 minute pe zi pentru monitorizare si claritate."
-      : "NutriSense daily plan: a simple 5-minute routine for monitoring and clarity.",
+      ? "Planul zilnic NutriAID: rutina simpla de 5 minute pe zi pentru monitorizare si claritate."
+      : "NutriAID daily plan: a simple 5-minute routine for monitoring and clarity.",
     alternates: {
       canonical: "/daily-plan",
     },

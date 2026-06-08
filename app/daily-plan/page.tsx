@@ -66,7 +66,7 @@ export default function DailyPlanPage() {
         <div className="rounded-3xl border border-emerald-200 dark:border-emerald-900 bg-white dark:bg-slate-900 p-8 sm:p-10">
           <div className="inline-flex items-center gap-2 rounded-full bg-emerald-600/10 text-emerald-700 dark:text-emerald-300 px-4 py-1.5 text-sm font-semibold mb-5">
             <Sparkles className="h-4 w-4" />
-            NutriSense Intolerances
+            NutriAID Intolerances
           </div>
           <h1 className="text-4xl sm:text-5xl font-extrabold text-slate-900 dark:text-white mb-4">
             {t.title}

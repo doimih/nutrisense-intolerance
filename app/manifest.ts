@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "NutriSense Intolerances",
-    short_name: "NutriSense",
+    name: "NutriAID Intolerances",
+    short_name: "NutriAID",
     description:
       "Monitorizează intoleranțele alimentare, jurnalul de simptome și recomandările generale.",
     start_url: "/",

@@ -45,7 +45,7 @@ async function run() {
   });
   if (!r.response.ok) throw new Error(`Login failed: ${JSON.stringify(r.json)}`);
 
-  const testEmail = `qa+${Date.now()}@nutrisense.local`;
+  const testEmail = `qa+${Date.now()}@nutriaid.local`;
   r = await api('/api/superadmin/users', {
     method: 'POST',
     body: JSON.stringify({ name: 'QA User', email: testEmail, plan: 'free' }),

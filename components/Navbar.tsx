@@ -104,7 +104,7 @@ export default function Navbar() {
             <Leaf className="w-4 h-4 text-white" />
           </div>
           <span className="font-bold text-slate-900 dark:text-white text-lg">
-            NutriSense
+            NutriAID
           </span>
         </Link>
 

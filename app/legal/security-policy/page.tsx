@@ -8,7 +8,7 @@ export default function SecurityPolicyPage() {
   return (
     <LegalLayout title="Politica de Securitate" lastUpdated="1 ianuarie 2025">
       <p>
-        Securitatea datelor tale este o prioritate pentru NutriSense
+        Securitatea datelor tale este o prioritate pentru NutriAID
         Intolerances. Această politică descrie măsurile de securitate
         implementate și responsabilitățile utilizatorilor.
       </p>
@@ -64,7 +64,7 @@ export default function SecurityPolicyPage() {
       <h2>4. Raportarea vulnerabilităților</h2>
       <p>
         Dacă ai descoperit o vulnerabilitate de securitate, te rugăm să ne
-        raportezi responsabil la <strong>security@nutrisense.ro</strong> înainte de
+        raportezi responsabil la <strong>security@nutriaid.ro</strong> înainte de
         a o face publică. Ne angajăm să:
       </p>
       <ul>
@@ -95,8 +95,8 @@ export default function SecurityPolicyPage() {
 
       <h2>7. Contact securitate</h2>
       <p>
-        Pentru probleme de securitate: security@nutrisense.ro<br />
-        Pentru alte întrebări: contact@nutrisense.ro
+        Pentru probleme de securitate: security@nutriaid.ro<br />
+        Pentru alte întrebări: contact@nutriaid.ro
       </p>
     </LegalLayout>
   );

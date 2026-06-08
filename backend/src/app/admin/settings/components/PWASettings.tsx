@@ -6,8 +6,8 @@ export default function PWASettings() {
     enabled: true,
     vapidPublicKey: '',
     vapidPrivateKey: '',
-    appName: 'NutriSense',
-    appShortName: 'NutriSense',
+    appName: 'NutriAID',
+    appShortName: 'NutriAID',
     themeColor: '#16a34a',
     backgroundColor: '#f8faf8',
   });

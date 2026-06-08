@@ -5,22 +5,22 @@
       "email": "design@doimih.net",
       "name": "Super Admin",
       "role": "superadmin",
-      "passwordHash": "6c555a56b26408f576561dfbcba4b65e4c332b2882e02e1693f7e17f70e86a454247a56ad29012f7951df6b029547691b6136e208828dfefb1346898a0c59924",
-      "passwordSalt": "d74ea3650852d90bed03f682afa52c4c",
+      "passwordHash": "4dde68d8ee11435dc6349790529eb39eca5caaeb03d73301e530b7c8843655f2cb367dd8f1d858e89f5556c0c6e7bbe05ddecc28b8712a46c82adc9be921954d",
+      "passwordSalt": "a37c9a4fc90a96ca4de495989b18cde7",
       "mustChangePassword": false,
       "status": "active",
       "plan": "enterprise",
       "createdAt": "2026-06-08T10:17:14.288Z",
-      "updatedAt": "2026-06-08T11:37:39.903Z",
-      "lastLoginAt": "2026-06-08T11:37:39.903Z",
-      "sessionVersion": 9,
-      "sessionInvalidBefore": 1780918634,
+      "updatedAt": "2026-06-08T11:41:59.400Z",
+      "lastLoginAt": "2026-06-08T11:41:47.946Z",
+      "sessionVersion": 10,
+      "sessionInvalidBefore": 1780918919,
       "twoFactorSecret": "HXP233Q77PRQSLMF6H73IVSKH44NYYKM"
     },
     {
       "id": "adm_1780913834905_khso4i",
       "name": "QA User",
-      "email": "qa+1780913834397@nutrisense.local",
+      "email": "qa+1780913834397@nutriaid.local",
       "role": "user",
       "passwordHash": "disabled",
       "passwordSalt": "disabled",
@@ -37,7 +37,7 @@
     {
       "id": "adm_1780914130207_s1v8hx",
       "name": "QA User",
-      "email": "qa+1780914129830@nutrisense.local",
+      "email": "qa+1780914129830@nutriaid.local",
       "role": "user",
       "passwordHash": "disabled",
       "passwordSalt": "disabled",
@@ -54,7 +54,7 @@
     {
       "id": "adm_1780914316798_i26jx1",
       "name": "QA User",
-      "email": "qa+1780914316169@nutrisense.local",
+      "email": "qa+1780914316169@nutriaid.local",
       "role": "user",
       "passwordHash": "disabled",
       "passwordSalt": "disabled",
@@ -83,7 +83,7 @@
     {
       "id": "sub_1780913834905_wlrx1j",
       "userId": "adm_1780913834905_khso4i",
-      "userEmail": "qa+1780913834397@nutrisense.local",
+      "userEmail": "qa+1780913834397@nutriaid.local",
       "plan": "free",
       "status": "expired",
       "stripeSubscriptionId": null,
@@ -93,7 +93,7 @@
     {
       "id": "sub_1780914130207_kyefe7",
       "userId": "adm_1780914130207_s1v8hx",
-      "userEmail": "qa+1780914129830@nutrisense.local",
+      "userEmail": "qa+1780914129830@nutriaid.local",
       "plan": "free",
       "status": "expired",
       "stripeSubscriptionId": null,
@@ -103,7 +103,7 @@
     {
       "id": "sub_1780914316798_gwlytj",
       "userId": "adm_1780914316798_i26jx1",
-      "userEmail": "qa+1780914316169@nutrisense.local",
+      "userEmail": "qa+1780914316169@nutriaid.local",
       "plan": "free",
       "status": "expired",
       "stripeSubscriptionId": null,
@@ -125,6 +125,50 @@
     }
   ],
   "logs": [
+    {
+      "id": "log_1780918956311_ks6k8n",
+      "source": "audit",
+      "level": "info",
+      "message": "logout on auth",
+      "metadata": {
+        "actorEmail": "design@doimih.net",
+        "resourceId": null
+      },
+      "createdAt": "2026-06-08T11:42:36.311Z"
+    },
+    {
+      "id": "log_1780918919401_sfru7q",
+      "source": "audit",
+      "level": "info",
+      "message": "users.set-password on user",
+      "metadata": {
+        "actorEmail": "design@doimih.net",
+        "resourceId": "adm_superadmin_001"
+      },
+      "createdAt": "2026-06-08T11:41:59.401Z"
+    },
+    {
+      "id": "log_1780918907950_ktn04m",
+      "source": "audit",
+      "level": "info",
+      "message": "login on auth",
+      "metadata": {
+        "actorEmail": "design@doimih.net",
+        "resourceId": null
+      },
+      "createdAt": "2026-06-08T11:41:47.950Z"
+    },
+    {
+      "id": "log_1780918907948_eplaxw",
+      "source": "security",
+      "level": "info",
+      "message": "Superadmin login successful",
+      "metadata": {
+        "ip": "::1",
+        "email": "design@doimih.net"
+      },
+      "createdAt": "2026-06-08T11:41:47.948Z"
+    },
     {
       "id": "log_1780918659909_hid5lj",
       "source": "audit",
@@ -1459,6 +1503,40 @@
     {
       "actorUserId": "adm_superadmin_001",
       "actorEmail": "design@doimih.net",
+      "action": "logout",
+      "resource": "auth",
+      "resourceId": null,
+      "ip": "::1",
+      "id": "audit_1780918956311_4uikg6",
+      "createdAt": "2026-06-08T11:42:36.311Z"
+    },
+    {
+      "actorUserId": "adm_superadmin_001",
+      "actorEmail": "design@doimih.net",
+      "action": "users.set-password",
+      "resource": "user",
+      "resourceId": "adm_superadmin_001",
+      "ip": "::1",
+      "metadata": {
+        "plan": "enterprise",
+        "status": "active"
+      },
+      "id": "audit_1780918919401_f2s1m1",
+      "createdAt": "2026-06-08T11:41:59.401Z"
+    },
+    {
+      "actorUserId": "adm_superadmin_001",
+      "actorEmail": "design@doimih.net",
+      "action": "login",
+      "resource": "auth",
+      "resourceId": null,
+      "ip": "::1",
+      "id": "audit_1780918907950_6vnlc1",
+      "createdAt": "2026-06-08T11:41:47.950Z"
+    },
+    {
+      "actorUserId": "adm_superadmin_001",
+      "actorEmail": "design@doimih.net",
       "action": "login",
       "resource": "auth",
       "resourceId": null,
@@ -1620,7 +1698,7 @@
       "resourceId": "adm_1780915691373_nap8vp",
       "ip": "::1",
       "metadata": {
-        "email": "qa+1780915690423@nutrisense.local"
+        "email": "qa+1780915690423@nutriaid.local"
       },
       "id": "audit_1780917346735_8kuimz",
       "createdAt": "2026-06-08T11:15:46.735Z"
@@ -1633,7 +1711,7 @@
       "resourceId": "adm_1780916301287_8417m3",
       "ip": "::1",
       "metadata": {
-        "email": "qa+1780916300539@nutrisense.local"
+        "email": "qa+1780916300539@nutriaid.local"
       },
       "id": "audit_1780917344397_6wkgz1",
       "createdAt": "2026-06-08T11:15:44.397Z"
@@ -1867,7 +1945,7 @@
       "resourceId": "adm_1780915691373_nap8vp",
       "ip": "::1",
       "metadata": {
-        "userEmail": "qa+1780915690423@nutrisense.local"
+        "userEmail": "qa+1780915690423@nutriaid.local"
       },
       "id": "audit_1780915694006_ula9q4",
       "createdAt": "2026-06-08T10:48:14.006Z"
@@ -1973,7 +2051,7 @@
       "resourceId": "adm_1780915380549_g6b011",
       "ip": "::1",
       "metadata": {
-        "email": "qa+1780915380497@nutrisense.local"
+        "email": "qa+1780915380497@nutriaid.local"
       },
       "id": "audit_1780915471162_rox6gj",
       "createdAt": "2026-06-08T10:44:31.162Z"
@@ -2000,7 +2078,7 @@
       "resourceId": "adm_1780915380549_g6b011",
       "ip": "::1",
       "metadata": {
-        "userEmail": "qa+1780915380497@nutrisense.local"
+        "userEmail": "qa+1780915380497@nutriaid.local"
       },
       "id": "audit_1780915385529_4xwfjw",
       "createdAt": "2026-06-08T10:43:05.529Z"
@@ -2186,7 +2264,7 @@
       "resourceId": "adm_1780914316798_i26jx1",
       "ip": "::1",
       "metadata": {
-        "userEmail": "qa+1780914316169@nutrisense.local"
+        "userEmail": "qa+1780914316169@nutriaid.local"
       },
       "id": "audit_1780914318061_snuloc",
       "createdAt": "2026-06-08T10:25:18.061Z"
@@ -2306,7 +2384,7 @@
       "resourceId": "adm_1780914130207_s1v8hx",
       "ip": "::1",
       "metadata": {
-        "userEmail": "qa+1780914129830@nutrisense.local"
+        "userEmail": "qa+1780914129830@nutriaid.local"
       },
       "id": "audit_1780914131785_c217vc",
       "createdAt": "2026-06-08T10:22:11.785Z"
@@ -2426,7 +2504,7 @@
       "resourceId": "adm_1780913834905_khso4i",
       "ip": "::1",
       "metadata": {
-        "userEmail": "qa+1780913834397@nutrisense.local"
+        "userEmail": "qa+1780913834397@nutriaid.local"
       },
       "id": "audit_1780913838750_aqe983",
       "createdAt": "2026-06-08T10:17:18.750Z"
@@ -2526,6 +2604,15 @@
     }
   ],
   "securityEvents": [
+    {
+      "type": "login_success",
+      "ip": "::1",
+      "email": "design@doimih.net",
+      "userId": "adm_superadmin_001",
+      "message": "Superadmin login successful",
+      "id": "sec_1780918907948_zqgb6b",
+      "createdAt": "2026-06-08T11:41:47.948Z"
+    },
     {
       "type": "login_success",
       "ip": "::1",
@@ -2818,7 +2905,7 @@
   "aiLogs": [
     {
       "userId": "adm_1780914316798_i26jx1",
-      "userEmail": "qa+1780914316169@nutrisense.local",
+      "userEmail": "qa+1780914316169@nutriaid.local",
       "status": "success",
       "latencyMs": 996,
       "summary": "Manual superadmin re-run completed",
@@ -2827,7 +2914,7 @@
     },
     {
       "userId": "adm_1780914130207_s1v8hx",
-      "userEmail": "qa+1780914129830@nutrisense.local",
+      "userEmail": "qa+1780914129830@nutriaid.local",
       "status": "success",
       "latencyMs": 988,
       "summary": "Manual superadmin re-run completed",
@@ -2836,7 +2923,7 @@
     },
     {
       "userId": "adm_1780913834905_khso4i",
-      "userEmail": "qa+1780913834397@nutrisense.local",
+      "userEmail": "qa+1780913834397@nutriaid.local",
       "status": "success",
       "latencyMs": 724,
       "summary": "Manual superadmin re-run completed",

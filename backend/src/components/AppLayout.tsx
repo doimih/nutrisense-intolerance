@@ -132,7 +132,7 @@ export default function AppLayout({ children, currentPath }: AppLayoutProps) {
                 />
               </svg>
             </div>
-            <span className="font-bold text-foreground text-base tracking-tight">NutriSense</span>
+            <span className="font-bold text-foreground text-base tracking-tight">NutriAID</span>
           </div>
         </div>
 

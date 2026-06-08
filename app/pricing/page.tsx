@@ -54,7 +54,7 @@ type PricingCopy = {
 const copy: Record<"ro" | "en", PricingCopy> = {
   ro: {
     metaDescription:
-      "Incepe acum cu NutriSense Intolerances: planuri clare, analiza AI si primele raspunsuri reale in doar cateva zile.",
+      "Incepe acum cu NutriAID Intolerances: planuri clare, analiza AI si primele raspunsuri reale in doar cateva zile.",
     heroTitle: "E timpul sa afli ce iti face rau. Incepe acum.",
     heroSubtitle: [
       "Nu trebuie sa traiesti cu durere, confuzie sau frica de mancare.",
@@ -178,7 +178,7 @@ const copy: Record<"ro" | "en", PricingCopy> = {
   },
   en: {
     metaDescription:
-      "Start now with NutriSense Intolerances: clear pricing plans, AI analysis, and your first real answers in just days.",
+      "Start now with NutriAID Intolerances: clear pricing plans, AI analysis, and your first real answers in just days.",
     heroTitle: "It is time to find what harms you. Start now.",
     heroSubtitle: [
       "You do not have to live with pain, confusion, or fear of food.",

@@ -44,7 +44,7 @@ const copy: Record<"ro" | "en", FaqPageCopy> = {
         items: [
           {
             id: "1",
-            question: "1. Ce este NutriSense Intolerances?",
+            question: "1. Ce este NutriAID Intolerances?",
             paragraphs: [
               "Este o platforma inteligenta care te ajuta sa intelegi ce alimente iti provoaca simptome precum balonare, dureri, migrene, oboseala, greata sau eruptii.",
               "Nu pune diagnostice.",
@@ -224,7 +224,7 @@ const copy: Record<"ro" | "en", FaqPageCopy> = {
     finalCta: {
       title: "Ai intrebari? Ai raspunsuri. Acum e timpul sa ai si claritate.",
       primary: "Incepe analiza intolerantelor tale",
-      secondary: "Vezi cum functioneaza NutriSense",
+      secondary: "Vezi cum functioneaza NutriAID",
     },
   },
   en: {
@@ -243,7 +243,7 @@ const copy: Record<"ro" | "en", FaqPageCopy> = {
         items: [
           {
             id: "1",
-            question: "1. What is NutriSense Intolerances?",
+            question: "1. What is NutriAID Intolerances?",
             paragraphs: [
               "It is an intelligent platform that helps you understand which foods trigger symptoms such as bloating, pain, migraines, fatigue, nausea, or rashes.",
               "It does not diagnose.",
@@ -423,7 +423,7 @@ const copy: Record<"ro" | "en", FaqPageCopy> = {
     finalCta: {
       title: "You have questions? You have answers. Now it is time for clarity.",
       primary: "Start your intolerance analysis",
-      secondary: "See how NutriSense works",
+      secondary: "See how NutriAID works",
     },
   },
 };
@@ -498,7 +498,7 @@ export default function FaqPage() {
         <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
           <div className="inline-flex rounded-full bg-white/10 px-4 py-1.5 text-sm font-semibold text-white/90 mb-5">
             <ShieldCheck className="h-4 w-4 mr-2" />
-            NutriSense Intolerances
+            NutriAID Intolerances
           </div>
           <h2 className="text-3xl sm:text-5xl font-extrabold leading-tight text-white mb-8">{t.finalCta.title}</h2>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">

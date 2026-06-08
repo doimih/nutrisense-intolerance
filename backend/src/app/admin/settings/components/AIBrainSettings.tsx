@@ -7,8 +7,8 @@ export default function AIBrainSettings() {
     temperature: '0.7',
     maxTokens: '2048',
     systemPrompt:
-      "You are NutriSense AI, a specialized nutrition assistant. Provide evidence-based dietary recommendations tailored to the user's intolerances and dietary preferences. Always include a medical disclaimer.",
-    orchestratorUrl: 'https://api.nutrisense.app/ai/orchestrate',
+      "You are NutriAID AI, a specialized nutrition assistant. Provide evidence-based dietary recommendations tailored to the user's intolerances and dietary preferences. Always include a medical disclaimer.",
+    orchestratorUrl: 'https://api.nutriaid.app/ai/orchestrate',
     fallbackModel: 'gemini-1.5-pro',
     enableStreaming: true,
     enableCache: true,

@@ -103,7 +103,7 @@ export default function DashboardPage() {
           {isRo ? "Bun venit" : "Welcome"}, {user?.name?.split(" ")[0] ?? (isRo ? "utilizator" : "user")} 👋
         </h1>
         <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
-          {isRo ? "Iata un rezumat al contului tau NutriSense." : "Here is a summary of your NutriSense account."}
+          {isRo ? "Iata un rezumat al contului tau NutriAID." : "Here is a summary of your NutriAID account."}
         </p>
       </div>
 

@@ -5,7 +5,7 @@ import { Brain, Sparkles, ShieldCheck, ArrowRight } from "lucide-react";
 export const metadata: Metadata = {
   title: "De ce AI?",
   description:
-    "Afla de ce AI-ul NutriSense poate observa tipare in intolerante alimentare mai rapid si mai clar.",
+    "Afla de ce AI-ul NutriAID poate observa tipare in intolerante alimentare mai rapid si mai clar.",
   alternates: {
     canonical: "/why-ai",
   },
@@ -27,7 +27,7 @@ export default function WhyAiPage() {
 
           <p className="mt-4 text-slate-600 dark:text-slate-300 text-base sm:text-lg">
             Intolerantele alimentare pot avea reactii intarziate si combinatii greu de urmarit.
-            NutriSense foloseste AI pentru a corela jurnalul alimentar cu simptomele si pentru a
+            NutriAID foloseste AI pentru a corela jurnalul alimentar cu simptomele si pentru a
             genera recomandari mai clare, personalizate.
           </p>
 

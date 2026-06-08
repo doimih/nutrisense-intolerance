@@ -454,7 +454,7 @@ export default function AuthPage() {
                 />
               </svg>
             </div>
-            <span className="text-white font-bold text-xl tracking-tight">NutriSense</span>
+            <span className="text-white font-bold text-xl tracking-tight">NutriAID</span>
           </div>
 
           <h1 className="text-4xl font-bold text-white leading-snug mb-4">
@@ -491,7 +491,7 @@ export default function AuthPage() {
           {/* Mobile logo */}
           <div className="flex items-center gap-2 mb-8 lg:hidden">
             <AppLogo size={32} />
-            <span className="font-bold text-foreground text-lg tracking-tight">NutriSense</span>
+            <span className="font-bold text-foreground text-lg tracking-tight">NutriAID</span>
           </div>
 
           <div className="mb-8">

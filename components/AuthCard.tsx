@@ -27,7 +27,7 @@ export default function AuthCard({
               <Leaf className="w-5 h-5 text-white" />
             </div>
             <span className="text-xl font-bold text-slate-900 dark:text-white">
-              NutriSense
+              NutriAID
             </span>
           </Link>
         </div>

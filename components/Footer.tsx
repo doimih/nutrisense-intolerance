@@ -42,7 +42,7 @@ export default function Footer() {
               <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
                 <Leaf className="w-4 h-4 text-white" />
               </div>
-              <span className="font-bold text-white text-lg">NutriSense</span>
+              <span className="font-bold text-white text-lg">NutriAID</span>
             </Link>
             <p className="text-sm leading-relaxed text-slate-400 mb-4">
               {isRo
@@ -103,7 +103,7 @@ export default function Footer() {
         {/* Bottom bar */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500">
           <span>
-            © {currentYear} NutriSense Intolerances. {copy.footer.copyright}
+            © {currentYear} NutriAID Intolerances. {copy.footer.copyright}
           </span>
           <span className="flex items-center gap-1">
             {copy.footer.madeWith} <Heart className="w-3 h-3 text-red-400 fill-red-400" /> {copy.footer.forYourHealth}

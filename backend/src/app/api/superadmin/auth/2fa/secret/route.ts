@@ -5,7 +5,7 @@ import { createOtpAuthUrl, generateTotpSecret } from '@/lib/server/superadmin/to
 
 export const runtime = 'nodejs';
 
-const DEFAULT_ISSUER = 'NutriSense Superadmin';
+const DEFAULT_ISSUER = 'NutriAID Superadmin';
 
 export async function GET(request: NextRequest) {
   const auth = await requireSuperadmin(request);

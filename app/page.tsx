@@ -83,7 +83,7 @@ const content: Record<"ro" | "en", HomeContent> = {
       title: "Descopera ce alimente iti provoaca simptomele. Rapid. Clar. Personalizat.",
       subtitleLines: [
         "Balonare, dureri abdominale, oboseala, migrene, reflux, greata, eruptii pe piele - toate au o cauza.",
-        "NutriSense Intolerances foloseste AI pentru a identifica alimentele care iti declanseaza reactiile.",
+        "NutriAID Intolerances foloseste AI pentru a identifica alimentele care iti declanseaza reactiile.",
       ],
       primaryCta: "Incepe analiza intolerantelor tale",
       secondaryCta: "Vezi cum functioneaza",
@@ -120,7 +120,7 @@ const content: Record<"ro" | "en", HomeContent> = {
       ],
     },
     whyDifferent: {
-      title: "De ce NutriSense Intolerances este diferit?",
+      title: "De ce NutriAID Intolerances este diferit?",
       intro: [
         "Pentru ca nu iti dam sfaturi generice.",
         "Nu iti spunem sa elimini jumatate din alimente.",
@@ -150,7 +150,7 @@ const content: Record<"ro" | "en", HomeContent> = {
       ],
     },
     howItWorks: {
-      title: "Cum functioneaza NutriSense Intolerances?",
+      title: "Cum functioneaza NutriAID Intolerances?",
       steps: [
         {
           title: "1. Introduci ce ai mancat",
@@ -175,7 +175,7 @@ const content: Record<"ro" | "en", HomeContent> = {
       ],
     },
     audience: {
-      title: "Pentru cine este NutriSense Intolerances?",
+      title: "Pentru cine este NutriAID Intolerances?",
       intro: "Pentru tine, daca:",
       items: [
         "ai simptome digestive recurente",
@@ -185,7 +185,7 @@ const content: Record<"ro" | "en", HomeContent> = {
         "ai primit raspunsuri vagi sau incomplete",
         "simti ca nimeni nu te asculta cu adevarat",
       ],
-      ending: "NutriSense Intolerances este pentru oamenii care vor claritate, control si o viata normala.",
+      ending: "NutriAID Intolerances este pentru oamenii care vor claritate, control si o viata normala.",
     },
     testimonials: {
       title: "Oamenii care au trecut prin ce treci tu. Si au gasit raspunsuri.",
@@ -198,7 +198,7 @@ const content: Record<"ro" | "en", HomeContent> = {
         {
           quote: "Am plans cand am vazut prima corelatie. Nu exagerez.",
           author: "Andreea, 34 ani",
-          body: "Dupa 8 ani de balonare si dureri, dupa zeci de analize perfecte, NutriSense a fost singurul loc unde am simtit ca cineva ma intelege. In 3 zile am aflat ce imi provoca simptomele.",
+          body: "Dupa 8 ani de balonare si dureri, dupa zeci de analize perfecte, NutriAID a fost singurul loc unde am simtit ca cineva ma intelege. In 3 zile am aflat ce imi provoca simptomele.",
         },
         {
           quote: "Nu mai traiesc cu frica de mancare.",
@@ -208,7 +208,7 @@ const content: Record<"ro" | "en", HomeContent> = {
         {
           quote: "Medicii mi-au spus ca e stres. Nu era stres.",
           author: "Ioana, 29 ani",
-          body: "NutriSense a gasit o combinatie alimentara la care reactionam. Nici nu mi-ar fi trecut prin cap.",
+          body: "NutriAID a gasit o combinatie alimentara la care reactionam. Nici nu mi-ar fi trecut prin cap.",
         },
         {
           quote: "Simptomele mele au scazut cu 60% in prima saptamana.",
@@ -229,7 +229,7 @@ const content: Record<"ro" | "en", HomeContent> = {
             "Am trait 12 ani cu balonare, dureri abdominale si oboseala cronica.",
             "Am facut toate analizele posibile. Toate perfecte.",
             "Am fost trimisa la psiholog pentru ca probabil e anxietate.",
-            "Cand am inceput NutriSense, am introdus cateva mese si cateva simptome.",
+            "Cand am inceput NutriAID, am introdus cateva mese si cateva simptome.",
             "In a treia zi, AI-ul a identificat o combinatie alimentara la care reactionam.",
             "Niciun medic nu mi-a spus asta vreodata.",
             "Dupa o saptamana, simptomele mele s-au redus la jumatate.",
@@ -242,7 +242,7 @@ const content: Record<"ro" | "en", HomeContent> = {
             "Migrenele mele apareau fara logica.",
             "Uneori dupa mancare, alteori nu.",
             "Am incercat diete, suplimente, medicamente.",
-            "NutriSense a descoperit ca reactionam la o combinatie intre lactate si gluten.",
+            "NutriAID a descoperit ca reactionam la o combinatie intre lactate si gluten.",
             "Nu lactatele singure.",
             "Nu glutenul singur.",
             "Ci combinatia.",
@@ -254,7 +254,7 @@ const content: Record<"ro" | "en", HomeContent> = {
           paragraphs: [
             "Ajunsesem sa mananc doar 5 alimente.",
             "Orice altceva imi provoca reactii.",
-            "NutriSense m-a ajutat sa descopar alimente sigure.",
+            "NutriAID m-a ajutat sa descopar alimente sigure.",
             "Nu doar ce imi face rau, ci si ce imi face bine.",
             "Acum pot manca normal.",
             "Fara frica.",
@@ -276,7 +276,7 @@ const content: Record<"ro" | "en", HomeContent> = {
       ],
       commonEnding: [
         "Si totusi au gasit raspunsuri aici.",
-        "Pentru ca NutriSense Intolerances analizeaza, coreleaza, explica, simplifica si ghideaza.",
+        "Pentru ca NutriAID Intolerances analizeaza, coreleaza, explica, simplifica si ghideaza.",
         "Si o face in fiecare zi.",
       ],
     },
@@ -308,7 +308,7 @@ const content: Record<"ro" | "en", HomeContent> = {
         "Nu trebuie sa traiesti cu frica de mancare.",
       ],
       primary: "Incepe analiza intolerantelor tale",
-      secondary: "Vezi cum functioneaza NutriSense",
+      secondary: "Vezi cum functioneaza NutriAID",
     },
   },
   en: {
@@ -317,7 +317,7 @@ const content: Record<"ro" | "en", HomeContent> = {
       title: "Discover which foods trigger your symptoms. Fast. Clear. Personalized.",
       subtitleLines: [
         "Bloating, abdominal pain, fatigue, migraines, reflux, nausea, skin rashes - they all have a cause.",
-        "NutriSense Intolerances uses AI to identify the foods that trigger your reactions.",
+        "NutriAID Intolerances uses AI to identify the foods that trigger your reactions.",
       ],
       primaryCta: "Start your intolerance analysis",
       secondaryCta: "See how it works",
@@ -354,7 +354,7 @@ const content: Record<"ro" | "en", HomeContent> = {
       ],
     },
     whyDifferent: {
-      title: "Why is NutriSense Intolerances different?",
+      title: "Why is NutriAID Intolerances different?",
       intro: [
         "Because we do not give you generic advice.",
         "We do not tell you to eliminate half of your foods.",
@@ -384,7 +384,7 @@ const content: Record<"ro" | "en", HomeContent> = {
       ],
     },
     howItWorks: {
-      title: "How does NutriSense Intolerances work?",
+      title: "How does NutriAID Intolerances work?",
       steps: [
         {
           title: "1. Enter what you ate",
@@ -409,7 +409,7 @@ const content: Record<"ro" | "en", HomeContent> = {
       ],
     },
     audience: {
-      title: "Who is NutriSense Intolerances for?",
+      title: "Who is NutriAID Intolerances for?",
       intro: "For you, if:",
       items: [
         "you have recurring digestive symptoms",
@@ -419,7 +419,7 @@ const content: Record<"ro" | "en", HomeContent> = {
         "you received vague or incomplete answers",
         "you feel nobody truly listens to you",
       ],
-      ending: "NutriSense Intolerances is for people who want clarity, control, and a normal life.",
+      ending: "NutriAID Intolerances is for people who want clarity, control, and a normal life.",
     },
     testimonials: {
       title: "People who went through what you are going through. And found answers.",
@@ -432,7 +432,7 @@ const content: Record<"ro" | "en", HomeContent> = {
         {
           quote: "I cried when I saw the first correlation. I am not exaggerating.",
           author: "Andreea, 34",
-          body: "After 8 years of bloating and pain, after dozens of perfect tests, NutriSense was the only place where I felt someone understood me. In 3 days I found out what was causing my symptoms.",
+          body: "After 8 years of bloating and pain, after dozens of perfect tests, NutriAID was the only place where I felt someone understood me. In 3 days I found out what was causing my symptoms.",
         },
         {
           quote: "I no longer live in fear of food.",
@@ -442,7 +442,7 @@ const content: Record<"ro" | "en", HomeContent> = {
         {
           quote: "Doctors told me it was stress. It was not stress.",
           author: "Ioana, 29",
-          body: "NutriSense found a food combination I was reacting to. It never would have crossed my mind.",
+          body: "NutriAID found a food combination I was reacting to. It never would have crossed my mind.",
         },
         {
           quote: "My symptoms dropped by 60% in the first week.",
@@ -463,7 +463,7 @@ const content: Record<"ro" | "en", HomeContent> = {
             "I lived for 12 years with bloating, abdominal pain, and chronic fatigue.",
             "I did every test possible. All of them were perfect.",
             "I was sent to a psychologist because it was probably anxiety.",
-            "When I started NutriSense, I logged a few meals and a few symptoms.",
+            "When I started NutriAID, I logged a few meals and a few symptoms.",
             "On the third day, the AI identified a food combination I reacted to.",
             "No doctor had ever told me that.",
             "After one week, my symptoms were cut in half.",
@@ -476,7 +476,7 @@ const content: Record<"ro" | "en", HomeContent> = {
             "My migraines appeared without any logic.",
             "Sometimes after food, sometimes not.",
             "I tried diets, supplements, medications.",
-            "NutriSense discovered I was reacting to a combination of dairy and gluten.",
+            "NutriAID discovered I was reacting to a combination of dairy and gluten.",
             "Not dairy alone.",
             "Not gluten alone.",
             "But the combination.",
@@ -488,7 +488,7 @@ const content: Record<"ro" | "en", HomeContent> = {
           paragraphs: [
             "I had reached the point where I was eating only 5 foods.",
             "Anything else triggered reactions.",
-            "NutriSense helped me discover safe foods.",
+            "NutriAID helped me discover safe foods.",
             "Not only what harms me, but also what works for me.",
             "Now I can eat normally.",
             "Without fear.",
@@ -510,7 +510,7 @@ const content: Record<"ro" | "en", HomeContent> = {
       ],
       commonEnding: [
         "And still, they found answers here.",
-        "Because NutriSense Intolerances analyzes, correlates, explains, simplifies, and guides.",
+        "Because NutriAID Intolerances analyzes, correlates, explains, simplifies, and guides.",
         "And it does it every day.",
       ],
     },
@@ -546,7 +546,7 @@ const content: Record<"ro" | "en", HomeContent> = {
         "You do not need to live in fear of food.",
       ],
       primary: "Start your intolerance analysis",
-      secondary: "See how NutriSense works",
+      secondary: "See how NutriAID works",
     },
   },
 };
@@ -556,7 +556,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const isRo = lang === "ro";
 
   return {
-    title: "NutriSense Intolerances",
+    title: "NutriAID Intolerances",
     description: isRo
       ? "Descopera ce alimente iti provoaca simptomele cu ajutorul AI-ului, rapid si personalizat."
       : "Discover which foods trigger your symptoms with AI-powered, fast, personalized analysis.",

@@ -1,4 +1,4 @@
-Docker setup for NutriSense (frontend + backend)
+Docker setup for NutriAID (frontend + backend)
 
 1) Prerequisites
 - Docker Desktop / Docker Engine installed

@@ -146,7 +146,7 @@ export default function Sidebar({
         <div className="flex items-center gap-2.5">
           <AppLogo size={32} />
           {!collapsed && (
-            <span className="font-bold text-foreground text-lg tracking-tight">NutriSense</span>
+            <span className="font-bold text-foreground text-lg tracking-tight">NutriAID</span>
           )}
         </div>
       </div>
@@ -254,7 +254,7 @@ export default function Sidebar({
         <div className="flex items-center justify-between px-4 py-4 border-b border-border">
           <div className="flex items-center gap-2.5">
             <AppLogo size={28} />
-            <span className="font-bold text-foreground text-base tracking-tight">NutriSense</span>
+            <span className="font-bold text-foreground text-base tracking-tight">NutriAID</span>
           </div>
           <button
             onClick={onMobileClose}

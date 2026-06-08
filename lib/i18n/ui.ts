@@ -138,7 +138,7 @@ const uiCopy: Record<AppLanguage, UiCopy> = {
     auth: {
       login: {
         title: "Autentificare",
-        subtitle: "Acceseaza-ti contul NutriSense Intolerances",
+        subtitle: "Acceseaza-ti contul NutriAID Intolerances",
         description: "Autentifica-te pentru a accesa profilul tau, jurnalul de monitorizare si recomandarile salvate.",
         noAccountYet: "Nu ai cont? ",
         createOneFree: "Creeaza unul gratuit",
@@ -188,7 +188,7 @@ const uiCopy: Record<AppLanguage, UiCopy> = {
       legal: "Legal",
       secure: "Datele tale sunt in siguranta",
       disclaimerTitle: "Disclaimer medical:",
-      disclaimerBody: "NutriSense Intolerances nu ofera sfaturi medicale. Informatiile sunt generale si nu inlocuiesc consultul unui medic sau nutritionist.",
+      disclaimerBody: "NutriAID Intolerances nu ofera sfaturi medicale. Informatiile sunt generale si nu inlocuiesc consultul unui medic sau nutritionist.",
       copyright: "Toate drepturile rezervate.",
       madeWith: "Facut cu",
       forYourHealth: "pentru sanatatea ta",
@@ -236,7 +236,7 @@ const uiCopy: Record<AppLanguage, UiCopy> = {
     auth: {
       login: {
         title: "Sign in",
-        subtitle: "Access your NutriSense Intolerances account",
+        subtitle: "Access your NutriAID Intolerances account",
         description: "Sign in to access your profile, monitoring journal and saved guidance.",
         noAccountYet: "No account yet? ",
         createOneFree: "Create one for free",
@@ -286,7 +286,7 @@ const uiCopy: Record<AppLanguage, UiCopy> = {
       legal: "Legal",
       secure: "Your data is secure",
       disclaimerTitle: "Medical disclaimer:",
-      disclaimerBody: "NutriSense Intolerances does not provide medical advice. Information is general and does not replace consultation with a doctor or dietitian.",
+      disclaimerBody: "NutriAID Intolerances does not provide medical advice. Information is general and does not replace consultation with a doctor or dietitian.",
       copyright: "All rights reserved.",
       madeWith: "Made with",
       forYourHealth: "for your health",

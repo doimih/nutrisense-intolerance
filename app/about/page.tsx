@@ -50,14 +50,14 @@ type GuideCopy = {
 const copy: Record<"ro" | "en", GuideCopy> = {
   ro: {
     metaDescription:
-      "Ghidul tău în 7 zile cu NutriSense Intolerances: primele corelații, primele răspunsuri și primele schimbări reale.",
+      "Ghidul tău în 7 zile cu NutriAID Intolerances: primele corelații, primele răspunsuri și primele schimbări reale.",
     heroTitle:
       "Ghidul tău în 7 zile — primele răspunsuri, primele corelații, primele schimbări",
     heroSubtitle: [
       "Nu ai nevoie de luni de analiză.",
       "Nu ai nevoie de diete extreme.",
       "Nu ai nevoie de perfecțiune.",
-      "În doar 7 zile, NutriSense Intolerances îți arată primele tipare reale.",
+      "În doar 7 zile, NutriAID Intolerances îți arată primele tipare reale.",
     ],
     section1: {
       title: "Ce vei obține în 7 zile?",
@@ -200,18 +200,18 @@ const copy: Record<"ro" | "en", GuideCopy> = {
     section6: {
       title: "E timpul să începi cele 7 zile care îți pot schimba viața.",
       primaryCta: "Începe analiza intoleranțelor tale",
-      secondaryCta: "Vezi cum funcționează NutriSense",
+      secondaryCta: "Vezi cum funcționează NutriAID",
     },
   },
   en: {
     metaDescription:
-      "Your 7-day guide with NutriSense Intolerances: first correlations, first answers, and first meaningful changes.",
+      "Your 7-day guide with NutriAID Intolerances: first correlations, first answers, and first meaningful changes.",
     heroTitle: "Your 7-day guide — first answers, first correlations, first changes",
     heroSubtitle: [
       "You do not need months of analysis.",
       "You do not need extreme diets.",
       "You do not need perfection.",
-      "In just 7 days, NutriSense Intolerances shows you the first real patterns.",
+      "In just 7 days, NutriAID Intolerances shows you the first real patterns.",
     ],
     section1: {
       title: "What will you get in 7 days?",
@@ -354,7 +354,7 @@ const copy: Record<"ro" | "en", GuideCopy> = {
     section6: {
       title: "It is time to start the 7 days that can change your life.",
       primaryCta: "Start your intolerance analysis",
-      secondaryCta: "See how NutriSense works",
+      secondaryCta: "See how NutriAID works",
     },
   },
 };
@@ -386,7 +386,7 @@ export default function AboutPage() {
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-20">
           <div className="inline-flex items-center gap-2 rounded-full bg-emerald-600/10 text-emerald-700 dark:text-emerald-300 px-4 py-1.5 text-sm font-semibold mb-6">
             <Sparkles className="h-4 w-4" />
-            NutriSense Intolerances
+            NutriAID Intolerances
           </div>
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-tight text-slate-900 dark:text-white max-w-5xl">
             {t.heroTitle}

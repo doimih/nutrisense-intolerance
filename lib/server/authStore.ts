@@ -110,7 +110,7 @@ export function authenticateUser(email: string, password: string): User | null {
 // Bootstrap a stable account for local sign-in on the frontend app.
 seedUser({
   id: "usr_frontend_superadmin",
-  name: "NutriSense Admin",
+  name: "NutriAID Admin",
   email: FRONTEND_SUPERADMIN_EMAIL,
   password: FRONTEND_SUPERADMIN_PASSWORD,
   role: "superadmin",

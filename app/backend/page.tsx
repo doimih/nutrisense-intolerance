@@ -7,7 +7,7 @@ const ADMIN_CONSOLE_URL =
 
 export const metadata: Metadata = {
   title: "Admin Console Access",
-  description: "Open the NutriSense admin console.",
+  description: "Open the NutriAID admin console.",
   alternates: {
     canonical: "/backend",
   },

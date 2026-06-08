@@ -116,7 +116,7 @@ export default function ChangePasswordPage() {
       <div className="w-full max-w-md rounded-2xl border border-border bg-card p-8 shadow-sm">
         <div className="flex items-center gap-2 mb-6">
           <AppLogo size={30} />
-          <span className="font-bold text-foreground text-lg tracking-tight">NutriSense</span>
+          <span className="font-bold text-foreground text-lg tracking-tight">NutriAID</span>
         </div>
 
         <div className="mb-6">

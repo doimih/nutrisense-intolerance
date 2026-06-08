@@ -6,7 +6,7 @@ export function generateMetadata(): Metadata {
   const isRo = getServerLanguage() === "ro";
 
   return {
-    title: isRo ? "Panou NutriSense" : "NutriSense Dashboard",
+    title: isRo ? "Panou NutriAID" : "NutriAID Dashboard",
     robots: {
       index: false,
       follow: false,

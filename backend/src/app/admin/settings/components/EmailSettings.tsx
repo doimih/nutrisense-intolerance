@@ -7,8 +7,8 @@ export default function EmailSettings() {
     smtpPort: '587',
     smtpUser: 'apikey',
     smtpPass: '',
-    fromEmail: 'noreply@nutrisense.app',
-    fromName: 'NutriSense',
+    fromEmail: 'noreply@nutriaid.app',
+    fromName: 'NutriAID',
     encryption: 'tls',
   });
   const [saved, setSaved] = useState(false);
