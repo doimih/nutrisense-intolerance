@@ -118,10 +118,13 @@ export default function TwoFASettings() {
           </p>
         </div>
         <button
+          type="button"
           onClick={() => setGlobalEnabled(!globalEnabled)}
           className={`relative w-12 h-6 rounded-full transition-colors duration-200 ${
             globalEnabled ? 'bg-primary' : 'bg-muted-foreground/30'
           }`}
+          aria-label={globalEnabled ? 'Disable two-factor authentication system-wide' : 'Enable two-factor authentication system-wide'}
+          title={globalEnabled ? 'Disable two-factor authentication system-wide' : 'Enable two-factor authentication system-wide'}
         >
           <span
             className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 ${

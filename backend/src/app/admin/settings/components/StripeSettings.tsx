@@ -114,8 +114,11 @@ export default function StripeSettings() {
               placeholder="sk_live_..."
             />
             <button
+              type="button"
               onClick={() => setVisibleSecret(!visibleSecret)}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              aria-label={visibleSecret ? 'Hide secret key' : 'Show secret key'}
+              title={visibleSecret ? 'Hide secret key' : 'Show secret key'}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
@@ -146,8 +149,11 @@ export default function StripeSettings() {
               placeholder="whsec_..."
             />
             <button
+              type="button"
               onClick={() => setVisibleWebhook(!visibleWebhook)}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              aria-label={visibleWebhook ? 'Hide webhook secret' : 'Show webhook secret'}
+              title={visibleWebhook ? 'Hide webhook secret' : 'Show webhook secret'}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
@@ -172,6 +178,8 @@ export default function StripeSettings() {
             <label className="label-text">Currency</label>
             <select
               className="input-field"
+              aria-label="Currency"
+              title="Currency"
               value={form?.currency}
               onChange={(e) => setForm({ ...form, currency: e?.target?.value })}
             >
@@ -186,6 +194,8 @@ export default function StripeSettings() {
             <input
               className="input-field"
               type="number"
+              aria-label="Trial Days"
+              title="Trial Days"
               value={form?.trialDays}
               onChange={(e) => setForm({ ...form, trialDays: e?.target?.value })}
               min="0"
@@ -196,6 +206,8 @@ export default function StripeSettings() {
             <label className="label-text">Billing Mode</label>
             <select
               className="input-field"
+              aria-label="Billing Mode"
+              title="Billing Mode"
               value={form?.billingMode}
               onChange={(e) => setForm({ ...form, billingMode: e?.target?.value })}
             >

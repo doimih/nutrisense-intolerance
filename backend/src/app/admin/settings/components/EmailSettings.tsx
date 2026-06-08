@@ -86,6 +86,8 @@ export default function EmailSettings() {
           <label className="label-text">Encryption</label>
           <select
             className="input-field"
+            aria-label="Encryption"
+            title="Encryption"
             value={form?.encryption}
             onChange={(e) => setForm({ ...form, encryption: e?.target?.value })}
           >

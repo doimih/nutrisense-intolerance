@@ -146,6 +146,8 @@ export default function UsersSettings() {
       <div className="flex items-center gap-2">
         <select
           className="input-field max-w-[220px]"
+          aria-label="Filter users by plan"
+          title="Filter users by plan"
           value={planFilter}
           onChange={(e) => setPlanFilter(e.target.value as typeof planFilter)}
         >

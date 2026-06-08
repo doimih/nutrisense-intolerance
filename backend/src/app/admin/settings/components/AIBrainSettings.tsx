@@ -33,6 +33,8 @@ export default function AIBrainSettings() {
           <label className="label-text">Default Model</label>
           <select
             className="input-field"
+            aria-label="Default Model"
+            title="Default Model"
             value={config?.defaultModel}
             onChange={(e) => setConfig({ ...config, defaultModel: e?.target?.value })}
           >
@@ -47,6 +49,8 @@ export default function AIBrainSettings() {
           <label className="label-text">Fallback Model</label>
           <select
             className="input-field"
+            aria-label="Fallback Model"
+            title="Fallback Model"
             value={config?.fallbackModel}
             onChange={(e) => setConfig({ ...config, fallbackModel: e?.target?.value })}
           >
@@ -63,6 +67,8 @@ export default function AIBrainSettings() {
           <input
             className="w-full accent-primary"
             type="range"
+            aria-label="Temperature"
+            title="Temperature"
             min="0"
             max="1"
             step="0.1"
@@ -79,6 +85,8 @@ export default function AIBrainSettings() {
           <input
             className="input-field"
             type="number"
+            aria-label="Max Tokens"
+            title="Max Tokens"
             value={config?.maxTokens}
             onChange={(e) => setConfig({ ...config, maxTokens: e?.target?.value })}
             min="256"
@@ -100,6 +108,8 @@ export default function AIBrainSettings() {
           <label className="label-text">System Prompt</label>
           <textarea
             className="input-field resize-none"
+            aria-label="System Prompt"
+            title="System Prompt"
             rows={5}
             value={config?.systemPrompt}
             onChange={(e) => setConfig({ ...config, systemPrompt: e?.target?.value })}

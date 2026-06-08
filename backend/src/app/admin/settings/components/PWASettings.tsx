@@ -43,10 +43,13 @@ export default function PWASettings() {
             </p>
           </div>
           <button
+            type="button"
             onClick={() => setConfig({ ...config, enabled: !config.enabled })}
             className={`relative w-12 h-6 rounded-full transition-colors duration-200 ${
               config.enabled ? 'bg-primary' : 'bg-muted-foreground/30'
             }`}
+            aria-label={config.enabled ? 'Disable PWA' : 'Enable PWA'}
+            title={config.enabled ? 'Disable PWA' : 'Enable PWA'}
           >
             <span
               className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 ${
@@ -61,6 +64,8 @@ export default function PWASettings() {
             <label className="label-text">App Name</label>
             <input
               className="input-field"
+              aria-label="App Name"
+              title="App Name"
               value={config.appName}
               onChange={(e) => setConfig({ ...config, appName: e.target.value })}
             />
@@ -69,6 +74,8 @@ export default function PWASettings() {
             <label className="label-text">Short Name</label>
             <input
               className="input-field"
+              aria-label="Short Name"
+              title="Short Name"
               value={config.appShortName}
               onChange={(e) => setConfig({ ...config, appShortName: e.target.value })}
             />
@@ -78,12 +85,16 @@ export default function PWASettings() {
             <div className="flex gap-2">
               <input
                 className="input-field flex-1 font-mono text-xs"
+                aria-label="Theme Color Hex"
+                title="Theme Color Hex"
                 value={config.themeColor}
                 onChange={(e) => setConfig({ ...config, themeColor: e.target.value })}
               />
               <input
                 type="color"
                 className="w-10 h-10 rounded-lg border border-border cursor-pointer"
+                aria-label="Theme Color Picker"
+                title="Theme Color Picker"
                 value={config.themeColor}
                 onChange={(e) => setConfig({ ...config, themeColor: e.target.value })}
               />
@@ -94,12 +105,16 @@ export default function PWASettings() {
             <div className="flex gap-2">
               <input
                 className="input-field flex-1 font-mono text-xs"
+                aria-label="Background Color Hex"
+                title="Background Color Hex"
                 value={config.backgroundColor}
                 onChange={(e) => setConfig({ ...config, backgroundColor: e.target.value })}
               />
               <input
                 type="color"
                 className="w-10 h-10 rounded-lg border border-border cursor-pointer"
+                aria-label="Background Color Picker"
+                title="Background Color Picker"
                 value={config.backgroundColor}
                 onChange={(e) => setConfig({ ...config, backgroundColor: e.target.value })}
               />
@@ -176,6 +191,8 @@ export default function PWASettings() {
           <input
             className="input-field w-40"
             type="time"
+            aria-label="Daily Reminder Time"
+            title="Daily Reminder Time"
             value={notifications.reminderTime}
             onChange={(e) => setNotifications({ ...notifications, reminderTime: e.target.value })}
           />
