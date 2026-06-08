@@ -3,6 +3,8 @@
 import React, { createContext, useContext, useMemo, useState } from "react";
 import { AppLanguage, LANGUAGE_COOKIE } from "@/lib/i18n/config";
 
+const RUNTIME_LANGUAGE: AppLanguage = "ro";
+
 type LanguageContextValue = {
   lang: AppLanguage;
   setLang: (value: AppLanguage) => void;
@@ -17,11 +19,13 @@ export function LanguageProvider({
   initialLang: AppLanguage;
   children: React.ReactNode;
 }) {
-  const [lang, setLangState] = useState<AppLanguage>(initialLang);
+  void initialLang;
+  const [lang, setLangState] = useState<AppLanguage>(RUNTIME_LANGUAGE);
 
   const setLang = (value: AppLanguage) => {
-    setLangState(value);
-    document.cookie = `${LANGUAGE_COOKIE}=${value}; Path=/; Max-Age=31536000; SameSite=Lax`;
+    void value;
+    setLangState(RUNTIME_LANGUAGE);
+    document.cookie = `${LANGUAGE_COOKIE}=${RUNTIME_LANGUAGE}; Path=/; Max-Age=31536000; SameSite=Lax`;
   };
 
   const contextValue = useMemo(

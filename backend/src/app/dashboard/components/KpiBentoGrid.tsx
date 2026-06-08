@@ -14,6 +14,15 @@ interface KpiCardData {
   colSpan?: string;
 }
 
+type DashboardSnapshot = {
+  activeUsers: number;
+  activeSubscriptions: number;
+  mrr: number;
+  latestPayments: Array<{ amount: number; currency: string; status: string }>;
+  ai: { status: string };
+  infrastructure: { criticalErrors: number };
+};
+
 function TrendArrow({ direction }: { direction: 'up' | 'down' | 'neutral' }) {
   if (direction === 'up')
     return (
@@ -161,12 +170,47 @@ const variantStyles: Record<KpiCardData['variant'], { card: string; icon: string
     },
   };
 
-export default function KpiBentoGrid() {
+export default function KpiBentoGrid({ snapshot }: { snapshot: DashboardSnapshot | null }) {
+  const liveKpis = snapshot
+    ? [
+        {
+          ...kpiData[0],
+          label: 'Active Users',
+          value: String(snapshot.activeUsers),
+          subValue: 'superadmin scope',
+          trendLabel: 'Live from API',
+          href: '/admin/settings',
+        },
+        {
+          ...kpiData[1],
+          label: 'Active Subscriptions',
+          value: String(snapshot.activeSubscriptions),
+          subValue: 'Stripe synced snapshot',
+          href: '/admin/settings',
+        },
+        {
+          ...kpiData[2],
+          label: 'MRR',
+          value: `$${snapshot.mrr}`,
+          subValue: 'Monthly recurring revenue',
+          href: '/admin/settings',
+        },
+        {
+          ...kpiData[3],
+          label: 'Critical Errors',
+          value: String(snapshot.infrastructure.criticalErrors),
+          subValue: `AI status: ${snapshot.ai.status}`,
+          trendLabel: 'Live from logs',
+          href: '/admin/settings',
+        },
+      ]
+    : kpiData;
+
   return (
     // Grid plan: 4 cards → grid-cols-4 → row 1: kpi-intolerances (1 col) + kpi-intensity (2 col) + kpi-streak (1 col)
     // row 2: kpi-guidance fills naturally
     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-      {kpiData.map((kpi) => {
+      {liveKpis.map((kpi) => {
         const styles = variantStyles[kpi.variant];
         const content = (
           <div

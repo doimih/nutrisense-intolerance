@@ -166,9 +166,11 @@ export default function MonitoringPage() {
   const today = new Date().toISOString().split("T")[0];
   const [form, setForm] = useState({
     date: today,
+    mealTime: "",
     consumedFoodsText: "",
     symptoms: [] as Symptom[],
     symptomsIntensity: 0,
+    reactionLatencyMinutes: "",
     wellbeing: 3 as WellbeingLevel,
     notes: "",
   });
@@ -204,9 +206,14 @@ export default function MonitoringPage() {
     try {
       const entry = await addMonitoringEntry({
         date: form.date,
+        mealTime: form.mealTime || undefined,
         consumedFoods: foods,
         symptoms: form.symptoms,
         symptomsIntensity: form.symptoms.length > 0 ? form.symptomsIntensity : 0,
+        reactionLatencyMinutes:
+          form.symptoms.length > 0 && form.reactionLatencyMinutes
+            ? Number(form.reactionLatencyMinutes)
+            : null,
         wellbeing: form.wellbeing,
         notes: form.notes,
       });
@@ -215,15 +222,18 @@ export default function MonitoringPage() {
       setShowForm(false);
       setForm({
         date: today,
+        mealTime: "",
         consumedFoodsText: "",
         symptoms: [],
         symptomsIntensity: 0,
+        reactionLatencyMinutes: "",
         wellbeing: 3,
         notes: "",
       });
       setTimeout(() => setSuccess(false), 3000);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : isRo ? "Eroare la salvare." : "Save failed.");
+      void err;
+      setError(isRo ? "Eroare la salvare." : "Save failed.");
     } finally {
       setSaving(false);
     }
@@ -293,6 +303,17 @@ export default function MonitoringPage() {
               />
             </FormField>
 
+            <FormField
+              label={isRo ? "Ora mesei" : "Meal time"}
+              hint={isRo ? "Optional, dar util pentru corelatii" : "Optional, but useful for correlations"}
+            >
+              <Input
+                type="time"
+                value={form.mealTime}
+                onChange={(e) => setForm({ ...form, mealTime: e.target.value })}
+              />
+            </FormField>
+
             {/* Foods */}
             <FormField
               label={isRo ? "Alimente consumate" : "Consumed foods"}
@@ -335,25 +356,49 @@ export default function MonitoringPage() {
 
             {/* Intensity (only if symptoms) */}
             {form.symptoms.length > 0 && (
-              <FormField
-                label={`${isRo ? "Intensitate simptome" : "Symptom intensity"}: ${form.symptomsIntensity}/10`}
-              >
-                <input
-                  type="range"
-                  min={1}
-                  max={10}
-                  value={form.symptomsIntensity}
-                  onChange={(e) =>
-                    setForm({ ...form, symptomsIntensity: Number(e.target.value) })
+              <>
+                <FormField
+                  label={`${isRo ? "Intensitate simptome" : "Symptom intensity"}: ${form.symptomsIntensity}/10`}
+                >
+                  <input
+                    type="range"
+                    min={1}
+                    max={10}
+                    title={isRo ? "Intensitate simptome" : "Symptom intensity"}
+                    aria-label={isRo ? "Intensitate simptome" : "Symptom intensity"}
+                    value={form.symptomsIntensity}
+                    onChange={(e) =>
+                      setForm({ ...form, symptomsIntensity: Number(e.target.value) })
+                    }
+                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-red-500"
+                  />
+                  <div className="flex justify-between text-xs text-slate-400 mt-1">
+                    <span>{isRo ? "Usor" : "Mild"}</span>
+                    <span>{isRo ? "Moderat" : "Moderate"}</span>
+                    <span>{isRo ? "Sever" : "Severe"}</span>
+                  </div>
+                </FormField>
+
+                <FormField
+                  label={isRo ? "Latență reacție (minute)" : "Reaction latency (minutes)"}
+                  hint={
+                    isRo
+                      ? "Timp aproximativ pana la aparitia simptomelor"
+                      : "Approximate time until symptoms appeared"
                   }
-                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-red-500"
-                />
-                <div className="flex justify-between text-xs text-slate-400 mt-1">
-                  <span>{isRo ? "Usor" : "Mild"}</span>
-                  <span>{isRo ? "Moderat" : "Moderate"}</span>
-                  <span>{isRo ? "Sever" : "Severe"}</span>
-                </div>
-              </FormField>
+                >
+                  <Input
+                    type="number"
+                    min={0}
+                    max={1440}
+                    value={form.reactionLatencyMinutes}
+                    onChange={(e) =>
+                      setForm({ ...form, reactionLatencyMinutes: e.target.value })
+                    }
+                    placeholder={isRo ? "Ex: 45" : "Ex: 45"}
+                  />
+                </FormField>
+              </>
             )}
 
             {/* Wellbeing */}

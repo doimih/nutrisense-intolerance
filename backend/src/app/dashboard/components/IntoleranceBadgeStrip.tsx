@@ -22,7 +22,7 @@ export default function IntoleranceBadgeStrip() {
     <div className="card p-5 h-full flex flex-col">
       <div className="flex items-center justify-between mb-4">
         <h2 className="section-header">Your Intolerances</h2>
-        <Link href="/profile" className="text-xs font-semibold text-primary hover:underline">
+        <Link href="/admin/settings" className="text-xs font-semibold text-primary hover:underline">
           Manage
         </Link>
       </div>

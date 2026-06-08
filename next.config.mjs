@@ -22,6 +22,13 @@ const contentSecurityPolicy = [
 const nextConfig = {
   reactStrictMode: true,
   output: "standalone",
+  webpack(config, { dev }) {
+    if (dev) {
+      // Prevent flaky dev cache corruption on Windows that breaks CSS/chunk loading.
+      config.cache = false;
+    }
+    return config;
+  },
   async headers() {
     return [
       {

@@ -1,0 +1,403 @@
+{
+  "history": [
+    {
+      "id": "gh_1780917529030_o50rj2",
+      "userEmail": "design@doimih.net",
+      "generatedAt": "2026-06-08T11:18:49.030Z",
+      "source": "ai",
+      "requestFingerprint": "4229fc34826544cd5f66b741ff892ccdaf01100af45ceb4fb6fda27a550fe62e",
+      "prompt": "SYSTEM: You generate non-medical food sensitivity guidance.\nRULES: no diagnosis, no treatment, no drugs, no supplements, no restrictive diets, no absolutes.\nLANG: ro\nSUBSCRIPTION_TIER: new\nDETAIL_LEVEL: detailed\nDIETARY_PREFERENCE: normal\nINTOLERANCES: none\nMONITORING_ENTRIES:\n{\"date\":\"2024-06-01\",\"hour\":\"13:20\",\"foods\":[\"Salată cu ton\",\"Pâine fără gluten\",\"Mere\"],\"symptoms\":[\"balonare\"],\"intensity\":3,\"latency\":60}\n{\"date\":\"2024-05-30\",\"hour\":\"12:40\",\"foods\":[\"Orez cu legume\",\"Pui la grătar\",\"Portocală\"],\"symptoms\":[],\"intensity\":0,\"latency\":null}\n{\"date\":\"2024-05-28\",\"hour\":\"19:10\",\"foods\":[\"Pizza (conținea urme de lactoză)\",\"Suc de portocale\"],\"symptoms\":[\"balonare\",\"dureri_abdominale\",\"greata\"],\"intensity\":7,\"latency\":45}\nOUTPUT_SCHEMA: recommendedFoods[], avoidFoods[], mealExamples[], generalTips[], disclaimer",
+      "monitoringEntries": [
+        {
+          "date": "2024-06-01",
+          "hour": "13:20",
+          "consumedFoods": [
+            "Salată cu ton",
+            "Pâine fără gluten",
+            "Mere"
+          ],
+          "symptoms": [
+            "balonare"
+          ],
+          "symptomsIntensity": 3,
+          "reactionLatencyMinutes": 60,
+          "notes": "Ușoară balonare după masă, a dispărut în aproximativ o oră."
+        },
+        {
+          "date": "2024-05-30",
+          "hour": "12:40",
+          "consumedFoods": [
+            "Orez cu legume",
+            "Pui la grătar",
+            "Portocală"
+          ],
+          "symptoms": [],
+          "symptomsIntensity": 0,
+          "reactionLatencyMinutes": null,
+          "notes": "Zi excelentă, fără nicio reacție."
+        },
+        {
+          "date": "2024-05-28",
+          "hour": "19:10",
+          "consumedFoods": [
+            "Pizza (conținea urme de lactoză)",
+            "Suc de portocale"
+          ],
+          "symptoms": [
+            "balonare",
+            "dureri_abdominale",
+            "greata"
+          ],
+          "symptomsIntensity": 7,
+          "reactionLatencyMinutes": 45,
+          "notes": "Reacție clară la pizza. Evit în viitor."
+        }
+      ],
+      "result": {
+        "id": "guidance_1780917529028_3udid1",
+        "generatedAt": "2026-06-08T11:18:49.028Z",
+        "intolerances": [],
+        "dietaryPreference": "normal",
+        "detailLevel": "detailed",
+        "recommendedFoods": [
+          "orez cu legume",
+          "pui la grătar",
+          "portocală"
+        ],
+        "avoidFoods": [
+          "pizza (conținea urme de lactoză)",
+          "suc de portocale",
+          "salată cu ton",
+          "pâine fără gluten",
+          "mere"
+        ],
+        "mealExamples": [
+          {
+            "name": "Masa 1 - varianta echilibrata",
+            "ingredients": [
+              "orez cu legume",
+              "pui la grătar",
+              "portocală"
+            ],
+            "notes": "Portie moderata, ritm lent, observatie simptome in primele 120 minute."
+          },
+          {
+            "name": "Masa 2 - varianta usoara",
+            "ingredients": [
+              "cartof dulce",
+              "salata verde",
+              "peste"
+            ],
+            "notes": "Evita combinatiile multiple noi in aceeasi zi."
+          }
+        ],
+        "generalTips": [
+          "Prioritizeaza mesele simple cu putine ingrediente noi.",
+          "Observa reactiile intarziate la 2h, 6h si 24h."
+        ],
+        "disclaimer": "Aceste recomandari descriu probabilitati si corelatii observate in jurnal si nu reprezinta sfat medical.",
+        "warnings": [
+          "Corelatiile sunt orientative si depind de consecventa jurnalului.",
+          "Testeaza ajustarile in pasi mici, pe intervale de 2-3 zile."
+        ],
+        "source": "ai"
+      }
+    },
+    {
+      "id": "gh_1780916087571_r0j2uu",
+      "userEmail": "design@doimih.net",
+      "generatedAt": "2026-06-08T10:54:47.571Z",
+      "source": "ai",
+      "requestFingerprint": "4229fc34826544cd5f66b741ff892ccdaf01100af45ceb4fb6fda27a550fe62e",
+      "prompt": "SYSTEM: You generate non-medical food sensitivity guidance.\nRULES: no diagnosis, no treatment, no drugs, no supplements, no restrictive diets, no absolutes.\nLANG: ro\nSUBSCRIPTION_TIER: new\nDETAIL_LEVEL: detailed\nDIETARY_PREFERENCE: normal\nINTOLERANCES: none\nMONITORING_ENTRIES:\n{\"date\":\"2024-06-01\",\"hour\":\"13:20\",\"foods\":[\"Salată cu ton\",\"Pâine fără gluten\",\"Mere\"],\"symptoms\":[\"balonare\"],\"intensity\":3,\"latency\":60}\n{\"date\":\"2024-05-30\",\"hour\":\"12:40\",\"foods\":[\"Orez cu legume\",\"Pui la grătar\",\"Portocală\"],\"symptoms\":[],\"intensity\":0,\"latency\":null}\n{\"date\":\"2024-05-28\",\"hour\":\"19:10\",\"foods\":[\"Pizza (conținea urme de lactoză)\",\"Suc de portocale\"],\"symptoms\":[\"balonare\",\"dureri_abdominale\",\"greata\"],\"intensity\":7,\"latency\":45}\nOUTPUT_SCHEMA: recommendedFoods[], avoidFoods[], mealExamples[], generalTips[], disclaimer",
+      "monitoringEntries": [
+        {
+          "date": "2024-06-01",
+          "hour": "13:20",
+          "consumedFoods": [
+            "Salată cu ton",
+            "Pâine fără gluten",
+            "Mere"
+          ],
+          "symptoms": [
+            "balonare"
+          ],
+          "symptomsIntensity": 3,
+          "reactionLatencyMinutes": 60,
+          "notes": "Ușoară balonare după masă, a dispărut în aproximativ o oră."
+        },
+        {
+          "date": "2024-05-30",
+          "hour": "12:40",
+          "consumedFoods": [
+            "Orez cu legume",
+            "Pui la grătar",
+            "Portocală"
+          ],
+          "symptoms": [],
+          "symptomsIntensity": 0,
+          "reactionLatencyMinutes": null,
+          "notes": "Zi excelentă, fără nicio reacție."
+        },
+        {
+          "date": "2024-05-28",
+          "hour": "19:10",
+          "consumedFoods": [
+            "Pizza (conținea urme de lactoză)",
+            "Suc de portocale"
+          ],
+          "symptoms": [
+            "balonare",
+            "dureri_abdominale",
+            "greata"
+          ],
+          "symptomsIntensity": 7,
+          "reactionLatencyMinutes": 45,
+          "notes": "Reacție clară la pizza. Evit în viitor."
+        }
+      ],
+      "result": {
+        "id": "guidance_1780916087570_plnvf3",
+        "generatedAt": "2026-06-08T10:54:47.570Z",
+        "intolerances": [],
+        "dietaryPreference": "normal",
+        "detailLevel": "detailed",
+        "recommendedFoods": [
+          "orez cu legume",
+          "pui la grătar",
+          "portocală"
+        ],
+        "avoidFoods": [
+          "pizza (conținea urme de lactoză)",
+          "suc de portocale",
+          "salată cu ton",
+          "pâine fără gluten",
+          "mere"
+        ],
+        "mealExamples": [
+          {
+            "name": "Masa 1 - varianta echilibrata",
+            "ingredients": [
+              "orez cu legume",
+              "pui la grătar",
+              "portocală"
+            ],
+            "notes": "Portie moderata, ritm lent, observatie simptome in primele 120 minute."
+          },
+          {
+            "name": "Masa 2 - varianta usoara",
+            "ingredients": [
+              "cartof dulce",
+              "salata verde",
+              "peste"
+            ],
+            "notes": "Evita combinatiile multiple noi in aceeasi zi."
+          }
+        ],
+        "generalTips": [
+          "Prioritizeaza mesele simple cu putine ingrediente noi.",
+          "Observa reactiile intarziate la 2h, 6h si 24h."
+        ],
+        "disclaimer": "Aceste recomandari descriu probabilitati si corelatii observate in jurnal si nu reprezinta sfat medical.",
+        "warnings": [
+          "Corelatiile sunt orientative si depind de consecventa jurnalului.",
+          "Testeaza ajustarile in pasi mici, pe intervale de 2-3 zile."
+        ],
+        "source": "ai"
+      }
+    },
+    {
+      "id": "gh_1780915929677_4c7two",
+      "userEmail": "design@doimih.net",
+      "generatedAt": "2026-06-08T10:52:09.677Z",
+      "source": "ai",
+      "requestFingerprint": "4229fc34826544cd5f66b741ff892ccdaf01100af45ceb4fb6fda27a550fe62e",
+      "prompt": "SYSTEM: You generate non-medical food sensitivity guidance.\nRULES: no diagnosis, no treatment, no drugs, no supplements, no restrictive diets, no absolutes.\nLANG: ro\nSUBSCRIPTION_TIER: new\nDETAIL_LEVEL: detailed\nDIETARY_PREFERENCE: normal\nINTOLERANCES: none\nMONITORING_ENTRIES:\n{\"date\":\"2024-06-01\",\"hour\":\"13:20\",\"foods\":[\"Salată cu ton\",\"Pâine fără gluten\",\"Mere\"],\"symptoms\":[\"balonare\"],\"intensity\":3,\"latency\":60}\n{\"date\":\"2024-05-30\",\"hour\":\"12:40\",\"foods\":[\"Orez cu legume\",\"Pui la grătar\",\"Portocală\"],\"symptoms\":[],\"intensity\":0,\"latency\":null}\n{\"date\":\"2024-05-28\",\"hour\":\"19:10\",\"foods\":[\"Pizza (conținea urme de lactoză)\",\"Suc de portocale\"],\"symptoms\":[\"balonare\",\"dureri_abdominale\",\"greata\"],\"intensity\":7,\"latency\":45}\nOUTPUT_SCHEMA: recommendedFoods[], avoidFoods[], mealExamples[], generalTips[], disclaimer",
+      "monitoringEntries": [
+        {
+          "date": "2024-06-01",
+          "hour": "13:20",
+          "consumedFoods": [
+            "Salată cu ton",
+            "Pâine fără gluten",
+            "Mere"
+          ],
+          "symptoms": [
+            "balonare"
+          ],
+          "symptomsIntensity": 3,
+          "reactionLatencyMinutes": 60,
+          "notes": "Ușoară balonare după masă, a dispărut în aproximativ o oră."
+        },
+        {
+          "date": "2024-05-30",
+          "hour": "12:40",
+          "consumedFoods": [
+            "Orez cu legume",
+            "Pui la grătar",
+            "Portocală"
+          ],
+          "symptoms": [],
+          "symptomsIntensity": 0,
+          "reactionLatencyMinutes": null,
+          "notes": "Zi excelentă, fără nicio reacție."
+        },
+        {
+          "date": "2024-05-28",
+          "hour": "19:10",
+          "consumedFoods": [
+            "Pizza (conținea urme de lactoză)",
+            "Suc de portocale"
+          ],
+          "symptoms": [
+            "balonare",
+            "dureri_abdominale",
+            "greata"
+          ],
+          "symptomsIntensity": 7,
+          "reactionLatencyMinutes": 45,
+          "notes": "Reacție clară la pizza. Evit în viitor."
+        }
+      ],
+      "result": {
+        "id": "guidance_1780915929672_c1mgnc",
+        "generatedAt": "2026-06-08T10:52:09.672Z",
+        "intolerances": [],
+        "dietaryPreference": "normal",
+        "detailLevel": "detailed",
+        "recommendedFoods": [
+          "orez cu legume",
+          "pui la grătar",
+          "portocală"
+        ],
+        "avoidFoods": [
+          "pizza (conținea urme de lactoză)",
+          "suc de portocale",
+          "salată cu ton",
+          "pâine fără gluten",
+          "mere"
+        ],
+        "mealExamples": [
+          {
+            "name": "Masa 1 - varianta echilibrata",
+            "ingredients": [
+              "orez cu legume",
+              "pui la grătar",
+              "portocală"
+            ],
+            "notes": "Portie moderata, ritm lent, observatie simptome in primele 120 minute."
+          },
+          {
+            "name": "Masa 2 - varianta usoara",
+            "ingredients": [
+              "cartof dulce",
+              "salata verde",
+              "peste"
+            ],
+            "notes": "Evita combinatiile multiple noi in aceeasi zi."
+          }
+        ],
+        "generalTips": [
+          "Prioritizeaza mesele simple cu putine ingrediente noi.",
+          "Observa reactiile intarziate la 2h, 6h si 24h."
+        ],
+        "disclaimer": "Aceste recomandari descriu probabilitati si corelatii observate in jurnal si nu reprezinta sfat medical.",
+        "warnings": [
+          "Corelatiile sunt orientative si depind de consecventa jurnalului.",
+          "Testeaza ajustarile in pasi mici, pe intervale de 2-3 zile."
+        ],
+        "source": "ai"
+      }
+    },
+    {
+      "id": "gh_1780914846442_m5ozex",
+      "userEmail": "qa+new+1780914845060@nutrisense.local",
+      "generatedAt": "2026-06-08T10:34:06.442Z",
+      "source": "ai",
+      "requestFingerprint": "a11c1d27fb73d434c8855042211db91f2e2bb96b3caea8e32907134be4ed6c37",
+      "prompt": "SYSTEM: You generate non-medical food sensitivity guidance.\nRULES: no diagnosis, no treatment, no drugs, no supplements, no restrictive diets, no absolutes.\nLANG: en\nSUBSCRIPTION_TIER: new\nDETAIL_LEVEL: detailed\nDIETARY_PREFERENCE: normal\nINTOLERANCES: lactoza,gluten\nMONITORING_ENTRIES:\n{\"date\":\"2026-06-08\",\"hour\":\"08:30\",\"foods\":[\"milk\",\"toast\",\"coffee\"],\"symptoms\":[\"balonare\"],\"intensity\":4,\"latency\":45}\n{\"date\":\"2026-06-08\",\"hour\":\"13:15\",\"foods\":[\"rice\",\"chicken\",\"salad\"],\"symptoms\":[],\"intensity\":0,\"latency\":null}\nOUTPUT_SCHEMA: recommendedFoods[], avoidFoods[], mealExamples[], generalTips[], disclaimer",
+      "monitoringEntries": [
+        {
+          "date": "2026-06-08",
+          "hour": "08:30",
+          "consumedFoods": [
+            "milk",
+            "toast",
+            "coffee"
+          ],
+          "symptoms": [
+            "balonare"
+          ],
+          "symptomsIntensity": 4,
+          "reactionLatencyMinutes": 45,
+          "notes": "Morning discomfort"
+        },
+        {
+          "date": "2026-06-08",
+          "hour": "13:15",
+          "consumedFoods": [
+            "rice",
+            "chicken",
+            "salad"
+          ],
+          "symptoms": [],
+          "symptomsIntensity": 0,
+          "reactionLatencyMinutes": null,
+          "notes": "No symptoms"
+        }
+      ],
+      "result": {
+        "id": "guidance_1780914846440_evqdsv",
+        "generatedAt": "2026-06-08T10:34:06.440Z",
+        "intolerances": [
+          "lactoza",
+          "gluten"
+        ],
+        "dietaryPreference": "normal",
+        "detailLevel": "detailed",
+        "recommendedFoods": [
+          "rice",
+          "chicken",
+          "salad"
+        ],
+        "avoidFoods": [
+          "white bread",
+          "whole milk",
+          "milk",
+          "toast",
+          "coffee"
+        ],
+        "mealExamples": [
+          {
+            "name": "Meal 1 - balanced option",
+            "ingredients": [
+              "rice",
+              "chicken",
+              "salad"
+            ],
+            "notes": "Moderate portion, slow pace, observe symptoms in the first 120 minutes."
+          },
+          {
+            "name": "Meal 2 - light option",
+            "ingredients": [
+              "sweet potato",
+              "green salad",
+              "fish"
+            ],
+            "notes": "Avoid introducing multiple new combinations on the same day."
+          }
+        ],
+        "generalTips": [
+          "Prioritize simple meals with few new ingredients.",
+          "Observe delayed reactions at 2h, 6h, and 24h."
+        ],
+        "disclaimer": "These recommendations describe probabilities and journal correlations and are not medical advice.",
+        "warnings": [
+          "Correlations are indicative and depend on journal consistency.",
+          "Test adjustments in small steps over 2-3 day windows."
+        ],
+        "source": "ai"
+      }
+    }
+  ]
+}

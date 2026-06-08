@@ -69,7 +69,8 @@ export default function ProfilePage() {
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : isRo ? "Salvare esuata." : "Save failed.");
+      void err;
+      setError(isRo ? "Salvare esuata." : "Save failed.");
     } finally {
       setSaving(false);
     }

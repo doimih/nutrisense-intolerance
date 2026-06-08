@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Sidebar from './Sidebar';
-import { AdminSession, clearAdminSession, loadAdminSession } from '@/lib/adminAuth';
+import type { AdminSession } from '@/lib/adminAuth';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -17,28 +17,45 @@ export default function AppLayout({ children, currentPath }: AppLayoutProps) {
   const router = useRouter();
 
   useEffect(() => {
-    const currentSession = loadAdminSession();
+    let active = true;
+    fetch('/api/superadmin/auth/session')
+      .then(async (response) => {
+        if (!active) return;
+        if (!response.ok) {
+          setSession(null);
+          setIsSessionChecked(true);
+          router.replace('/');
+          return;
+        }
 
-    if (!currentSession) {
-      setSession(null);
-      setIsSessionChecked(true);
-      router.replace('/');
-      return;
-    }
+        const payload = (await response.json()) as {
+          user: { id: string; name: string; email: string; role: 'superadmin' | 'admin' | 'user' };
+        };
 
-    if (currentSession.mustChangePassword) {
-      setSession(currentSession);
-      setIsSessionChecked(true);
-      router.replace('/change-password');
-      return;
-    }
+        setSession({
+          userId: payload.user.id,
+          name: payload.user.name,
+          email: payload.user.email,
+          role: payload.user.role,
+          mustChangePassword: false,
+          loggedInAt: new Date().toISOString(),
+        });
+        setIsSessionChecked(true);
+      })
+      .catch(() => {
+        if (!active) return;
+        setSession(null);
+        setIsSessionChecked(true);
+        router.replace('/');
+      });
 
-    setSession(currentSession);
-    setIsSessionChecked(true);
+    return () => {
+      active = false;
+    };
   }, [router]);
 
-  const handleSignOut = () => {
-    clearAdminSession();
+  const handleSignOut = async () => {
+    await fetch('/api/superadmin/auth/logout', { method: 'POST' });
     setSession(null);
     router.push('/');
   };
@@ -73,6 +90,7 @@ export default function AppLayout({ children, currentPath }: AppLayoutProps) {
         currentPath={currentPath}
         userName={session.name}
         userEmail={session.email}
+        userRole={session.role}
         onSignOut={handleSignOut}
       />
 

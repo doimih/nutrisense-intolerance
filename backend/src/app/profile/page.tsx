@@ -1,11 +1,5 @@
-import React from 'react';
-import AppLayout from '@/components/AppLayout';
-import ProfileContent from './components/ProfileContent';
+import { redirect } from 'next/navigation';
 
 export default function ProfilePage() {
-  return (
-    <AppLayout currentPath="/profile">
-      <ProfileContent />
-    </AppLayout>
-  );
+  redirect('/dashboard');
 }

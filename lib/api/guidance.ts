@@ -2,261 +2,276 @@ import type {
   GuidanceRequest,
   GuidanceResult,
   GuidanceHistoryEntry,
+  MonitoringContextItem,
+  MealExample,
 } from "@/types/guidance";
-import { INTOLERANCE_LABELS } from "@/types/profile";
+import { getIntoleranceLabel } from "@/lib/i18n/labels";
+import { listMonitoringEntries } from "@/lib/api/monitoring";
+import type { DietaryPreference, Intolerance } from "@/types/profile";
 
-function delay(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-const MOCK_GUIDANCE_DATA: Record<
-  string,
-  { recommended: string[]; avoid: string[] }
-> = {
-  lactoza: {
-    recommended: [
-      "Lapte vegetal (migdale, ovăz, soia, cocos)",
-      "Brânzeturi maturate (cantitate mică)",
-      "Iaurt fără lactoză",
-      "Fructe proaspete",
-      "Legume",
-      "Carne slabă",
-      "Pește",
-      "Ouă",
-      "Leguminoase",
-    ],
-    avoid: [
-      "Lapte de vacă, oaie, capră",
-      "Smântână și frișcă",
-      "Înghețată convențională",
-      "Brânzeturi moi proaspete",
-      "Unt în cantități mari",
-    ],
-  },
-  gluten: {
-    recommended: [
-      "Orez alb și brun",
-      "Quinoa",
-      "Porumb și mămăligă",
-      "Cartofi",
-      "Paste fără gluten",
-      "Pâine fără gluten (certificată)",
-      "Hrișcă",
-      "Mei",
-      "Tapioca",
-    ],
-    avoid: [
-      "Grâu (pâine, paste convenționale)",
-      "Orz și secară",
-      "Ovăz neatentat (contaminare încrucișată)",
-      "Bere convențională",
-      "Sosuri cu amidon de grâu",
-    ],
-  },
-  nuci: {
-    recommended: [
-      "Semințe de floarea soarelui",
-      "Semințe de dovleac",
-      "Semințe de susan",
-      "Fructe proaspete",
-      "Legume variate",
-    ],
-    avoid: [
-      "Migdale, caju, nuci, alune",
-      "Unt de arahide și alte paste din nuci",
-      "Produse de patiserie cu nuci",
-      "Granola cu nuci",
-    ],
-  },
-  histamina: {
-    recommended: [
-      "Carne proaspătă (nu procesată)",
-      "Pește proaspăt (nu conservat)",
-      "Ouă (albuș cu moderație)",
-      "Cereale: orez, porumb, mei",
-      "Legume: morcovi, broccoli, cartofi dulci",
-      "Fructe cu histamină redusă: mere, pere, struguri",
-    ],
-    avoid: [
-      "Brânzeturi maturate",
-      "Vin roșu și bere",
-      "Roșii, spanac, vinete",
-      "Ciocolată și cacao",
-      "Alimente fermentate (varză murată, miso)",
-      "Conserve de pește",
-    ],
-  },
-  fodmap: {
-    recommended: [
-      "Legume: morcovi, castraveți, salată verde, dovlecei",
-      "Fructe: banane, căpșuni, portocale, kiwi",
-      "Carne și pește",
-      "Ouă",
-      "Lactate fără lactoză",
-      "Orez, quinoa, ovăz (porțio mică)",
-    ],
-    avoid: [
-      "Ceapă și usturoi",
-      "Fasole, linte, năut",
-      "Mere, pere, mango",
-      "Lactate cu lactoză",
-      "Grâu în cantități mari",
-      "Ciuperci",
-    ],
-  },
+type GuidanceApiError = {
+  error?: string;
 };
 
-function buildGuidance(req: GuidanceRequest): GuidanceResult {
-  const recommended = new Set<string>();
-  const avoid = new Set<string>();
+type GuidanceApiResponse = {
+  result?: GuidanceResult;
+};
 
-  req.intolerances.forEach((intol) => {
-    const data = MOCK_GUIDANCE_DATA[intol];
-    if (data) {
-      data.recommended.forEach((f) => recommended.add(f));
-      data.avoid.forEach((f) => avoid.add(f));
-    }
-  });
+type HistoryApiResponse = {
+  history?: GuidanceHistoryEntry[];
+};
 
-  // Default foods if no specific intolerance selected
-  if (req.intolerances.length === 0) {
-    ["Legume variate", "Fructe proaspete", "Cereale integrale", "Proteine slabe"].forEach(
-      (f) => recommended.add(f)
-    );
+type ExportApiResponse = {
+  exportedAt?: string;
+  history?: GuidanceResult[];
+};
+
+const inFlight = new Map<string, Promise<GuidanceResult>>();
+
+function getCurrentLang(): "ro" | "en" {
+  return "ro";
+}
+
+function toHour(value?: string): string {
+  if (!value) return "unknown";
+  if (value.includes("T")) {
+    const hour = value.split("T")[1]?.slice(0, 5);
+    return hour || "unknown";
+  }
+  return value.slice(0, 5);
+}
+
+function buildMonitoringContextEntries(entries: Awaited<ReturnType<typeof listMonitoringEntries>>): MonitoringContextItem[] {
+  return entries.slice(0, 60).map((entry) => ({
+    date: entry.date,
+    hour: toHour(entry.mealTime || entry.createdAt),
+    consumedFoods: entry.consumedFoods,
+    symptoms: entry.symptoms,
+    symptomsIntensity: entry.symptomsIntensity,
+    reactionLatencyMinutes:
+      typeof entry.reactionLatencyMinutes === "number" ? entry.reactionLatencyMinutes : null,
+    notes: entry.notes,
+  }));
+}
+
+function isStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every((item) => typeof item === "string");
+}
+
+function isMealExample(value: unknown): value is MealExample {
+  if (!value || typeof value !== "object") return false;
+  const candidate = value as Record<string, unknown>;
+  return (
+    typeof candidate.name === "string" &&
+    isStringArray(candidate.ingredients) &&
+    (typeof candidate.notes === "string" || typeof candidate.notes === "undefined")
+  );
+}
+
+function isDietaryPreference(value: unknown): value is DietaryPreference {
+  return (
+    value === "normal" ||
+    value === "vegetarian" ||
+    value === "vegan" ||
+    value === "keto" ||
+    value === "low-fodmap" ||
+    value === "mediterranean" ||
+    value === "dairy-free"
+  );
+}
+
+function isIntolerance(value: unknown): value is Intolerance {
+  return (
+    value === "gluten" ||
+    value === "lactoza" ||
+    value === "nuci" ||
+    value === "histamina" ||
+    value === "fructoza" ||
+    value === "sulfiti" ||
+    value === "fodmap"
+  );
+}
+
+function validateGuidanceResult(value: unknown): GuidanceResult {
+  if (!value || typeof value !== "object") {
+    throw new Error("Invalid AI response payload.");
   }
 
-  const mealExamples = [
-    {
-      name: "Mic dejun echilibrat",
-      ingredients: [
-        req.intolerances.includes("lactoza")
-          ? "Porridge cu lapte de ovăz"
-          : "Iaurt cu fructe de pădure",
-        "Fructe proaspete de sezon",
-        "Semințe de chia sau in",
-      ],
-      notes: "Bogat în fibre, potrivit pentru dimineți active.",
-    },
-    {
-      name: "Prânz nutritiv",
-      ingredients: [
-        req.intolerances.includes("gluten") ? "Orez brun cu legume" : "Paste integrale",
-        "Piept de pui sau tofu la grătar",
-        "Salată verde cu dressing de lămâie",
-      ],
-      notes: "Echilibrat în macronutrienți, ușor de preparat.",
-    },
-    {
-      name: "Cină ușoară",
-      ingredients: [
-        "Supă cremă de legume (fără ingrediente alergene)",
-        "Pâine fără gluten sau biscuiți din orez",
-        "O porție mică de proteină slabă",
-      ],
-      notes: "Ușor de digerat, ideal înainte de somn.",
-    },
-  ];
+  const candidate = value as Record<string, unknown>;
+  const requiredStringFields = ["id", "generatedAt", "disclaimer"];
+  for (const field of requiredStringFields) {
+    if (typeof candidate[field] !== "string") {
+      throw new Error(`Invalid AI response: missing field ${field}.`);
+    }
+  }
 
-  const tips =
-    req.detailLevel === "basic"
-      ? [
-          "Citește întotdeauna etichetele produselor alimentare.",
-          "Introduce alimentele noi treptat pentru a observa reacțiile.",
-        ]
-      : req.detailLevel === "detailed"
-      ? [
-          "Citește întotdeauna etichetele, inclusiv mențiunile de tip 'poate conține urme de...'.",
-          "Introduce alimentele noi câte unul pe rând, la 3–4 zile distanță.",
-          "Ține un jurnal alimentar pentru a corela simptomele cu alimentele.",
-          "Consultă un nutriționist pentru un plan personalizat.",
-        ]
-      : [
-          "Citește etichetele produselor, inclusiv ingredientele ascunse.",
-          "Introduce alimentele noi câte unul, la 3–4 zile distanță.",
-          "Ține un jurnal alimentar detaliat, notând orele meselor și simptomele.",
-          "Consultă un nutriționist sau alergolog pentru evaluare profesionistă.",
-          "Atenție la contaminarea încrucișată la prepararea mâncării.",
-          "Hidratarea adecvată (1.5–2L apă/zi) ajută digestia.",
-          "Gătitul la domiciliu reduce riscul expunerii la alergeni ascunși.",
-        ];
+  if (!isStringArray(candidate.recommendedFoods)) {
+    throw new Error("Invalid AI response: recommendedFoods must be string[].");
+  }
+  if (!isStringArray(candidate.avoidFoods)) {
+    throw new Error("Invalid AI response: avoidFoods must be string[].");
+  }
+  if (!Array.isArray(candidate.mealExamples) || !candidate.mealExamples.every(isMealExample)) {
+    throw new Error("Invalid AI response: mealExamples must match expected schema.");
+  }
+  if (!isStringArray(candidate.generalTips)) {
+    throw new Error("Invalid AI response: generalTips must be string[].");
+  }
+  if (!Array.isArray(candidate.intolerances) || !candidate.intolerances.every((x) => typeof x === "string")) {
+    throw new Error("Invalid AI response: intolerances must be string[].");
+  }
+  if (!candidate.intolerances.every(isIntolerance)) {
+    throw new Error("Invalid AI response: intolerances contain unsupported values.");
+  }
+  if (!isDietaryPreference(candidate.dietaryPreference)) {
+    throw new Error("Invalid AI response: missing dietaryPreference.");
+  }
+
+  const detailLevel =
+    candidate.detailLevel === "basic" ||
+    candidate.detailLevel === "detailed" ||
+    candidate.detailLevel === "comprehensive"
+      ? candidate.detailLevel
+      : "detailed";
+
+  const source =
+    candidate.source === "ai" || candidate.source === "fallback"
+      ? candidate.source
+      : undefined;
+
+  const warnings = isStringArray(candidate.warnings) ? candidate.warnings : undefined;
 
   return {
-    id: `guidance_${Date.now()}`,
-    generatedAt: new Date().toISOString(),
-    intolerances: req.intolerances,
-    dietaryPreference: req.dietaryPreference,
-    recommendedFoods: Array.from(recommended),
-    avoidFoods: Array.from(avoid),
-    mealExamples,
-    generalTips: tips,
-    disclaimer:
-      "Aceste recomandări au caracter informativ general și nu constituie sfaturi medicale. Consultați un medic sau nutriționist înainte de a face modificări semnificative în alimentație.",
+    id: String(candidate.id),
+    generatedAt: String(candidate.generatedAt),
+    intolerances: candidate.intolerances,
+    dietaryPreference: candidate.dietaryPreference,
+    detailLevel,
+    recommendedFoods: candidate.recommendedFoods,
+    avoidFoods: candidate.avoidFoods,
+    mealExamples: candidate.mealExamples,
+    generalTips: candidate.generalTips,
+    disclaimer: String(candidate.disclaimer),
+    warnings,
+    source,
   };
 }
 
-export async function generateGuidance(
-  req: GuidanceRequest
-): Promise<GuidanceResult> {
-  await delay(1200);
+function requestKey(input: GuidanceRequest): string {
+  const sortedIntolerances = [...input.intolerances].sort();
+  return JSON.stringify({
+    intolerances: sortedIntolerances,
+    dietaryPreference: input.dietaryPreference,
+    detailLevel: input.detailLevel,
+  });
+}
 
-  const result = buildGuidance(req);
+export async function generateGuidance(req: GuidanceRequest): Promise<GuidanceResult> {
+  const key = requestKey(req);
+  const existing = inFlight.get(key);
+  if (existing) return existing;
 
-  // Store in history
-  if (typeof window !== "undefined") {
-    const history: GuidanceHistoryEntry[] = JSON.parse(
-      localStorage.getItem("ns_guidance_history") || "[]"
-    );
-    const entry: GuidanceHistoryEntry = {
-      id: result.id,
-      generatedAt: result.generatedAt,
-      intolerances: result.intolerances,
-      dietaryPreference: result.dietaryPreference,
-      summary: `Recomandări pentru: ${result.intolerances.map((i) => INTOLERANCE_LABELS[i]).join(", ") || "fără restricții specifice"}`,
+  const promise = (async () => {
+    const monitoringEntries = await listMonitoringEntries();
+    const body: GuidanceRequest = {
+      ...req,
+      monitoringEntries: buildMonitoringContextEntries(monitoringEntries),
     };
-    history.unshift(entry);
-    localStorage.setItem("ns_guidance_history", JSON.stringify(history.slice(0, 20)));
-    localStorage.setItem(`ns_guidance_${result.id}`, JSON.stringify(result));
-  }
 
-  return result;
+    const response = await fetch("/api/guidance", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
+
+    const payload = (await response.json()) as GuidanceApiResponse & GuidanceApiError;
+    if (!response.ok) {
+      throw new Error(payload.error ?? "Could not process AI guidance.");
+    }
+
+    return validateGuidanceResult(payload.result);
+  })();
+
+  inFlight.set(key, promise);
+
+  try {
+    return await promise;
+  } finally {
+    inFlight.delete(key);
+  }
 }
 
 export async function getHistory(): Promise<GuidanceHistoryEntry[]> {
-  await delay(400);
+  const response = await fetch("/api/guidance/history", {
+    method: "GET",
+  });
 
-  if (typeof window !== "undefined") {
-    const stored = localStorage.getItem("ns_guidance_history");
-    if (stored) return JSON.parse(stored) as GuidanceHistoryEntry[];
+  const payload = (await response.json()) as HistoryApiResponse & GuidanceApiError;
+  if (!response.ok) {
+    throw new Error(payload.error ?? "Could not load guidance history.");
   }
 
-  // Return mock history
-  return [
-    {
-      id: "guidance_mock_001",
-      generatedAt: "2024-05-28T14:30:00Z",
-      intolerances: ["lactoza", "gluten"],
-      dietaryPreference: "normal",
-      summary: "Recomandări pentru: Lactoză, Gluten",
-    },
-    {
-      id: "guidance_mock_002",
-      generatedAt: "2024-05-20T09:15:00Z",
-      intolerances: ["histamina"],
-      dietaryPreference: "normal",
-      summary: "Recomandări pentru: Histamină",
-    },
-  ];
+  if (!Array.isArray(payload.history)) return [];
+  return payload.history;
 }
 
-export async function getGuidanceById(
-  id: string
-): Promise<GuidanceResult | null> {
-  await delay(300);
+export async function getGuidanceById(id: string): Promise<GuidanceResult | null> {
+  const response = await fetch(`/api/guidance/history/${encodeURIComponent(id)}`, {
+    method: "GET",
+  });
 
-  if (typeof window !== "undefined") {
-    const stored = localStorage.getItem(`ns_guidance_${id}`);
-    if (stored) return JSON.parse(stored) as GuidanceResult;
+  if (response.status === 404) return null;
+
+  const payload = (await response.json()) as { result?: GuidanceResult } & GuidanceApiError;
+  if (!response.ok) {
+    throw new Error(payload.error ?? "Could not load guidance result.");
   }
 
-  return null;
+  return payload.result ? validateGuidanceResult(payload.result) : null;
+}
+
+export async function deleteGuidanceHistory(id?: string): Promise<void> {
+  const target = id
+    ? `/api/guidance/history?id=${encodeURIComponent(id)}`
+    : "/api/guidance/history";
+
+  const response = await fetch(target, { method: "DELETE" });
+  const payload = (await response.json()) as GuidanceApiError;
+
+  if (!response.ok) {
+    throw new Error(payload.error ?? "Could not delete guidance history.");
+  }
+}
+
+export async function exportGuidanceHistory(): Promise<{
+  exportedAt: string;
+  history: GuidanceResult[];
+}> {
+  const response = await fetch("/api/guidance/export", { method: "GET" });
+  const payload = (await response.json()) as ExportApiResponse & GuidanceApiError;
+
+  if (!response.ok) {
+    throw new Error(payload.error ?? "Could not export guidance history.");
+  }
+
+  return {
+    exportedAt: payload.exportedAt || new Date().toISOString(),
+    history: Array.isArray(payload.history) ? payload.history : [],
+  };
+}
+
+export function summarizeGuidance(entry: GuidanceHistoryEntry): string {
+  const lang = getCurrentLang();
+  const labels = entry.intolerances.map((intol) => getIntoleranceLabel(intol, lang));
+  if (labels.length === 0) {
+    return lang === "ro"
+      ? "Recomandari fara restrictii specifice"
+      : "Guidance with no specific restrictions";
+  }
+
+  return lang === "ro"
+    ? `Recomandari pentru: ${labels.join(", ")}`
+    : `Guidance for: ${labels.join(", ")}`;
 }

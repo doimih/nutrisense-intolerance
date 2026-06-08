@@ -18,6 +18,7 @@
     "lint": "next lint",
     "type-check": "tsc --noEmit",
     "test:unit": "vitest run",
+    "test:e2e:user-ai": "node scripts/user-ai-e2e.mjs",
     "test:smoke": "node scripts/qa-smoke.mjs",
     "qa": "npm run lint && npm run type-check && npm run build:all && npm run test:unit && npm run test:smoke"
   },
@@ -26,7 +27,8 @@
     "lucide-react": "^0.395.0",
     "next": "^14.2.35",
     "react": "^18",
-    "react-dom": "^18"
+    "react-dom": "^18",
+    "stripe": "^22.2.0"
   },
   "devDependencies": {
     "@types/node": "^22.19.20",

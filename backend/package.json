@@ -39,14 +39,15 @@
     "warning": "🚨 CRITICAL: DO NOT REMOVE OR MODIFY ABOVE DEPENDENCIES - Required for Next.js 15 TypeScript app functionality"
   },
   "scripts": {
-    "dev": "next dev -p 4028",
+    "dev": "cross-env NEXT_DISABLE_DEVTOOLS=1 next dev -p 4028",
     "build": "next build",
     "start": "cross-env PORT=4028 node .next/standalone/server.js",
     "lint": "next lint",
     "lint:fix": "next lint --fix",
     "format": "prettier --write \"src/**/*.{ts,tsx,css,md,json}\"",
     "serve": "cross-env PORT=4028 node .next/standalone/server.js",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "test:e2e:superadmin": "node scripts/superadmin-e2e.mjs"
   },
   "dependencies": {
     "@dhiwise/component-tagger": "^1.0.15",

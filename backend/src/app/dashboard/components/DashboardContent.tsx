@@ -8,25 +8,43 @@ import RecentJournalFeed from './RecentJournalFeed';
 import IntoleranceBadgeStrip from './IntoleranceBadgeStrip';
 import DashboardQuickActions from './DashboardQuickActions';
 
-const ADMIN_SESSION_KEY = 'ns_admin_session';
-
 export default function DashboardContent() {
   const [displayName, setDisplayName] = useState('Admin');
+  const [snapshot, setSnapshot] = useState<{
+    activeUsers: number;
+    activeSubscriptions: number;
+    mrr: number;
+    latestPayments: Array<{ amount: number; currency: string; status: string }>;
+    ai: { status: string };
+    infrastructure: { criticalErrors: number };
+  } | null>(null);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    let active = true;
 
-    const raw = localStorage.getItem(ADMIN_SESSION_KEY);
-    if (!raw) return;
+    fetch('/api/superadmin/auth/session')
+      .then((response) => (response.ok ? response.json() : null))
+      .then((payload: { user?: { name?: string } } | null) => {
+        if (!active || !payload?.user?.name?.trim()) return;
+        setDisplayName(payload.user.name.trim());
+      })
+      .catch(() => {
+        // Keep fallback display name.
+      });
 
-    try {
-      const session = JSON.parse(raw) as { name?: string };
-      if (session?.name?.trim()) {
-        setDisplayName(session.name.trim());
-      }
-    } catch {
-      // Keep fallback display name.
-    }
+    fetch('/api/superadmin/dashboard')
+      .then((response) => (response.ok ? response.json() : null))
+      .then((payload) => {
+        if (!active || !payload) return;
+        setSnapshot(payload);
+      })
+      .catch(() => {
+        // Keep fallback mock KPI rendering.
+      });
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   return (
@@ -43,7 +61,7 @@ export default function DashboardContent() {
       </div>
 
       {/* KPI bento grid */}
-      <KpiBentoGrid />
+      <KpiBentoGrid snapshot={snapshot} />
 
       {/* Middle row: chart + intolerances */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">

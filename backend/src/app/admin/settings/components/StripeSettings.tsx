@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 export default function StripeSettings() {
   const [form, setForm] = useState({
@@ -14,7 +14,52 @@ export default function StripeSettings() {
   const [visibleSecret, setVisibleSecret] = useState(false);
   const [visibleWebhook, setVisibleWebhook] = useState(false);
 
-  const handleSave = () => {
+  useEffect(() => {
+    fetch('/api/superadmin/settings')
+      .then((response) => (response.ok ? response.json() : null))
+      .then(
+        (
+          payload: {
+            settings?: {
+              stripe?: {
+                publishableKeyMasked?: string;
+                secretKeyMasked?: string;
+                webhookSecretMasked?: string;
+                billingMode?: string;
+              };
+            };
+          } | null
+        ) => {
+          if (!payload?.settings?.stripe) return;
+          setForm((prev) => ({
+            ...prev,
+            publishableKey: payload.settings?.stripe?.publishableKeyMasked || prev.publishableKey,
+            secretKey: payload.settings?.stripe?.secretKeyMasked || prev.secretKey,
+            webhookSecret: payload.settings?.stripe?.webhookSecretMasked || prev.webhookSecret,
+            billingMode:
+              (payload.settings?.stripe?.billingMode as typeof prev.billingMode) ||
+              prev.billingMode,
+          }));
+        }
+      )
+      .catch(() => {
+        // keep local defaults
+      });
+  }, []);
+
+  const handleSave = async () => {
+    await fetch('/api/superadmin/settings', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        stripe: {
+          publishableKeyMasked: form.publishableKey,
+          secretKeyMasked: form.secretKey,
+          webhookSecretMasked: form.webhookSecret,
+          billingMode: form.billingMode,
+        },
+      }),
+    });
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
   };

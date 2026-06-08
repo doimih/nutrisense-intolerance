@@ -1,4 +1,5 @@
 import type { UserProfile, UpdateProfileRequest } from "@/types/profile";
+import { getSessionUser } from "@/lib/api/auth";
 
 const MOCK_PROFILE: UserProfile = {
   userId: "usr_mock_001",
@@ -13,24 +14,41 @@ function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function getStoredProfile(): UserProfile {
-  if (typeof window !== "undefined") {
-    const stored = localStorage.getItem("ns_profile");
-    if (stored) return JSON.parse(stored) as UserProfile;
-
-    // Sync name/email from user
-    const userStored = localStorage.getItem("ns_user");
-    if (userStored) {
-      const user = JSON.parse(userStored);
-      return { ...MOCK_PROFILE, name: user.name, email: user.email };
-    }
+async function getStoredProfile(): Promise<UserProfile> {
+  if (typeof window === "undefined") {
+    return MOCK_PROFILE;
   }
-  return MOCK_PROFILE;
+
+  const sessionUser = await getSessionUser();
+  if (!sessionUser) {
+    const storedAnon = localStorage.getItem("ns_profile");
+    return storedAnon ? (JSON.parse(storedAnon) as UserProfile) : MOCK_PROFILE;
+  }
+
+  const normalizedEmail = sessionUser.email.trim().toLowerCase();
+  const scopedStorageKey = `ns_profile:${normalizedEmail}`;
+  const stored = localStorage.getItem(scopedStorageKey);
+  if (stored) {
+    const parsed = JSON.parse(stored) as UserProfile;
+    return {
+      ...parsed,
+      userId: sessionUser.id,
+      name: sessionUser.name,
+      email: sessionUser.email,
+    };
+  }
+
+  return {
+    ...MOCK_PROFILE,
+    userId: sessionUser.id,
+    name: sessionUser.name,
+    email: sessionUser.email,
+  };
 }
 
 export async function getProfile(): Promise<UserProfile> {
   await delay(400);
-  return getStoredProfile();
+  return await getStoredProfile();
 }
 
 export async function updateProfile(
@@ -38,23 +56,18 @@ export async function updateProfile(
 ): Promise<UserProfile> {
   await delay(600);
 
-  const current = getStoredProfile();
+  const current = await getStoredProfile();
   const updated: UserProfile = {
     ...current,
     ...data,
+    email: current.email,
+    userId: current.userId,
     updatedAt: new Date().toISOString(),
   };
 
   if (typeof window !== "undefined") {
-    localStorage.setItem("ns_profile", JSON.stringify(updated));
-
-    // Also update user name
-    const userStored = localStorage.getItem("ns_user");
-    if (userStored && data.name) {
-      const user = JSON.parse(userStored);
-      user.name = data.name;
-      localStorage.setItem("ns_user", JSON.stringify(user));
-    }
+    const scopedStorageKey = `ns_profile:${current.email.trim().toLowerCase()}`;
+    localStorage.setItem(scopedStorageKey, JSON.stringify(updated));
   }
 
   return updated;

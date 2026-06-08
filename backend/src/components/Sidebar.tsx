@@ -18,6 +18,7 @@ interface SidebarProps {
   currentPath: string;
   userName: string;
   userEmail: string;
+  userRole: 'superadmin' | 'admin' | 'user';
   onSignOut: () => void;
 }
 
@@ -68,58 +69,6 @@ function LayoutDashboardIcon({ className }: { className?: string }) {
   );
 }
 
-function UserCircleIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-      />
-    </svg>
-  );
-}
-
-function SparklesIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
-      />
-    </svg>
-  );
-}
-
-function ClockIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-      />
-    </svg>
-  );
-}
-
-function BookOpenIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-      />
-    </svg>
-  );
-}
-
 function SettingsIcon({ className }: { className?: string }) {
   return (
     <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -162,10 +111,6 @@ function ChevronLeftIcon({ className }: { className?: string }) {
 
 const navItems: NavItem[] = [
   { label: 'Dashboard', href: '/dashboard', icon: <LayoutDashboardIcon className="w-5 h-5" /> },
-  { label: 'Profile', href: '/profile', icon: <UserCircleIcon className="w-5 h-5" /> },
-  { label: 'Guidance', href: '/guidance', icon: <SparklesIcon className="w-5 h-5" /> },
-  { label: 'History', href: '/history', icon: <ClockIcon className="w-5 h-5" /> },
-  { label: 'Journal', href: '/monitoring-journal', icon: <BookOpenIcon className="w-5 h-5" /> },
   { label: 'Settings', href: '/admin/settings', icon: <SettingsIcon className="w-5 h-5" /> },
 ];
 
@@ -177,6 +122,7 @@ export default function Sidebar({
   currentPath,
   userName,
   userEmail,
+  userRole,
   onSignOut,
 }: SidebarProps) {
   const initials = userName
@@ -245,7 +191,20 @@ export default function Sidebar({
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-foreground truncate">{userName}</p>
-              <p className="text-xs text-muted-foreground truncate">{userEmail}</p>
+              <div className="flex items-center gap-2">
+                <p className="text-xs text-muted-foreground truncate">{userEmail}</p>
+                <span
+                  className={`text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded ${
+                    userRole === 'superadmin'
+                      ? 'bg-red-100 text-red-700'
+                      : userRole === 'admin'
+                        ? 'bg-blue-100 text-blue-700'
+                        : 'bg-muted text-muted-foreground'
+                  }`}
+                >
+                  {userRole}
+                </span>
+              </div>
             </div>
           </div>
         )}

@@ -5,19 +5,13 @@ import { toast } from 'sonner';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import AppLogo from '@/components/ui/AppLogo';
-import {
-  loadAdminSession,
-  loadAdminUsers,
-  persistAdminSession,
-  saveAdminUsers,
-  StoredAdminUser,
-} from '@/lib/adminAuth';
 
 type AuthTab = 'login' | 'register';
 
 interface LoginFormData {
   email: string;
   password: string;
+  otpCode: string;
   rememberMe: boolean;
 }
 
@@ -77,34 +71,39 @@ function LoginForm() {
     handleSubmit,
     formState: { errors },
   } = useForm<LoginFormData>({
-    defaultValues: { email: '', password: '', rememberMe: false },
+    defaultValues: { email: '', password: '', otpCode: '', rememberMe: false },
   });
 
   const onSubmit = async (data: LoginFormData) => {
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 1200));
+    try {
+      const response = await fetch('/api/superadmin/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: data.email,
+          password: data.password,
+          otpCode: data.otpCode,
+        }),
+      });
 
-    const users = loadAdminUsers();
-    const user = users.find((u) => u.email.toLowerCase() === data.email.trim().toLowerCase());
+      const payload = (await response.json().catch(() => ({}))) as {
+        error?: string;
+        user?: { name?: string };
+      };
 
-    if (!user || user.password !== data.password) {
-      setLoading(false);
-      toast.error('Invalid email or password.');
-      return;
-    }
+      if (!response.ok) {
+        throw new Error(payload.error || 'Invalid email or password.');
+      }
 
-    persistAdminSession(user);
-
-    setLoading(false);
-
-    if (user.mustChangePassword) {
-      toast.success(
-        'Welcome, Super Admin. Please change your temporary password after first login.'
-      );
-      router.push('/change-password');
-    } else {
-      toast.success(`Welcome back, ${user.name}!`);
+      toast.success(`Welcome back, ${payload.user?.name || 'Super Admin'}!`);
       router.push('/dashboard');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Invalid email or password.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -129,6 +128,22 @@ function LoginForm() {
           })}
         />
         {errors.email && <p className="error-text">{errors.email.message}</p>}
+      </div>
+
+      <div>
+        <label htmlFor="login-otp" className="label-text">
+          2FA code
+        </label>
+        <input
+          id="login-otp"
+          type="text"
+          inputMode="numeric"
+          autoComplete="one-time-code"
+          className="input-field"
+          placeholder="123456"
+          {...register('otpCode')}
+        />
+        <p className="helper-text">Required only if 2FA is enabled for this account.</p>
       </div>
 
       <div>
@@ -202,7 +217,6 @@ function LoginForm() {
 }
 
 function RegisterForm() {
-  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -216,34 +230,11 @@ function RegisterForm() {
   });
 
   const onSubmit = async (data: RegisterFormData) => {
+    void data;
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 1400));
-
-    const users = loadAdminUsers();
-    const normalizedEmail = data.email.trim().toLowerCase();
-
-    if (users.some((u) => u.email.toLowerCase() === normalizedEmail)) {
-      setLoading(false);
-      toast.error('An account with this email already exists.');
-      return;
-    }
-
-    const createdUser: StoredAdminUser = {
-      id: `adm_${Date.now()}`,
-      name: data.name.trim(),
-      email: normalizedEmail,
-      password: data.password,
-      mustChangePassword: false,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-
-    saveAdminUsers([...users, createdUser]);
-    persistAdminSession(createdUser);
-
+    await new Promise((r) => setTimeout(r, 600));
     setLoading(false);
-    toast.success('Account created! Welcome to NutriSense.');
-    router.push('/dashboard');
+    toast.error('Self-registration is disabled. Contact the platform owner.');
   };
 
   const passwordValue = watch('password');
@@ -411,15 +402,19 @@ export default function AuthPage() {
   const [activeTab, setActiveTab] = useState<AuthTab>('login');
 
   useEffect(() => {
-    const currentSession = loadAdminSession();
-    if (!currentSession) return;
+    let active = true;
+    fetch('/api/superadmin/auth/session')
+      .then((response) => {
+        if (!active || !response.ok) return;
+        router.replace('/dashboard');
+      })
+      .catch(() => {
+        // remain on login
+      });
 
-    if (currentSession.mustChangePassword) {
-      router.replace('/change-password');
-      return;
-    }
-
-    router.replace('/dashboard');
+    return () => {
+      active = false;
+    };
   }, [router]);
 
   return (

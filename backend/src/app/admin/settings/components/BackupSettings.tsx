@@ -23,13 +23,13 @@ export default function BackupSettings() {
   const [saved, setSaved] = useState(false);
   const [running, setRunning] = useState(false);
 
-  const [hetznerHost, setHetznerHost] = useState('');
-  const [hetznerUsername, setHetznerUsername] = useState('');
-  const [hetznerPassword, setHetznerPassword] = useState('');
-  const [hetznerPort, setHetznerPort] = useState('23');
-  const [hetznerPath, setHetznerPath] = useState('/backups/nutrisense');
-  const [hetznerProtocol, setHetznerProtocol] = useState('sftp');
-  const [hetznerShowPassword, setHetznerShowPassword] = useState(false);
+  const [hetznerRegion, setHetznerRegion] = useState('eu-central');
+  const [hetznerEndpoint, setHetznerEndpoint] = useState('');
+  const [hetznerBucket, setHetznerBucket] = useState('');
+  const [hetznerAccessKey, setHetznerAccessKey] = useState('');
+  const [hetznerSecretKey, setHetznerSecretKey] = useState('');
+  const [hetznerShowSecretKey, setHetznerShowSecretKey] = useState(false);
+  const [hetznerEditing, setHetznerEditing] = useState(false);
   const [hetznerSaved, setHetznerSaved] = useState(false);
   const [hetznerTesting, setHetznerTesting] = useState(false);
   const [hetznerTestResult, setHetznerTestResult] = useState<'success' | 'failed' | null>(null);
@@ -46,6 +46,7 @@ export default function BackupSettings() {
 
   const handleHetznerSave = () => {
     setHetznerSaved(true);
+    setHetznerEditing(false);
     setTimeout(() => setHetznerSaved(false), 2500);
   };
 
@@ -74,6 +75,8 @@ export default function BackupSettings() {
             <label className="label-text">Backup Schedule</label>
             <select
               className="input-field"
+              title="Backup schedule"
+              aria-label="Backup schedule"
               value={schedule}
               onChange={(e) => setSchedule(e.target.value)}
             >
@@ -88,6 +91,8 @@ export default function BackupSettings() {
             <input
               className="input-field"
               type="number"
+              title="Retention period"
+              aria-label="Retention period"
               value={retention}
               onChange={(e) => setRetention(e.target.value)}
               min="1"
@@ -98,6 +103,8 @@ export default function BackupSettings() {
             <label className="label-text">Storage Destination</label>
             <select
               className="input-field"
+              title="Storage destination"
+              aria-label="Storage destination"
               value={destination}
               onChange={(e) => setDestination(e.target.value)}
             >
@@ -105,7 +112,7 @@ export default function BackupSettings() {
               <option value="gcs">Google Cloud Storage</option>
               <option value="local">Local Storage</option>
               <option value="supabase">Supabase Storage</option>
-              <option value="hetzner">Hetzner Storage Box</option>
+              <option value="hetzner">Hetzner Object Storage</option>
             </select>
           </div>
         </div>
@@ -138,82 +145,107 @@ export default function BackupSettings() {
             </svg>
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-foreground">Hetzner Storage Box</h3>
+            <h3 className="text-sm font-semibold text-foreground">Setari Storage</h3>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Configure your Hetzner Storage Box credentials for remote backups
+              Configureaza conexiunea Hetzner Object Storage pentru backup-uri remote
             </p>
           </div>
         </div>
 
+        <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+          <p>Pentru Hetzner Object Storage completeaza:</p>
+          <p>Endpoint: ex. https://fsn1.your-objectstorage.com</p>
+          <p>Bucket: numele bucket-ului creat</p>
+          <p>Access Key si Secret Key: din Hetzner Console (nu email/parola de cont).</p>
+        </div>
+
         <div className="grid grid-cols-2 gap-4">
           <div className="col-span-2 sm:col-span-1">
-            <label className="label-text">Storage Box Host</label>
+            <label className="label-text">Provider</label>
             <input
-              className="input-field"
+              className="input-field bg-muted/40"
               type="text"
-              placeholder="uXXXXXX.your-storagebox.de"
-              value={hetznerHost}
-              onChange={(e) => setHetznerHost(e.target.value)}
+              title="Provider"
+              aria-label="Provider"
+              value="Hetzner Storage"
+              disabled
+              readOnly
             />
-            <p className="text-xs text-muted-foreground mt-1">
-              Found in your Hetzner Robot panel under Storage Boxes
-            </p>
           </div>
 
           <div className="col-span-2 sm:col-span-1">
-            <label className="label-text">Protocol</label>
-            <select
-              className="input-field"
-              value={hetznerProtocol}
-              onChange={(e) => setHetznerProtocol(e.target.value)}
-            >
-              <option value="sftp">SFTP (recommended)</option>
-              <option value="ftp">FTP</option>
-              <option value="ftps">FTPS</option>
-              <option value="samba">Samba / SMB</option>
-              <option value="rsync">rsync over SSH</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="label-text">Username</label>
+            <label className="label-text">Region</label>
             <input
               className="input-field"
               type="text"
-              placeholder="uXXXXXX"
-              value={hetznerUsername}
-              onChange={(e) => setHetznerUsername(e.target.value)}
+              placeholder="eu-central"
+              value={hetznerRegion}
+              onChange={(e) => setHetznerRegion(e.target.value)}
+              disabled={!hetznerEditing}
+              readOnly={!hetznerEditing}
             />
           </div>
 
-          <div>
-            <label className="label-text">Port</label>
+          <div className="col-span-2 sm:col-span-1">
+            <label className="label-text">Endpoint</label>
             <input
               className="input-field"
-              type="number"
-              value={hetznerPort}
-              onChange={(e) => setHetznerPort(e.target.value)}
-              placeholder="23"
+              type="text"
+              placeholder="https://fsn1.your-objectstorage.com"
+              value={hetznerEndpoint}
+              onChange={(e) => setHetznerEndpoint(e.target.value)}
+              disabled={!hetznerEditing}
+              readOnly={!hetznerEditing}
             />
-            <p className="text-xs text-muted-foreground mt-1">Default: SFTP=23, FTP=21, SMB=445</p>
           </div>
 
-          <div className="col-span-2">
-            <label className="label-text">Password</label>
+          <div className="col-span-2 sm:col-span-1">
+            <label className="label-text">Bucket</label>
+            <input
+              className="input-field"
+              type="text"
+              placeholder="numele-bucket-ului"
+              value={hetznerBucket}
+              onChange={(e) => setHetznerBucket(e.target.value)}
+              disabled={!hetznerEditing}
+              readOnly={!hetznerEditing}
+            />
+          </div>
+
+          <div className="col-span-2 sm:col-span-1">
+            <label className="label-text">Access Key</label>
+            <input
+              className="input-field"
+              type="text"
+              placeholder="Access Key din Hetzner Console"
+              value={hetznerAccessKey}
+              onChange={(e) => setHetznerAccessKey(e.target.value)}
+              disabled={!hetznerEditing}
+              readOnly={!hetznerEditing}
+            />
+          </div>
+
+          <div className="col-span-2 sm:col-span-1">
+            <label className="label-text">Secret Key</label>
             <div className="relative">
               <input
                 className="input-field pr-10"
-                type={hetznerShowPassword ? 'text' : 'password'}
-                placeholder="Storage Box password"
-                value={hetznerPassword}
-                onChange={(e) => setHetznerPassword(e.target.value)}
+                type={hetznerShowSecretKey ? 'text' : 'password'}
+                placeholder="Secret Key din Hetzner Console"
+                value={hetznerSecretKey}
+                onChange={(e) => setHetznerSecretKey(e.target.value)}
+                disabled={!hetznerEditing}
+                readOnly={!hetznerEditing}
               />
               <button
                 type="button"
-                onClick={() => setHetznerShowPassword((v) => !v)}
+                onClick={() => setHetznerShowSecretKey((v) => !v)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                disabled={!hetznerEditing}
+                title="Arata sau ascunde Secret Key"
+                aria-label="Arata sau ascunde Secret Key"
               >
-                {hetznerShowPassword ? (
+                {hetznerShowSecretKey ? (
                   <svg
                     className="w-4 h-4"
                     fill="none"
@@ -250,42 +282,13 @@ export default function BackupSettings() {
               </button>
             </div>
           </div>
-
-          <div className="col-span-2">
-            <label className="label-text">Remote Backup Path</label>
-            <input
-              className="input-field"
-              type="text"
-              placeholder="/backups/nutrisense"
-              value={hetznerPath}
-              onChange={(e) => setHetznerPath(e.target.value)}
-            />
-            <p className="text-xs text-muted-foreground mt-1">
-              Directory on the Storage Box where backups will be stored
-            </p>
-          </div>
         </div>
 
-        <div className="rounded-lg bg-blue-50 border border-blue-200 p-3 flex gap-3">
-          <svg
-            className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2}
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
-          </svg>
-          <p className="text-xs text-blue-700">
-            For improved security, consider creating a <strong>sub-account</strong> in Hetzner Robot
-            with restricted access, or configure <strong>SSH key authentication</strong> instead of
-            a password.
-          </p>
-        </div>
+        <p className="text-xs text-muted-foreground">
+          {hetznerEditing
+            ? 'Campurile pot fi editate. Completeaza endpoint, bucket, access key, secret key si regiunea.'
+            : 'Campurile sunt blocate. Apasa „Editeaza setari storage” pentru a modifica valorile.'}
+        </p>
 
         {hetznerTestResult && (
           <div
@@ -306,7 +309,7 @@ export default function BackupSettings() {
                 >
                   <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                 </svg>
-                Connection successful — Storage Box is reachable.
+                Conexiune reusita — Hetzner Object Storage este accesibil.
               </>
             ) : (
               <>
@@ -319,18 +322,32 @@ export default function BackupSettings() {
                 >
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
-                Connection failed — check your credentials and host.
+                Conexiune esuata — verifica endpoint-ul, bucket-ul si cheile de acces.
               </>
             )}
           </div>
         )}
 
         <div className="flex items-center gap-3 pt-1">
-          <button onClick={handleHetznerSave} className="btn-primary">
-            {hetznerSaved ? '✓ Saved' : 'Save Hetzner Config'}
+          <button
+            type="button"
+            onClick={() => {
+              setHetznerEditing((current) => !current);
+              setHetznerTestResult(null);
+            }}
+            className="btn-secondary"
+          >
+            {hetznerEditing ? 'Anuleaza editarea' : 'Editeaza setari storage'}
           </button>
-          <button onClick={handleHetznerTest} className="btn-secondary" disabled={hetznerTesting}>
-            {hetznerTesting ? 'Testing connection…' : 'Test Connection'}
+          <button onClick={handleHetznerSave} className="btn-primary" disabled={!hetznerEditing}>
+            {hetznerSaved ? '✓ Setari salvate' : 'Salveaza setari storage'}
+          </button>
+          <button
+            onClick={handleHetznerTest}
+            className="btn-secondary"
+            disabled={!hetznerEditing || hetznerTesting}
+          >
+            {hetznerTesting ? 'Testeaza conexiunea…' : 'Testeaza conexiunea'}
           </button>
         </div>
       </div>

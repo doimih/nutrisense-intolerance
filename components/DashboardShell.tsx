@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -14,10 +14,14 @@ import {
   X,
   Leaf,
   ChevronRight,
+  ShieldCheck,
 } from "lucide-react";
 import clsx from "clsx";
-import { logout } from "@/lib/api/auth";
+import { getSessionUser, logout } from "@/lib/api/auth";
 import { useLanguage } from "@/components/LanguageProvider";
+import { getUiCopy } from "@/lib/i18n/ui";
+
+const ADMIN_CONSOLE_URL = process.env.NEXT_PUBLIC_ADMIN_CONSOLE_URL || "http://localhost:4028";
 
 function NavItem({
   href,
@@ -61,11 +65,31 @@ function NavItem({
 export default function DashboardShell({ children }: { children: React.ReactNode }) {
   const { lang } = useLanguage();
   const isRo = lang === "ro";
+  const copy = getUiCopy(lang);
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isSuperadmin, setIsSuperadmin] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    getSessionUser()
+      .then((user) => {
+        if (active) {
+          const email = user?.email?.toLowerCase() ?? "";
+          setIsSuperadmin(user?.role === "superadmin" || email === "design@doimih.net");
+        }
+      })
+      .catch(() => {
+        if (active) setIsSuperadmin(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const navItems = [
-    { href: "/dashboard", icon: LayoutDashboard, label: isRo ? "Panou" : "Overview", exact: true },
+    { href: "/dashboard", icon: LayoutDashboard, label: copy.nav.dashboard, exact: true },
     { href: "/dashboard/profile", icon: User, label: isRo ? "Profil" : "Profile" },
     { href: "/dashboard/guidance", icon: Sparkles, label: isRo ? "Recomandari" : "Guidance" },
     { href: "/dashboard/history", icon: History, label: isRo ? "Istoric" : "History" },
@@ -88,20 +112,41 @@ export default function DashboardShell({ children }: { children: React.ReactNode
 
       <nav className="flex-1 space-y-1">
         <p className="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">
-          {isRo ? "Meniu" : "Menu"}
+          {copy.dashboardShell.menu}
         </p>
         {navItems.map((item) => (
           <NavItem key={item.href} {...item} onClick={() => setSidebarOpen(false)} />
         ))}
+
+        {isSuperadmin && (
+          <a
+            href={ADMIN_CONSOLE_URL}
+            target="_blank"
+            rel="noreferrer"
+            onClick={() => setSidebarOpen(false)}
+            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-red-700 bg-red-50 dark:text-red-300 dark:bg-red-950/30 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+          >
+            <ShieldCheck className="w-4 h-4 flex-shrink-0" />
+            {isRo ? "Consola Superadmin" : "Superadmin Console"}
+          </a>
+        )}
       </nav>
 
       <div className="border-t border-gray-100 dark:border-slate-700 pt-4 mt-4">
+        {isSuperadmin && (
+          <div className="mb-3 px-3">
+            <span className="inline-flex items-center gap-1 rounded-full bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide">
+              <ShieldCheck className="w-3.5 h-3.5" />
+              SUPERADMIN
+            </span>
+          </div>
+        )}
         <button
           onClick={handleLogout}
           className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
         >
           <LogOut className="w-4 h-4" />
-          {isRo ? "Iesire din cont" : "Sign out"}
+          {copy.dashboardShell.signOut}
         </button>
       </div>
     </div>
@@ -120,6 +165,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
           <div className="lg:hidden fixed bottom-4 right-4 z-50">
             <button
               onClick={() => setSidebarOpen(true)}
+              aria-label={copy.dashboardShell.menu}
               className="w-12 h-12 bg-green-600 hover:bg-green-700 text-white rounded-full shadow-lg flex items-center justify-center transition-colors"
             >
               <Menu className="w-5 h-5" />
@@ -135,6 +181,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
               <div className="absolute right-0 top-0 bottom-0 w-64 bg-white dark:bg-slate-800 shadow-xl">
                 <button
                   onClick={() => setSidebarOpen(false)}
+                  aria-label={copy.dashboardShell.menu}
                   className="absolute top-4 right-4 p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
                 >
                   <X className="w-5 h-5" />
