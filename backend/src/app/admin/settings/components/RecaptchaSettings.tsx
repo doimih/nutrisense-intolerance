@@ -1,0 +1,380 @@
+'use client';
+import React, { useEffect, useState } from 'react';
+
+type RecaptchaForm = {
+  enabled: boolean;
+  siteKey: string;
+  secretKey: string;
+  scoreThreshold: string;
+};
+
+type SettingsPayload = {
+  settings?: {
+    recaptcha?: Partial<RecaptchaForm & { hasSecretKey?: boolean }>;
+  };
+};
+
+type VerifyResult = {
+  ok: boolean;
+  score?: number;
+  action?: string;
+  hostname?: string;
+  errorCodes?: string[];
+  error?: string;
+};
+
+const DEFAULT_FORM: RecaptchaForm = {
+  enabled: false,
+  siteKey: '',
+  secretKey: '',
+  scoreThreshold: '0.5',
+};
+
+function HelpModal({ onClose }: { onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative w-full max-w-md bg-background rounded-2xl shadow-2xl border border-border overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
+              <svg className="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <h3 className="text-sm font-semibold text-foreground">Cum configurezi in Google reCAPTCHA Admin?</h3>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            aria-label="Inchide"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="px-5 py-5 space-y-4">
+          <ol className="space-y-3">
+            {[
+              <>Mergi la{' '}<a href="https://www.google.com/recaptcha/admin" target="_blank" rel="noopener noreferrer" className="text-primary underline">google.com/recaptcha/admin</a></>,
+              <>Creeaza un nou site — selecteaza tipul <strong>reCAPTCHA v3</strong></>,
+              <>Adauga domeniul tau (ex. <code className="text-xs bg-muted px-1.5 py-0.5 rounded font-mono">nutrisense-i.eu</code>)</>,
+              <>Copiaza <strong>Site Key</strong> si <strong>Secret Key</strong> in campurile din setari</>,
+              <>Salveaza si testeaza conexiunea cu butonul &quot;Testeaza conexiunea&quot;</>,
+            ].map((step, i) => (
+              <li key={i} className="flex items-start gap-3">
+                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 text-xs font-bold flex items-center justify-center">
+                  {i + 1}
+                </span>
+                <span className="text-sm text-foreground leading-relaxed pt-0.5">{step}</span>
+              </li>
+            ))}
+          </ol>
+
+          <div className="rounded-lg bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 px-4 py-3">
+            <p className="text-xs text-amber-800 dark:text-amber-300 leading-relaxed">
+              <strong>Nota:</strong> Testul de conexiune foloseste un token de test Google — in productie, tokenul real este generat de browser-ul utilizatorului.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function RecaptchaSettings() {
+  const [form, setForm] = useState<RecaptchaForm>(DEFAULT_FORM);
+  const [hasStoredSecret, setHasStoredSecret] = useState(false);
+  const [secretChanged, setSecretChanged] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [testing, setTesting] = useState(false);
+  const [testResult, setTestResult] = useState<VerifyResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [showHelp, setShowHelp] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/superadmin/settings')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((payload: SettingsPayload | null) => {
+        const rc = payload?.settings?.recaptcha;
+        if (!rc) return;
+        setForm((prev) => ({
+          ...prev,
+          enabled: rc.enabled ?? prev.enabled,
+          siteKey: rc.siteKey ?? prev.siteKey,
+          scoreThreshold: rc.scoreThreshold ?? prev.scoreThreshold,
+        }));
+        setHasStoredSecret(!!(rc.secretKey));
+      })
+      .catch(() => setError('Nu s-au putut incarca setarile reCAPTCHA.'));
+  }, []);
+
+  const handleSave = async () => {
+    setSaving(true);
+    setError(null);
+    setSaved(false);
+    setTestResult(null);
+
+    const payload: Partial<RecaptchaForm> = {
+      enabled: form.enabled,
+      siteKey: form.siteKey.trim(),
+      scoreThreshold: form.scoreThreshold,
+    };
+    if (secretChanged && form.secretKey.trim()) {
+      payload.secretKey = form.secretKey.trim();
+    }
+
+    const res = await fetch('/api/superadmin/settings', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ recaptcha: payload }),
+    });
+
+    setSaving(false);
+    if (!res.ok) { setError('Salvare esuata.'); return; }
+    setSaved(true);
+    if (secretChanged && form.secretKey.trim()) {
+      setHasStoredSecret(true);
+      setSecretChanged(false);
+      setForm((p) => ({ ...p, secretKey: '' }));
+    }
+    setTimeout(() => setSaved(false), 3000);
+  };
+
+  const handleTest = async () => {
+    setTesting(true);
+    setTestResult(null);
+    setError(null);
+
+    const res = await fetch('/api/superadmin/recaptcha/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    });
+
+    setTesting(false);
+    const data = (await res.json().catch(() => ({ ok: false, error: 'Invalid response' }))) as VerifyResult;
+    setTestResult(data);
+  };
+
+  const threshold = parseFloat(form.scoreThreshold) || 0.5;
+
+  return (
+    <div className="space-y-6">
+      {/* Title with ? help button */}
+      <div>
+        <div className="flex items-center gap-2">
+          <h2 className="text-lg font-semibold text-foreground">Google reCAPTCHA v3</h2>
+          <button
+            type="button"
+            onClick={() => setShowHelp(true)}
+            title="Cum configurezi reCAPTCHA?"
+            className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-800/40 transition-colors flex items-center justify-center text-xs font-bold"
+            aria-label="Ajutor configurare reCAPTCHA"
+          >
+            ?
+          </button>
+        </div>
+        <p className="text-sm text-muted-foreground mt-1">
+          Protejeaza formularul de contact impotriva spam-ului si bot-ilor. Necesita chei din{' '}
+          <a
+            href="https://www.google.com/recaptcha/admin"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary underline"
+          >
+            Google reCAPTCHA Admin
+          </a>.
+        </p>
+      </div>
+
+      {/* How it works */}
+      <div className="rounded-xl border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/20 p-4 space-y-2">
+        <p className="text-sm font-semibold text-blue-900 dark:text-blue-200">Cum functioneaza reCAPTCHA v3?</p>
+        <ul className="text-xs text-blue-800 dark:text-blue-300 space-y-1 list-disc list-inside">
+          <li>Invizibil pentru utilizator — nu necesita rezolvarea de puzzle-uri</li>
+          <li>Google returneaza un scor 0.0–1.0 (1.0 = uman, 0.0 = bot)</li>
+          <li>Mesajele cu scor sub pragul setat sunt respinse automat</li>
+          <li>Necesita <strong>Site Key</strong> (frontend) si <strong>Secret Key</strong> (backend)</li>
+        </ul>
+      </div>
+
+      {error && (
+        <div className="rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/20 px-4 py-3 text-sm text-red-700 dark:text-red-300">
+          {error}
+        </div>
+      )}
+
+      <div className="card p-5 space-y-5">
+        {/* Enable toggle */}
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-foreground">Activeaza reCAPTCHA v3</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Cand este activ, formularul de contact trimite tokenul catre Google pentru validare.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setForm((p) => ({ ...p, enabled: !p.enabled }))}
+            className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${
+              form.enabled ? 'bg-green-600' : 'bg-slate-300 dark:bg-slate-600'
+            }`}
+            role="switch"
+            aria-checked={form.enabled}
+          >
+            <span
+              className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow ring-0 transition-transform duration-200 ${
+                form.enabled ? 'translate-x-5' : 'translate-x-0'
+              }`}
+            />
+          </button>
+        </div>
+
+        <hr className="border-border" />
+
+        {/* Site Key */}
+        <div>
+          <label className="block text-sm font-medium text-foreground mb-1.5">
+            Site Key <span className="text-red-500">*</span>
+          </label>
+          <p className="text-xs text-muted-foreground mb-2">
+            Cheia publica — se include in codul frontend. Inceputa cu <code className="text-xs bg-muted px-1 py-0.5 rounded">6L</code>.
+          </p>
+          <input
+            type="text"
+            value={form.siteKey}
+            onChange={(e) => setForm((p) => ({ ...p, siteKey: e.target.value }))}
+            placeholder="6Lc..."
+            className="input w-full font-mono text-sm"
+            spellCheck={false}
+            autoComplete="off"
+          />
+        </div>
+
+        {/* Secret Key */}
+        <div>
+          <label className="block text-sm font-medium text-foreground mb-1.5">
+            Secret Key <span className="text-red-500">*</span>
+          </label>
+          <p className="text-xs text-muted-foreground mb-2">
+            Cheia privata — folosita exclusiv server-side. Nu o expune niciodata in frontend.
+          </p>
+          {hasStoredSecret && !secretChanged ? (
+            <div className="flex items-center gap-3">
+              <div className="flex-1 input flex items-center gap-2 text-sm text-muted-foreground font-mono">
+                <span className="text-green-600 dark:text-green-400">✓</span>
+                <span>Secret key salvata (ascunsa)</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => { setSecretChanged(true); setForm((p) => ({ ...p, secretKey: '' })); }}
+                className="btn-secondary text-xs px-3 py-1.5"
+              >
+                Modifica
+              </button>
+            </div>
+          ) : (
+            <input
+              type="password"
+              value={form.secretKey}
+              onChange={(e) => { setForm((p) => ({ ...p, secretKey: e.target.value })); setSecretChanged(true); }}
+              placeholder="6Lc..."
+              className="input w-full font-mono text-sm"
+              spellCheck={false}
+              autoComplete="new-password"
+            />
+          )}
+        </div>
+
+        {/* Score Threshold */}
+        <div>
+          <label className="block text-sm font-medium text-foreground mb-1.5">
+            Prag minim de scor
+          </label>
+          <p className="text-xs text-muted-foreground mb-2">
+            Mesajele cu scor sub acest prag sunt respinse ca spam. Recomandat: <strong>0.5</strong>. Mai mare = mai strict.
+          </p>
+          <div className="flex items-center gap-4">
+            <input
+              type="range"
+              min="0.1"
+              max="0.9"
+              step="0.1"
+              value={form.scoreThreshold}
+              onChange={(e) => setForm((p) => ({ ...p, scoreThreshold: e.target.value }))}
+              className="flex-1 h-2 rounded-lg accent-green-600 cursor-pointer"
+            />
+            <span className={`w-14 text-center text-sm font-bold rounded-lg px-2 py-1 ${
+              threshold >= 0.7 ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300' :
+              threshold >= 0.4 ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300' :
+              'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
+            }`}>
+              {threshold.toFixed(1)}
+            </span>
+          </div>
+          <div className="flex justify-between text-xs text-muted-foreground mt-1">
+            <span>0.1 — permisiv</span>
+            <span>0.5 — recomandat</span>
+            <span>0.9 — strict</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Test result */}
+      {testResult && (
+        <div className={`rounded-xl border p-4 space-y-2 ${
+          testResult.ok
+            ? 'border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-950/20'
+            : 'border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/20'
+        }`}>
+          <div className="flex items-center gap-2">
+            <span className={`text-lg ${testResult.ok ? 'text-green-600' : 'text-red-600'}`}>
+              {testResult.ok ? '✓' : '✗'}
+            </span>
+            <p className={`text-sm font-semibold ${testResult.ok ? 'text-green-800 dark:text-green-200' : 'text-red-800 dark:text-red-200'}`}>
+              {testResult.ok ? 'Conexiune reusita' : testResult.error ?? 'Verificare esuata'}
+            </p>
+          </div>
+          {testResult.ok && (
+            <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+              {testResult.score !== undefined && <div><span className="font-medium">Scor:</span> {testResult.score.toFixed(2)}</div>}
+              {testResult.hostname && <div><span className="font-medium">Hostname:</span> {testResult.hostname}</div>}
+              {testResult.action && <div><span className="font-medium">Actiune:</span> {testResult.action}</div>}
+            </div>
+          )}
+          {!testResult.ok && testResult.errorCodes && testResult.errorCodes.length > 0 && (
+            <p className="text-xs text-red-700 dark:text-red-300">Coduri eroare: {testResult.errorCodes.join(', ')}</p>
+          )}
+        </div>
+      )}
+
+      {/* Actions */}
+      <div className="flex items-center gap-3">
+        <button type="button" onClick={handleSave} disabled={saving} className="btn-primary">
+          {saving ? 'Se salveaza...' : saved ? '✓ Salvat' : 'Salveaza'}
+        </button>
+        <button
+          type="button"
+          onClick={handleTest}
+          disabled={testing || !hasStoredSecret}
+          className="btn-secondary"
+          title={!hasStoredSecret ? 'Salveaza mai intai secret key-ul' : 'Testeaza conexiunea cu Google reCAPTCHA'}
+        >
+          {testing ? 'Se testeaza...' : 'Testeaza conexiunea'}
+        </button>
+        {!hasStoredSecret && (
+          <p className="text-xs text-muted-foreground">Salveaza secret key-ul pentru a putea testa.</p>
+        )}
+      </div>
+
+      {/* Help modal */}
+      {showHelp && <HelpModal onClose={() => setShowHelp(false)} />}
+    </div>
+  );
+}

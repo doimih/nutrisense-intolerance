@@ -503,7 +503,7 @@ export default function FaqPage() {
           <h2 className="text-3xl sm:text-5xl font-extrabold leading-tight text-white mb-8">{t.finalCta.title}</h2>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
-              href="/dashboard"
+              href="/auth/register"
               className="inline-flex items-center gap-2 rounded-xl bg-white px-7 py-3.5 text-base font-semibold text-cyan-700 transition hover:bg-cyan-50"
             >
               {t.finalCta.primary}

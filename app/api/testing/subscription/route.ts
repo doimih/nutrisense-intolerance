@@ -65,7 +65,7 @@ export async function PATCH(request: NextRequest) {
           stripeSubscriptionId: null,
           updatedAt: new Date().toISOString(),
         }
-      : upsertSubscriptionSnapshot(session.user.email, {
+      : await upsertSubscriptionSnapshot(session.user.email, {
           planCode,
           status,
           stripeCustomerId: null,

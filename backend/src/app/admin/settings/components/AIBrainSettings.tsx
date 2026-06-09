@@ -29,58 +29,90 @@ type SettingsPayload = {
   };
 };
 
-const DEFAULT_SYSTEM_PROMPT = `You are NutriAID AI, the central orchestrator of a modular nutrition intelligence system.
-Your role is to:
-- generate, manage and orchestrate specialized AI workers
-- route user requests to the correct worker
-- validate safety and medical constraints
-- combine worker outputs into a final structured response
-- maintain a premium, evidence-based nutrition experience
+const DEFAULT_SYSTEM_PROMPT = `1. ROLUL TAU
+Esti AI Brain-ul platformei NutriAID, un sistem inteligent care proceseaza date despre:
+mese, ingrediente, simptome, ore, intensitate, istoricul utilizatorului
+si genereaza: analize, corelatii, recomandari, planuri alimentare, liste de ingrediente problematice, mesaje pentru UI.
+Nu esti medic. Nu pui diagnostice. Nu recomanzi tratamente.
 
-Worker Architecture:
-Core Workers:
-1. Profile Analyzer Worker
-2. Intolerance Checker Worker
-3. Allergy Checker Worker
-4. Medical Safety Worker
-5. Nutrition Calculator Worker
+2. REGULI FUNDAMENTALE
 
-Functional Workers:
-1. Meal Plan Generator Worker
-2. Recipe Builder Worker
-3. Shopping List Worker
-4. Supplement Advisor Worker
-5. Progress Tracking Worker
+ZERO HALUCINATII
+Nu inventa ingrediente, simptome sau date care nu exista in input.
 
-Utility Workers:
-1. PDF Generator Worker
-2. Memory Worker
-3. Data Validator Worker
+NU PUI DIAGNOSTICE
+Nu folosi termeni medicali precum "intoleranta", "alergie", "diagnostic".
+Foloseste doar: "posibila sensibilitate", "corelatie probabila", "pattern observat".
 
-Worker Output Format:
+NU RECOMANZI MEDICAMENTE SAU SUPLIMENTE
+
+OUTPUT STRICT JSON VALID
+Fara text in afara JSON-ului. Fara explicatii. Fara markdown. Fara comentarii.
+
+RESPECTA SCHEMA WORKER-ULUI
+Daca schema cere un camp, il incluzi. Daca nu ai date pui array gol.
+
+3. STRUCTURA GENERALA A RASPUNSULUI
 {
-  "worker": "WorkerName",
+  "worker": "numele-workerului",
   "status": "success | warning | error",
   "data": { ... },
-  "notes": [ ... ]
+  "notes": []
 }
 
-Orchestrator Logic:
-1. Intent detection for: meal plan, recipe, shopping list, supplement advice, nutritional analysis, progress tracking, general nutrition question.
-2. Worker routing using only required workers.
-3. Safety validation: always run Medical Safety Worker last.
-4. Response assembly: combine worker outputs into one structured answer.
+4. WORKERS DISPONIBILI
 
-Style and Behavior Rules:
-- always provide evidence-based nutrition guidance
-- never give medical diagnoses
-- always include a medical disclaimer
-- always respect intolerances and allergies
-- always validate safety before final answer
-- tone: professional, warm, supportive
+Worker: intolerance-checker
+Analizeaza mese + simptome si detecteaza corelatii.
+Output:
+{
+  "worker": "intolerance-checker",
+  "status": "success",
+  "data": { "flaggedIngredients": [], "correlations": [], "confidence": 0 },
+  "notes": []
+}
+Reguli: flaggedIngredients OBLIGATORIU (array), confidence intre 0 si 1.
 
-Always append this disclaimer:
-"NutriAID provides general nutrition guidance. This is not medical advice. Consult a healthcare professional for personalized medical recommendations."`;
+Worker: meal-plan-generator
+Genereaza un plan alimentar sigur.
+Output:
+{
+  "worker": "meal-plan-generator",
+  "status": "success",
+  "data": { "meals": [], "totalKcal": 0, "disclaimer": "", "flaggedIngredients": [] },
+  "notes": []
+}
+Reguli: flaggedIngredients OBLIGATORIU, disclaimer OBLIGATORIU, nu inventa ingrediente.
+
+Worker: symptom-analyzer
+Analizeaza evolutia simptomelor.
+Output:
+{
+  "worker": "symptom-analyzer",
+  "status": "success",
+  "data": { "trend": "", "severityScore": 0, "suggestedFocus": [] },
+  "notes": []
+}
+
+Worker: summary-generator
+Genereaza un rezumat pentru UI.
+Output:
+{
+  "worker": "summary-generator",
+  "status": "success",
+  "data": { "summary": "", "keyFindings": [] },
+  "notes": []
+}
+
+5. REGULI DE SIGURANTA
+Nu folosi termeni medicali. Nu recomanda suplimente sau medicamente.
+Nu recomanda diete extreme. Nu folosi limbaj alarmist.
+
+6. REGULI DE CALITATE
+Fii clar, concis, logic, consistent. Nu repeta informatii. Nu inventa date.
+
+7. DACA SCHEMA NU POATE FI RESPECTATA
+Seteaza "status": "error" si incluzi in notes motivul.`;
 
 const DEFAULT_CONFIG: AIBrainConfig = {
   defaultModel: 'gpt-4o',
@@ -93,7 +125,7 @@ const DEFAULT_CONFIG: AIBrainConfig = {
   enableCache: true,
 };
 
-const outputSchema = `{
+const workerOutputSchema = `{
   "worker": "WorkerName",
   "status": "success | warning | error",
   "data": {},
@@ -102,11 +134,133 @@ const outputSchema = `{
 
 const DEFAULT_WORKERS: WorkerDefinition[] = [
   {
+    id: 'intolerance-checker',
+    name: 'Intolerance Checker Worker',
+    description: 'Analizeaza mese + simptome si detecteaza corelatii si ingrediente problematice.',
+    prompt:
+      'Analizeaza mesele si simptomele din input. Identifica corelatii intre ingrediente si simptome. Returneaza flaggedIngredients (array), correlations (array de obiecte) si confidence (0-1). Nu folosi termeni de diagnostic. Foloseste "posibila sensibilitate" sau "corelatie probabila".',
+    inputSchema: `{
+  "meals": [
+    {
+      "date": "string",
+      "hour": "string",
+      "ingredients": ["string"]
+    }
+  ],
+  "symptoms": [
+    {
+      "date": "string",
+      "hour": "string",
+      "description": "string",
+      "intensity": "number (1-10)"
+    }
+  ]
+}`,
+    outputSchema: `{
+  "worker": "intolerance-checker",
+  "status": "success | warning | error",
+  "data": {
+    "flaggedIngredients": ["string"],
+    "correlations": [
+      {
+        "ingredient": "string",
+        "symptom": "string",
+        "frequency": "number",
+        "label": "posibila sensibilitate | corelatie probabila | pattern observat"
+      }
+    ],
+    "confidence": 0.0
+  },
+  "notes": []
+}`,
+    enabled: true,
+  },
+  {
+    id: 'meal-plan-generator',
+    name: 'Meal Plan Generator Worker',
+    description: 'Genereaza un plan alimentar sigur, evitand ingredientele problematice.',
+    prompt:
+      'Genereaza un plan alimentar pentru perioada solicitata. Evita ingredientele din flaggedIngredients. Include totalKcal estimat, disclaimer obligatoriu si flaggedIngredients lista. Nu inventa ingrediente inexistente. Nu recomanda suplimente sau medicamente.',
+    inputSchema: `{
+  "timeframe": "daily | weekly",
+  "flaggedIngredients": ["string"],
+  "preferences": ["string"],
+  "targetKcal": "number (optional)"
+}`,
+    outputSchema: `{
+  "worker": "meal-plan-generator",
+  "status": "success | warning | error",
+  "data": {
+    "meals": [
+      {
+        "name": "string",
+        "time": "string",
+        "ingredients": ["string"],
+        "kcal": "number"
+      }
+    ],
+    "totalKcal": 0,
+    "disclaimer": "string (obligatoriu)",
+    "flaggedIngredients": ["string"]
+  },
+  "notes": []
+}`,
+    enabled: true,
+  },
+  {
+    id: 'symptom-analyzer',
+    name: 'Symptom Analyzer Worker',
+    description: 'Analizeaza evolutia simptomelor in timp si identifica trenduri.',
+    prompt:
+      'Analizeaza istoricul simptomelor din input. Identifica trendul (improving/stable/worsening), calculeaza severityScore (0-10) si sugereaza focus areas. Nu pune diagnostice. Nu folosi termeni medicali. Foloseste "pattern observat" sau "tendinta".',
+    inputSchema: `{
+  "symptoms": [
+    {
+      "date": "string",
+      "description": "string",
+      "intensity": "number (1-10)"
+    }
+  ]
+}`,
+    outputSchema: `{
+  "worker": "symptom-analyzer",
+  "status": "success | warning | error",
+  "data": {
+    "trend": "improving | stable | worsening",
+    "severityScore": 0,
+    "suggestedFocus": ["string"]
+  },
+  "notes": []
+}`,
+    enabled: true,
+  },
+  {
+    id: 'summary-generator',
+    name: 'Summary Generator Worker',
+    description: 'Genereaza un rezumat clar si concis pentru afisare in UI.',
+    prompt:
+      'Pe baza datelor din input, genereaza un summary scurt (1-3 propozitii) si keyFindings (lista de observatii importante). Foloseste limbaj simplu, fara termeni medicali. Nu pune diagnostice. Fii constructiv si pozitiv.',
+    inputSchema: `{
+  "analysisData": {},
+  "lang": "ro | en"
+}`,
+    outputSchema: `{
+  "worker": "summary-generator",
+  "status": "success | warning | error",
+  "data": {
+    "summary": "string",
+    "keyFindings": ["string"]
+  },
+  "notes": []
+}`,
+    enabled: true,
+  },
+  {
     id: 'profile-analyzer',
     name: 'Profile Analyzer Worker',
-    description: 'Extracts user profile data, detects missing information, and normalizes user inputs.',
+    description: 'Extrage si normalizeaza datele profilului utilizatorului.',
     prompt:
-      'Extract user profile fields (age, sex, height, weight, goals, dietary pattern, intolerances, allergies, activity level), detect missing fields, and normalize units and naming.',
+      'Extrage campurile profilului (varsta, sex, inaltime, greutate, obiective, tip dieta, nivel activitate), detecteaza campuri lipsa si normalizeaza unitatile.',
     inputSchema: `{
   "profile": {
     "age": "number?",
@@ -115,175 +269,37 @@ const DEFAULT_WORKERS: WorkerDefinition[] = [
     "weightKg": "number?",
     "goal": "string?",
     "dietType": "string?",
-    "intolerances": "string[]?",
-    "allergies": "string[]?",
     "activityLevel": "string?"
   }
 }`,
-    outputSchema,
-    enabled: true,
-  },
-  {
-    id: 'intolerance-checker',
-    name: 'Intolerance Checker Worker',
-    description: 'Detects foods that conflict with declared intolerances and flags unsafe ingredients.',
-    prompt:
-      'Screen foods and ingredients against known intolerances. Flag direct conflicts, hidden ingredients, and cross-item conflicts.',
-    inputSchema: `{
-  "intolerances": ["string"],
-  "meals": [{ "name": "string", "ingredients": ["string"] }]
-}`,
-    outputSchema,
-    enabled: true,
-  },
-  {
-    id: 'allergy-checker',
-    name: 'Allergy Checker Worker',
-    description: 'Performs strict allergen screening and rejects unsafe meal plans.',
-    prompt:
-      'Apply strict allergen rules. Reject any meal or recipe containing allergens or likely cross-contamination risks.',
-    inputSchema: `{
-  "allergies": ["string"],
-  "meals": [{ "name": "string", "ingredients": ["string"] }]
-}`,
-    outputSchema,
-    enabled: true,
-  },
-  {
-    id: 'medical-safety',
-    name: 'Medical Safety Worker',
-    description: 'Ensures recommendation safety, rejects extreme diets, and appends medical disclaimers.',
-    prompt:
-      'Validate safety constraints, reject extreme restrictions, avoid diagnosis language, and append a medical disclaimer.',
-    inputSchema: `{
-  "recommendations": ["string"],
-  "userContext": { "conditions": ["string"], "medications": ["string"] }
-}`,
-    outputSchema,
+    outputSchema: workerOutputSchema,
     enabled: true,
   },
   {
     id: 'nutrition-calculator',
     name: 'Nutrition Calculator Worker',
-    description: 'Calculates calories, macros, micros, and validates nutritional balance.',
+    description: 'Calculeaza calorii, macronutrienti si valideaza echilibrul nutritional.',
     prompt:
-      'Compute calories, protein, carbs, fats, selected micros, and assess meal/day balance against user goals.',
+      'Calculeaza calorii, proteine, carbohidrati, grasimi si evalueaza echilibrul meselor fata de obiectivele utilizatorului.',
     inputSchema: `{
   "userTargets": { "kcal": "number", "protein": "number", "carbs": "number", "fat": "number" },
   "meals": [{ "name": "string", "foods": [{ "name": "string", "amount": "string" }] }]
 }`,
-    outputSchema,
-    enabled: true,
-  },
-  {
-    id: 'meal-plan-generator',
-    name: 'Meal Plan Generator Worker',
-    description: 'Builds daily/weekly meal plans with calories, macros, and alternatives.',
-    prompt:
-      'Generate a structured meal plan aligned with goals, intolerances, allergies, and preferences. Include per-meal calories/macros and alternatives.',
-    inputSchema: `{
-  "timeframe": "daily | weekly",
-  "profile": {},
-  "constraints": { "intolerances": ["string"], "allergies": ["string"], "preferences": ["string"] }
-}`,
-    outputSchema,
-    enabled: true,
-  },
-  {
-    id: 'recipe-builder',
-    name: 'Recipe Builder Worker',
-    description: 'Generates recipes with nutrition estimates and ingredient substitutions.',
-    prompt:
-      'Generate preparation steps, portion sizes, estimated nutrition, and safe substitutions for restricted ingredients.',
-    inputSchema: `{
-  "recipeRequest": { "mealType": "string", "servings": "number", "constraints": {} }
-}`,
-    outputSchema,
-    enabled: true,
-  },
-  {
-    id: 'shopping-list',
-    name: 'Shopping List Worker',
-    description: 'Converts meal plans into organized shopping lists.',
-    prompt:
-      'Aggregate ingredient needs from meal plans into a normalized shopping list grouped by category and quantity.',
-    inputSchema: `{
-  "mealPlan": { "days": [{ "meals": [{ "ingredients": [{ "name": "string", "qty": "string" }] }] }] }
-}`,
-    outputSchema,
-    enabled: true,
-  },
-  {
-    id: 'supplement-advisor',
-    name: 'Supplement Advisor Worker',
-    description: 'Suggests supplements with safety checks against intolerances and allergies.',
-    prompt:
-      'Suggest conservative, evidence-based supplement options and flag contraindications with known restrictions.',
-    inputSchema: `{
-  "profile": {},
-  "goals": ["string"],
-  "restrictions": { "intolerances": ["string"], "allergies": ["string"] }
-}`,
-    outputSchema,
-    enabled: true,
-  },
-  {
-    id: 'progress-tracking',
-    name: 'Progress Tracking Worker',
-    description: 'Tracks weight, calories, goals, and generates weekly summaries.',
-    prompt:
-      'Analyze historical logs (weight, adherence, calorie intake, symptoms) and produce trend summaries with safe adjustments.',
-    inputSchema: `{
-  "logs": [{ "date": "string", "weightKg": "number?", "kcal": "number?", "notes": "string?" }],
-  "goals": {}
-}`,
-    outputSchema,
-    enabled: true,
-  },
-  {
-    id: 'pdf-generator',
-    name: 'PDF Generator Worker',
-    description: 'Converts approved meal plans and reports into export-ready PDF payloads.',
-    prompt:
-      'Transform validated plan/report content into PDF-ready structured sections with metadata and layout hints.',
-    inputSchema: `{
-  "documentType": "meal-plan | progress-report",
-  "content": {}
-}`,
-    outputSchema,
-    enabled: true,
-  },
-  {
-    id: 'memory-worker',
-    name: 'Memory Worker',
-    description: 'Stores and recalls user profile preferences and historical context.',
-    prompt:
-      'Persist user preferences and retrieve relevant profile memory for future requests while avoiding sensitive overreach.',
-    inputSchema: `{
-  "action": "store | recall",
-  "userId": "string",
-  "payload": {}
-}`,
-    outputSchema,
+    outputSchema: workerOutputSchema,
     enabled: true,
   },
   {
     id: 'data-validator',
     name: 'Data Validator Worker',
-    description: 'Validates that all worker payloads match schemas and rejects malformed responses.',
+    description: 'Valideaza ca toate payload-urile worker-ilor respecta schemele si respinge raspunsurile malformate.',
     prompt:
-      'Validate each worker output against schema constraints. Reject malformed payloads and return actionable validation notes.',
+      'Valideaza fiecare output de worker fata de constrangerile schemei. Respinge payload-urile malformate si returneaza note de validare.',
     inputSchema: `{
   "workerOutputs": [
-    {
-      "worker": "string",
-      "status": "string",
-      "data": {},
-      "notes": []
-    }
+    { "worker": "string", "status": "string", "data": {}, "notes": [] }
   ]
 }`,
-    outputSchema,
+    outputSchema: workerOutputSchema,
     enabled: true,
   },
 ];
@@ -310,7 +326,7 @@ export default function AIBrainSettings() {
           temperature: brain.temperature ?? prev.temperature,
           maxTokens: brain.maxTokens ?? prev.maxTokens,
           orchestratorUrl: brain.orchestratorUrl ?? prev.orchestratorUrl,
-          systemPrompt: brain.systemPrompt ?? prev.systemPrompt,
+          systemPrompt: brain.systemPrompt || prev.systemPrompt,
           enableStreaming: brain.enableStreaming ?? prev.enableStreaming,
           enableCache: brain.enableCache ?? prev.enableCache,
         }));
@@ -330,9 +346,7 @@ export default function AIBrainSettings() {
     const res = await fetch('/api/superadmin/settings', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        aiBrain: { ...config, workers },
-      }),
+      body: JSON.stringify({ aiBrain: { ...config, workers } }),
     });
     const payload = (await res.json().catch(() => ({}))) as { error?: string };
     setSaving(false);
@@ -342,6 +356,10 @@ export default function AIBrainSettings() {
     }
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
+  };
+
+  const handleResetPrompt = () => {
+    setConfig((prev) => ({ ...prev, systemPrompt: DEFAULT_SYSTEM_PROMPT }));
   };
 
   const updateActiveWorker = (patch: Partial<WorkerDefinition>) => {
@@ -361,7 +379,7 @@ export default function AIBrainSettings() {
       <div>
         <h2 className="section-header">AI Brain Configuration</h2>
         <p className="text-sm text-muted-foreground mt-1">
-          Configure AI model behavior and orchestration settings
+          Configure AI model behavior, system prompt and workers
         </p>
       </div>
 
@@ -464,21 +482,29 @@ export default function AIBrainSettings() {
                 placeholder="https://... (lasă gol pentru LLM direct)"
               />
               <p className="helper-text">
-                Lasă gol pentru a folosi LLM direct (recomandat). Completează doar dacă ai un
-                orchestrator extern — valoarea va fi citită prin env var <code>AI_ORCHESTRATOR_URL</code>.
+                Lasă gol pentru a folosi LLM direct. Completează doar dacă ai un orchestrator extern.
               </p>
             </div>
             <div className="col-span-2">
-              <label className="label-text">System Prompt</label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="label-text">System Prompt</label>
+                <button
+                  type="button"
+                  onClick={handleResetPrompt}
+                  className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors"
+                >
+                  Reset la default
+                </button>
+              </div>
               <textarea
-                className="input-field resize-none"
+                className="input-field resize-none font-mono text-xs"
                 aria-label="System Prompt"
                 title="System Prompt"
-                rows={16}
+                rows={20}
                 value={config.systemPrompt}
                 onChange={(e) => setConfig({ ...config, systemPrompt: e.target.value })}
               />
-              <p className="helper-text">Base instructions sent to the AI model for every request</p>
+              <p className="helper-text">Instructiuni trimise modelului AI la fiecare cerere. Se salveaza in DB si se foloseste de orchestrator.</p>
             </div>
           </div>
           <div className="flex items-center gap-6">
@@ -560,7 +586,7 @@ export default function AIBrainSettings() {
               </div>
 
               <div>
-                <label className="label-text">Worker Input Schema</label>
+                <label className="label-text">Input Schema</label>
                 <textarea
                   className="input-field font-mono text-xs resize-none"
                   rows={8}
@@ -570,10 +596,10 @@ export default function AIBrainSettings() {
               </div>
 
               <div>
-                <label className="label-text">Worker Output Schema</label>
+                <label className="label-text">Output Schema</label>
                 <textarea
                   className="input-field font-mono text-xs resize-none"
-                  rows={7}
+                  rows={10}
                   value={activeWorker.outputSchema}
                   onChange={(e) => updateActiveWorker({ outputSchema: e.target.value })}
                 />

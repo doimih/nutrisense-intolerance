@@ -35,8 +35,6 @@ function applyLanguageCookie(request: NextRequest, response: NextResponse): Next
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
-  const superadminEmail =
-    process.env.FRONTEND_SUPERADMIN_EMAIL?.trim().toLowerCase() || "design@doimih.net";
   const token = request.cookies.get(AUTH_COOKIE_NAME)?.value;
   const session = token ? await readSessionToken(token) : null;
 
@@ -49,8 +47,7 @@ export async function middleware(request: NextRequest) {
   }
 
   if (isSuperadminPath(pathname)) {
-    const email = session?.user.email?.toLowerCase() ?? "";
-    const isSuperadmin = session?.user.role === "superadmin" || email === superadminEmail;
+    const isSuperadmin = session?.user.role === "superadmin";
 
     if (!isSuperadmin) {
       const loginUrl = new URL("/auth/login", request.url);

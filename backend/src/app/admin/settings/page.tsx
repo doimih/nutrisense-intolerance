@@ -10,16 +10,20 @@ import AIBrainSettings from './components/AIBrainSettings';
 import UsersSettings from './components/UsersSettings';
 import TwoFASettings from './components/TwoFASettings';
 import PWASettings from './components/PWASettings';
+import PricingSettings from './components/PricingSettings';
+import RecaptchaSettings from './components/RecaptchaSettings';
 
 type SettingsSection =
   | 'email'
   | 'ai-keys'
   | 'backup'
   | 'stripe'
+  | 'pricing'
   | 'ai-brain'
   | 'users'
   | '2fa'
-  | 'pwa';
+  | 'pwa'
+  | 'recaptcha';
 
 interface SectionItem {
   id: SettingsSection;
@@ -80,6 +84,15 @@ function CreditCardIcon({ className }: { className?: string }) {
   );
 }
 
+function TagIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+        d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+    </svg>
+  );
+}
+
 function BrainIcon({ className }: { className?: string }) {
   return (
     <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -132,6 +145,15 @@ function BellIcon({ className }: { className?: string }) {
   );
 }
 
+function BotIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+        d="M9 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V5a2 2 0 00-2-2h-2M9 3a2 2 0 002 2h2a2 2 0 002-2M9 3a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+    </svg>
+  );
+}
+
 const sections: SectionItem[] = [
   {
     id: 'email',
@@ -158,6 +180,12 @@ const sections: SectionItem[] = [
     icon: <CreditCardIcon className="w-5 h-5" />,
   },
   {
+    id: 'pricing',
+    label: 'Preturi',
+    description: 'Pachete & preturi planuri',
+    icon: <TagIcon className="w-5 h-5" />,
+  },
+  {
     id: 'ai-brain',
     label: 'AI Brain',
     description: 'AI model configuration',
@@ -181,6 +209,12 @@ const sections: SectionItem[] = [
     description: 'Push notification settings',
     icon: <BellIcon className="w-5 h-5" />,
   },
+  {
+    id: 'recaptcha',
+    label: 'reCAPTCHA',
+    description: 'Anti-spam formular contact',
+    icon: <BotIcon className="w-5 h-5" />,
+  },
 ];
 
 const sectionComponents: Record<SettingsSection, React.ReactNode> = {
@@ -188,10 +222,12 @@ const sectionComponents: Record<SettingsSection, React.ReactNode> = {
   'ai-keys': <AIKeysSettings />,
   backup: <BackupSettings />,
   stripe: <StripeSettings />,
+  pricing: <PricingSettings />,
   'ai-brain': <AIBrainSettings />,
   users: <UsersSettings />,
   '2fa': <TwoFASettings />,
   pwa: <PWASettings />,
+  recaptcha: <RecaptchaSettings />,
 };
 
 export default function AdminSettingsPage() {

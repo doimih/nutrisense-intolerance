@@ -3,6 +3,8 @@ import type { DietaryPreference, Intolerance } from "@/types/profile";
 
 export type SubscriptionTier = "new" | "active" | "expired";
 
+export type PlanTier = "none" | "basic" | "pro" | "pro_plus";
+
 export type GuidanceGenerateInput = {
   intolerances: Intolerance[];
   dietaryPreference: DietaryPreference;
@@ -11,6 +13,7 @@ export type GuidanceGenerateInput = {
   userEmail: string;
   lang: "ro" | "en";
   subscriptionTier: SubscriptionTier;
+  planTier: PlanTier;
 };
 
 export type GuidanceHistoryRecord = {

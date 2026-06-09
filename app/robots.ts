@@ -1,7 +1,8 @@
 import type { MetadataRoute } from "next";
+import { getRuntimeSettings } from "@/lib/server/runtimeSettings";
 
-export default function robots(): MetadataRoute.Robots {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://nutriaid-i.eu";
+export default async function robots(): Promise<MetadataRoute.Robots> {
+  const { siteUrl } = await getRuntimeSettings();
 
   return {
     rules: [

@@ -2,8 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, BadgeCheck, ShieldCheck, Sparkles } from "lucide-react";
 import { getServerLanguage } from "@/lib/i18n/server";
-import PlanCheckoutButton from "./_components/PlanCheckoutButton";
+import BillingCancelledNotice from "./_components/BillingCancelledNotice";
+import { getRuntimeSettings } from "@/lib/server/runtimeSettings";
 import type { BillingPlanCode } from "@/lib/billing/plans";
+
+export const dynamic = "force-dynamic";
 
 type Plan = {
   code: BillingPlanCode;
@@ -315,12 +318,35 @@ export function generateMetadata(): Metadata {
   };
 }
 
-export default function PricingPage() {
+export default async function PricingPage() {
   const lang = getServerLanguage();
   const t = copy[lang];
+  const settings = await getRuntimeSettings();
+  const pricing = settings.pricing;
+
+  function formatPrice(amount: string, currency: string, interval: string, lang: 'ro' | 'en'): string {
+    const curr = currency.toUpperCase();
+    const intervalLabel = interval === 'year'
+      ? (lang === 'ro' ? 'an' : 'year')
+      : (lang === 'ro' ? 'luna' : 'month');
+    return `${amount} ${curr} / ${intervalLabel}`;
+  }
+
+  const dynamicPlans = t.section2.plans.map((plan) => {
+    const adminPlan = pricing[plan.code as 'basic' | 'pro' | 'pro_plus'];
+    return {
+      ...plan,
+      price: adminPlan.amount
+        ? formatPrice(adminPlan.amount, adminPlan.currency || 'eur', adminPlan.interval || 'month', lang)
+        : plan.price,
+      features: lang === 'ro' && adminPlan.features?.length ? adminPlan.features : plan.features,
+      subtitle: lang === 'ro' && adminPlan.description ? adminPlan.description : plan.subtitle,
+    };
+  });
 
   return (
     <div className="pt-24 pb-20 bg-slate-50 dark:bg-slate-950">
+      <BillingCancelledNotice lang={lang} />
       <section className="relative overflow-hidden border-y border-emerald-100 dark:border-emerald-900/40 bg-gradient-to-b from-emerald-100 via-white to-slate-50 dark:from-emerald-950/30 dark:via-slate-950 dark:to-slate-950">
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute -top-16 right-0 h-64 w-64 rounded-full bg-emerald-300/30 blur-3xl" />
@@ -362,9 +388,13 @@ export default function PricingPage() {
       <section id="plans" className="border-y border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
           <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white mb-2">{t.section2.title}</h2>
-          <p className="text-slate-600 dark:text-slate-300 mb-8">{t.section2.note}</p>
+          <p className="text-slate-600 dark:text-slate-300 mb-4">{t.section2.note}</p>
+          <div className="inline-flex items-center gap-2 rounded-full bg-emerald-600 text-white px-5 py-2 text-sm font-semibold mb-8 shadow-sm">
+            <span>🎁</span>
+            <span>{lang === "ro" ? "7 zile gratuit · Fără card · Anulezi oricând" : "7 days free · No card required · Cancel anytime"}</span>
+          </div>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            {t.section2.plans.map((plan) => (
+            {dynamicPlans.map((plan) => (
               <article
                 key={plan.name}
                 className={
@@ -381,7 +411,10 @@ export default function PricingPage() {
                     </span>
                   ) : null}
                 </div>
-                <p className="text-2xl font-extrabold text-slate-900 dark:text-white mb-1">{plan.price}</p>
+                <p className="text-2xl font-extrabold text-slate-900 dark:text-white mb-0.5">{plan.price}</p>
+                <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 mb-2">
+                  {lang === "ro" ? "✓ 7 zile gratuit la început" : "✓ 7-day free trial included"}
+                </p>
                 <p className="text-slate-700 dark:text-slate-300 mb-5">{plan.subtitle}</p>
                 <ul className="space-y-2">
                   {plan.features.map((feature) => (
@@ -391,12 +424,14 @@ export default function PricingPage() {
                     </li>
                   ))}
                 </ul>
-                <PlanCheckoutButton
-                  planCode={plan.code}
-                  label={lang === "ro" ? "Continua catre plata" : "Continue to checkout"}
-                  loginRequiredLabel={lang === "ro" ? "Autentifica-te pentru a continua." : "Sign in to continue."}
-                  loadingLabel={lang === "ro" ? "Se deschide checkout..." : "Opening checkout..."}
-                />
+                <div className="mt-6">
+                  <Link
+                    href="/auth/register"
+                    className="block w-full rounded-xl bg-emerald-600 px-4 py-2.5 text-center text-sm font-semibold text-white transition hover:bg-emerald-700"
+                  >
+                    {lang === "ro" ? "Continua catre plata" : "Continue to checkout"}
+                  </Link>
+                </div>
               </article>
             ))}
           </div>
@@ -470,14 +505,14 @@ export default function PricingPage() {
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
-              href="/dashboard"
+              href="/auth/register"
               className="inline-flex items-center gap-2 rounded-xl bg-white px-7 py-3.5 text-base font-semibold text-emerald-700 transition hover:bg-emerald-50"
             >
               {t.section6.primaryCta}
               <ArrowRight className="h-4 w-4" />
             </Link>
             <Link
-              href="#plans"
+              href="/auth/register"
               className="inline-flex items-center rounded-xl border border-white/35 bg-white/10 px-7 py-3.5 text-base font-semibold text-white transition hover:bg-white/20"
             >
               {t.section6.secondaryCta}

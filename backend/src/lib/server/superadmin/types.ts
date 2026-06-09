@@ -14,7 +14,7 @@ export type SuperadminUser = {
   mustChangePassword: boolean;
   twoFactorSecret: string | null;
   status: UserStatus;
-  plan: 'free' | 'pro' | 'enterprise';
+  plan: 'free' | 'basic' | 'pro' | 'pro_plus';
   sessionVersion: number;
   sessionInvalidBefore: number;
   createdAt: string;
@@ -37,7 +37,7 @@ export type SubscriptionRecord = {
   id: string;
   userId: string;
   userEmail: string;
-  plan: 'free' | 'pro' | 'enterprise';
+  plan: 'free' | 'basic' | 'pro' | 'pro_plus';
   status: SubscriptionStatus;
   stripeSubscriptionId: string | null;
   currentPeriodEnd: string;
@@ -56,7 +56,7 @@ export type PaymentRecord = {
   createdAt: string;
 };
 
-export type LogSource = 'server' | 'api' | 'stripe-webhook' | 'ai' | 'error' | 'security' | 'audit';
+export type LogSource = 'server' | 'api' | 'stripe-webhook' | 'ai' | 'error' | 'security' | 'audit' | 'frontend';
 
 export type LogRecord = {
   id: string;
@@ -118,6 +118,15 @@ export type AILogRecord = {
   metadata: Record<string, unknown>;
 };
 
+export type PlanPricing = {
+  name: string;
+  description: string;
+  amount: string;
+  currency: string;
+  interval: 'month' | 'year';
+  features: string[];
+};
+
 export type PlatformSettings = {
   app: {
     siteUrl: string;
@@ -131,6 +140,16 @@ export type PlatformSettings = {
     billingMode: 'subscription' | 'one-time' | 'usage';
     currency?: string;
     trialDays?: string;
+    products?: {
+      basic?: { productId: string; priceId: string };
+      pro?: { productId: string; priceId: string };
+      pro_plus?: { productId: string; priceId: string };
+    };
+  };
+  pricing?: {
+    basic?: PlanPricing;
+    pro?: PlanPricing;
+    pro_plus?: PlanPricing;
   };
   ai: {
     provider: string;
@@ -155,10 +174,12 @@ export type PlatformSettings = {
     smtpHost: string;
     smtpPort: string;
     smtpUser: string;
+    smtpPass: string;
     fromEmail: string;
     fromName: string;
     encryption: 'tls' | 'ssl' | 'none';
   };
+  internalEmailToken?: string;
   aiBrain?: {
     defaultModel: string;
     fallbackModel: string;
@@ -202,7 +223,14 @@ export type PlatformSettings = {
       endpoint: string;
       bucket: string;
       accessKey: string;
+      secretKey: string;
     };
+  };
+  recaptcha?: {
+    enabled: boolean;
+    siteKey: string;
+    secretKey: string;
+    scoreThreshold: string;
   };
 };
 

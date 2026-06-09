@@ -108,7 +108,7 @@ export default function DailyPlanPage() {
         <div className="rounded-2xl bg-gradient-to-br from-emerald-700 to-cyan-700 p-8 text-white text-center">
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
-              href="/dashboard"
+              href="/auth/register"
               className="inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3 text-sm font-semibold text-emerald-700 hover:bg-emerald-50"
             >
               {t.ctaPrimary}

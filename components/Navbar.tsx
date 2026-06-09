@@ -10,7 +10,7 @@ import { useLanguage } from "@/components/LanguageProvider";
 import { getUiCopy } from "@/lib/i18n/ui";
 
 const THEME_STORAGE_KEY = "ns_theme";
-const ADMIN_CONSOLE_URL = process.env.NEXT_PUBLIC_ADMIN_CONSOLE_URL || "http://localhost:4028";
+const FALLBACK_ADMIN_CONSOLE_URL = "https://backend.nutrisense-i.eu";
 
 export default function Navbar() {
   const { lang } = useLanguage();
@@ -22,7 +22,9 @@ export default function Navbar() {
   const [darkMode, setDarkMode] = useState(false);
   const [authed, setAuthed] = useState(false);
   const [isSuperadmin, setIsSuperadmin] = useState(false);
+
   const [scrolled, setScrolled] = useState(false);
+  const [adminConsoleUrl, setAdminConsoleUrl] = useState(FALLBACK_ADMIN_CONSOLE_URL);
 
   useEffect(() => {
     let active = true;
@@ -30,8 +32,7 @@ export default function Navbar() {
       .then((user) => {
         if (active) {
           setAuthed(!!user);
-          const email = user?.email?.toLowerCase() ?? "";
-          setIsSuperadmin(user?.role === "superadmin" || email === "design@doimih.net");
+          setIsSuperadmin(user?.role === "superadmin");
         }
       })
       .catch(() => {
@@ -52,6 +53,25 @@ export default function Navbar() {
       active = false;
     };
   }, [pathname]);
+
+  useEffect(() => {
+    let active = true;
+
+    fetch("/api/runtime-settings", { method: "GET" })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((payload: { settings?: { adminConsoleUrl?: string } } | null) => {
+        if (!active) return;
+        const nextUrl = payload?.settings?.adminConsoleUrl;
+        if (nextUrl) setAdminConsoleUrl(nextUrl);
+      })
+      .catch(() => {
+        if (active) setAdminConsoleUrl(FALLBACK_ADMIN_CONSOLE_URL);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 10);
@@ -77,6 +97,8 @@ export default function Navbar() {
     setAuthed(false);
     router.push("/");
   };
+
+  if (pathname.startsWith("/auth")) return null;
 
   const navLinks = [
     { href: "/", label: copy.nav.home },
@@ -141,7 +163,7 @@ export default function Navbar() {
             <>
               {isSuperadmin && (
                 <a
-                  href={ADMIN_CONSOLE_URL}
+                  href={adminConsoleUrl}
                   target="_blank"
                   rel="noreferrer"
                   className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-bold uppercase tracking-wide text-red-700 bg-red-100 dark:text-red-300 dark:bg-red-950/40 rounded-lg"
@@ -216,7 +238,7 @@ export default function Navbar() {
               <>
                 {isSuperadmin && (
                   <a
-                    href={ADMIN_CONSOLE_URL}
+                    href={adminConsoleUrl}
                     target="_blank"
                     rel="noreferrer"
                     className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-red-700 bg-red-50 dark:text-red-300 dark:bg-red-950/30 rounded-lg mb-1"

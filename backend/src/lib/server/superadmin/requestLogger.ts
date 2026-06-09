@@ -5,10 +5,10 @@ import { logError, logInfo } from '@/lib/server/superadmin/aiLogging';
 const SESSION_COOKIE = 'na_sid';
 
 type RouteContext = {
-  params?: Promise<Record<string, string>>;
+  params: Promise<any>;
 };
 
-type RouteHandler = (request: NextRequest, context?: RouteContext) => Promise<NextResponse>;
+type RouteHandler = (request: NextRequest, context: RouteContext) => Promise<NextResponse>;
 
 function getSessionId(request: NextRequest): string {
   const fromHeader = request.headers.get('x-nutriaid-session-id');
@@ -25,7 +25,7 @@ function getUserId(request: NextRequest): string | null {
 
 export function withRequestLogging(source: 'system' | 'orchestrator' | 'ai' | 'worker' = 'system') {
   return function wrap(handler: RouteHandler): RouteHandler {
-    return async (request: NextRequest, context?: RouteContext) => {
+    return async (request: NextRequest, context: RouteContext) => {
       const startedAt = Date.now();
       const sessionId = getSessionId(request);
       const userId = getUserId(request);

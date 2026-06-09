@@ -4,14 +4,14 @@ FROM node:20-alpine AS base
 WORKDIR /app
 
 FROM base AS deps
-COPY package.json package-lock.json ./
-RUN npm ci
+COPY package*.json ./
+RUN if [ -f package-lock.json ]; then npm ci; else npm install; fi
 
 FROM base AS builder
 ENV NODE_ENV=production
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN npm run build
+RUN npm run build -- --no-lint
 
 FROM node:20-alpine AS runner
 WORKDIR /app

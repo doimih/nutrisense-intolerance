@@ -12,12 +12,24 @@ type HetznerConfig = {
   endpoint: string;
   bucket: string;
   accessKey: string;
+  secretKey: string;
 };
 
 type SettingsPayload = {
   settings?: {
     backup?: BackupConfig & { hetzner?: HetznerConfig };
   };
+};
+
+type BackupHistoryEntry = {
+  id: string;
+  createdAt: string;
+  actorEmail: string | null;
+  destination: string;
+  triggeredBy: string;
+  filesUploaded: number | null;
+  prefix: string | null;
+  schedule: string | null;
 };
 
 const DEFAULT_CONFIG: BackupConfig = {
@@ -31,13 +43,15 @@ const DEFAULT_HETZNER: HetznerConfig = {
   endpoint: '',
   bucket: '',
   accessKey: '',
+  secretKey: '',
 };
 
 export default function BackupSettings() {
   const [config, setConfig] = useState<BackupConfig>(DEFAULT_CONFIG);
   const [hetzner, setHetzner] = useState<HetznerConfig>(DEFAULT_HETZNER);
-  const [hetznerSecretKey, setHetznerSecretKey] = useState('');
-  const [hetznerShowSecretKey, setHetznerShowSecretKey] = useState(false);
+  const [hasStoredSecret, setHasStoredSecret] = useState(false);
+  const [secretChanged, setSecretChanged] = useState(false);
+  const [showSecret, setShowSecret] = useState(false);
   const [hetznerEditing, setHetznerEditing] = useState(false);
 
   const [saved, setSaved] = useState(false);
@@ -52,8 +66,21 @@ export default function BackupSettings() {
   const [hetznerTestResult, setHetznerTestResult] = useState<{ ok: boolean; message: string } | null>(null);
 
   const [error, setError] = useState<string | null>(null);
+  const [backupHistory, setBackupHistory] = useState<BackupHistoryEntry[]>([]);
+  const [historyError, setHistoryError] = useState(false);
+
+  const loadHistory = () => {
+    setHistoryError(false);
+    fetch('/api/superadmin/backup/history')
+      .then((res) => (res.ok ? res.json() : Promise.reject(new Error('not ok'))))
+      .then((data: { history?: BackupHistoryEntry[] }) => {
+        setBackupHistory(data.history ?? []);
+      })
+      .catch(() => setHistoryError(true));
+  };
 
   useEffect(() => {
+    loadHistory();
     fetch('/api/superadmin/settings')
       .then((res) => (res.ok ? res.json() : null))
       .then((payload: SettingsPayload | null) => {
@@ -70,11 +97,27 @@ export default function BackupSettings() {
             endpoint: b.hetzner.endpoint ?? DEFAULT_HETZNER.endpoint,
             bucket: b.hetzner.bucket ?? DEFAULT_HETZNER.bucket,
             accessKey: b.hetzner.accessKey ?? DEFAULT_HETZNER.accessKey,
+            secretKey: '',
           });
+          setHasStoredSecret(!!(b.hetzner.secretKey));
         }
       })
       .catch(() => setError('Could not load backup settings.'));
   }, []);
+
+  const buildHetznerPayload = () => {
+    const payload: HetznerConfig = {
+      region: hetzner.region,
+      endpoint: hetzner.endpoint,
+      bucket: hetzner.bucket,
+      accessKey: hetzner.accessKey,
+      secretKey: hetzner.secretKey,
+    };
+    if (!secretChanged || !hetzner.secretKey) {
+      delete (payload as Partial<HetznerConfig>).secretKey;
+    }
+    return payload;
+  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -82,19 +125,11 @@ export default function BackupSettings() {
     const res = await fetch('/api/superadmin/settings', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        backup: {
-          ...config,
-          hetzner,
-        },
-      }),
+      body: JSON.stringify({ backup: { ...config } }),
     });
     const payload = (await res.json().catch(() => ({}))) as { error?: string };
     setSaving(false);
-    if (!res.ok) {
-      setError(payload.error || 'Could not save backup settings.');
-      return;
-    }
+    if (!res.ok) { setError(payload.error || 'Could not save backup settings.'); return; }
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
   };
@@ -102,21 +137,21 @@ export default function BackupSettings() {
   const handleHetznerSave = async () => {
     setHetznerSaving(true);
     setError(null);
+    const hetznerPayload = buildHetznerPayload();
     const res = await fetch('/api/superadmin/settings', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        backup: {
-          ...config,
-          hetzner,
-        },
+        backup: { ...config, hetzner: hetznerPayload },
       }),
     });
     const payload = (await res.json().catch(() => ({}))) as { error?: string };
     setHetznerSaving(false);
-    if (!res.ok) {
-      setError(payload.error || 'Could not save storage settings.');
-      return;
+    if (!res.ok) { setError(payload.error || 'Could not save storage settings.'); return; }
+    if (secretChanged && hetzner.secretKey) {
+      setHasStoredSecret(true);
+      setSecretChanged(false);
+      setHetzner((prev) => ({ ...prev, secretKey: '' }));
     }
     setHetznerSaved(true);
     setHetznerEditing(false);
@@ -126,36 +161,38 @@ export default function BackupSettings() {
   const handleBackupNow = async () => {
     setRunning(true);
     setRunResult(null);
-    const res = await fetch('/api/superadmin/backup/run', {
-      method: 'POST',
-    }).catch(() => null);
+    const res = await fetch('/api/superadmin/backup/run', { method: 'POST' }).catch(() => null);
     setRunning(false);
     if (!res) {
       setRunResult({ ok: false, message: 'Request failed.' });
     } else {
       const data = (await res.json().catch(() => ({}))) as { ok?: boolean; message?: string };
-      setRunResult({ ok: res.ok, message: data.message || (res.ok ? 'Backup requested.' : 'Backup failed.') });
+      setRunResult({ ok: res.ok && data.ok !== false, message: data.message || (res.ok ? 'Backup started.' : 'Backup failed.') });
+      if (res.ok && data.ok !== false) setTimeout(() => loadHistory(), 300);
     }
-    setTimeout(() => setRunResult(null), 6000);
+    setTimeout(() => setRunResult(null), 8000);
   };
 
   const handleHetznerTest = async () => {
     setHetznerTesting(true);
     setHetznerTestResult(null);
-
     if (!hetzner.endpoint || !hetzner.bucket || !hetzner.accessKey) {
       setHetznerTesting(false);
       setHetznerTestResult({ ok: false, message: 'Completeaza endpoint, bucket si access key inainte de a testa.' });
       setTimeout(() => setHetznerTestResult(null), 5000);
       return;
     }
-
     const res = await fetch('/api/superadmin/backup/test-connection', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...hetzner }),
+      body: JSON.stringify({
+        endpoint: hetzner.endpoint,
+        bucket: hetzner.bucket,
+        accessKey: hetzner.accessKey,
+        region: hetzner.region,
+        secretKey: secretChanged && hetzner.secretKey ? hetzner.secretKey : undefined,
+      }),
     }).catch(() => null);
-
     setHetznerTesting(false);
     if (!res) {
       setHetznerTestResult({ ok: false, message: 'Request failed — verifica endpoint-ul.' });
@@ -163,23 +200,20 @@ export default function BackupSettings() {
       const data = (await res.json().catch(() => ({}))) as { ok?: boolean; message?: string };
       setHetznerTestResult({ ok: res.ok && data.ok !== false, message: data.message || (res.ok ? 'Conexiune reusita.' : 'Conexiune esuata.') });
     }
-    setTimeout(() => setHetznerTestResult(null), 5000);
+    setTimeout(() => setHetznerTestResult(null), 6000);
   };
 
   return (
     <div className="space-y-5">
+      {/* General backup settings */}
       <div className="card p-6 space-y-5">
         <div>
           <h2 className="section-header">Backup Settings</h2>
-          <p className="text-sm text-muted-foreground mt-1">
-            Configure automated database and file backups
-          </p>
+          <p className="text-sm text-muted-foreground mt-1">Configure automated database and file backups</p>
         </div>
 
         {error && (
-          <p className="text-sm rounded-lg border border-negative/30 bg-negative-bg text-negative px-3 py-2">
-            {error}
-          </p>
+          <p className="text-sm rounded-lg border border-negative/30 bg-negative-bg text-negative px-3 py-2">{error}</p>
         )}
 
         <div className="grid grid-cols-2 gap-4">
@@ -222,20 +256,12 @@ export default function BackupSettings() {
             >
               <option value="local">Local Storage</option>
               <option value="hetzner">Hetzner Object Storage</option>
-              <option value="s3">Amazon S3</option>
-              <option value="gcs">Google Cloud Storage</option>
             </select>
           </div>
         </div>
 
         {runResult && (
-          <div
-            className={`rounded-lg p-3 flex items-center gap-2 text-sm font-medium ${
-              runResult.ok
-                ? 'bg-green-50 border border-green-200 text-green-700'
-                : 'bg-red-50 border border-red-200 text-red-700'
-            }`}
-          >
+          <div className={`rounded-lg p-3 flex items-center gap-2 text-sm font-medium ${runResult.ok ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-700'}`}>
             {runResult.ok ? '✓' : '✗'} {runResult.message}
           </div>
         )}
@@ -250,52 +276,28 @@ export default function BackupSettings() {
         </div>
       </div>
 
+      {/* Hetzner storage settings */}
       <div className="card p-6 space-y-5">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center flex-shrink-0">
-            <svg
-              className="w-4 h-4 text-red-600"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2"
-              />
+            <svg className="w-4 h-4 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2" />
             </svg>
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-foreground">Setari Storage</h3>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Configureaza conexiunea Hetzner Object Storage pentru backup-uri remote
-            </p>
+            <h3 className="text-sm font-semibold text-foreground">Setari Storage Hetzner</h3>
+            <p className="text-xs text-muted-foreground mt-0.5">Configureaza conexiunea Hetzner Object Storage pentru backup-uri remote</p>
           </div>
         </div>
 
-        <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
-          <p>Pentru Hetzner Object Storage completeaza:</p>
-          <p>Endpoint: ex. https://fsn1.your-objectstorage.com</p>
-          <p>Bucket: numele bucket-ului creat</p>
-          <p>Access Key si Secret Key: din Hetzner Console (nu email/parola de cont).</p>
+        <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700 space-y-1">
+          <p className="font-medium">Cum obtii credentialele:</p>
+          <p>1. Mergi în Hetzner Console → Object Storage → creeaza un bucket</p>
+          <p>2. La <strong>Access Keys</strong>, genereaza o pereche Access Key / Secret Key</p>
+          <p>3. Endpoint-ul il gasesti în detaliile bucket-ului (ex: <code>https://fsn1.your-objectstorage.com</code>)</p>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
-          <div className="col-span-2 sm:col-span-1">
-            <label className="label-text">Provider</label>
-            <input
-              className="input-field bg-muted/40"
-              type="text"
-              title="Provider"
-              aria-label="Provider"
-              value="Hetzner Storage"
-              disabled
-              readOnly
-            />
-          </div>
-
           <div className="col-span-2 sm:col-span-1">
             <label className="label-text">Region</label>
             <input
@@ -317,6 +319,12 @@ export default function BackupSettings() {
               placeholder="https://fsn1.your-objectstorage.com"
               value={hetzner.endpoint}
               onChange={(e) => setHetzner({ ...hetzner, endpoint: e.target.value })}
+              onBlur={(e) => {
+                const val = e.target.value.trim();
+                if (val && !val.startsWith('http://') && !val.startsWith('https://')) {
+                  setHetzner((prev) => ({ ...prev, endpoint: `https://${val}` }));
+                }
+              }}
               disabled={!hetznerEditing}
               readOnly={!hetznerEditing}
             />
@@ -353,22 +361,26 @@ export default function BackupSettings() {
             <div className="relative">
               <input
                 className="input-field pr-10"
-                type={hetznerShowSecretKey ? 'text' : 'password'}
-                placeholder="Secret Key din Hetzner Console"
-                value={hetznerSecretKey}
-                onChange={(e) => setHetznerSecretKey(e.target.value)}
+                type={showSecret ? 'text' : 'password'}
+                placeholder={hasStoredSecret && !secretChanged ? '•••••••• (salvat)' : 'Secret Key din Hetzner Console'}
+                value={hetzner.secretKey}
+                onChange={(e) => {
+                  setSecretChanged(true);
+                  setHetzner({ ...hetzner, secretKey: e.target.value });
+                }}
                 disabled={!hetznerEditing}
                 readOnly={!hetznerEditing}
+                autoComplete="new-password"
               />
               <button
                 type="button"
-                onClick={() => setHetznerShowSecretKey((v) => !v)}
+                onClick={() => setShowSecret((v) => !v)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                 disabled={!hetznerEditing}
-                title="Arata sau ascunde Secret Key"
-                aria-label="Arata sau ascunde Secret Key"
+                title={showSecret ? 'Ascunde' : 'Arata'}
+                aria-label={showSecret ? 'Ascunde secret key' : 'Arata secret key'}
               >
-                {hetznerShowSecretKey ? (
+                {showSecret ? (
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
                   </svg>
@@ -380,61 +392,111 @@ export default function BackupSettings() {
                 )}
               </button>
             </div>
-            <p className="helper-text">Secret Key nu este stocat în DB — seteaza HETZNER_SECRET_KEY în env.</p>
+            <p className="helper-text">
+              {hasStoredSecret && !secretChanged
+                ? 'Secret Key este salvat. Scrie unul nou pentru a-l schimba.'
+                : 'Stocat securizat in DB.'}
+            </p>
           </div>
         </div>
 
-        <p className="text-xs text-muted-foreground">
-          {hetznerEditing
-            ? 'Campurile pot fi editate. Completeaza endpoint, bucket, access key, secret key si regiunea.'
-            : 'Campurile sunt blocate. Apasa „Editeaza setari storage" pentru a modifica valorile.'}
-        </p>
-
         {hetznerTestResult && (
-          <div
-            className={`rounded-lg p-3 flex items-center gap-2 text-sm font-medium ${
-              hetznerTestResult.ok
-                ? 'bg-green-50 border border-green-200 text-green-700'
-                : 'bg-red-50 border border-red-200 text-red-700'
-            }`}
-          >
+          <div className={`rounded-lg p-3 flex items-center gap-2 text-sm font-medium ${hetznerTestResult.ok ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-700'}`}>
             {hetznerTestResult.ok ? '✓' : '✗'} {hetznerTestResult.message}
           </div>
         )}
 
-        <div className="flex items-center gap-3 pt-1">
+        <div className="flex flex-wrap items-center gap-3 pt-1">
           <button
             type="button"
-            onClick={() => {
-              setHetznerEditing((current) => !current);
-              setHetznerTestResult(null);
-            }}
+            onClick={() => { setHetznerEditing((v) => !v); setHetznerTestResult(null); }}
             className="btn-secondary"
           >
-            {hetznerEditing ? 'Anuleaza editarea' : 'Editeaza setari storage'}
+            {hetznerEditing ? 'Anuleaza' : 'Editeaza setari storage'}
           </button>
           <button
             onClick={() => void handleHetznerSave()}
             className="btn-primary"
             disabled={!hetznerEditing || hetznerSaving}
           >
-            {hetznerSaved ? '✓ Setari salvate' : hetznerSaving ? 'Salvand…' : 'Salveaza setari storage'}
+            {hetznerSaved ? '✓ Salvat' : hetznerSaving ? 'Salvand…' : 'Salveaza storage'}
           </button>
           <button
             onClick={() => void handleHetznerTest()}
             className="btn-secondary"
-            disabled={!hetznerEditing || hetznerTesting}
+            disabled={hetznerTesting}
           >
-            {hetznerTesting ? 'Testeaza conexiunea…' : 'Testeaza conexiunea'}
+            {hetznerTesting ? 'Testez…' : 'Testeaza conexiunea'}
           </button>
         </div>
       </div>
 
+      {/* Backup history */}
       <div className="card p-6">
-        <h3 className="text-sm font-semibold text-foreground mb-4">Backup History</h3>
-        <p className="text-sm text-muted-foreground text-center py-6">
-          No backup history available. Backup infrastructure not yet configured.
-        </p>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-sm font-semibold text-foreground">Istoric Backup-uri</h3>
+          <button
+            onClick={loadHistory}
+            className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+            title="Reincarca istoricul"
+          >
+            ↻ Reincarca
+          </button>
+        </div>
+
+        {historyError ? (
+          <p className="text-sm text-negative text-center py-6">
+            Nu s-a putut incarca istoricul. Apasa ↻ Reincarca.
+          </p>
+        ) : backupHistory.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-6">
+            Nu exista backup-uri inregistrate inca.
+          </p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border text-left">
+                  <th className="pb-2 pr-4 font-medium text-muted-foreground">Data</th>
+                  <th className="pb-2 pr-4 font-medium text-muted-foreground">Destinatie</th>
+                  <th className="pb-2 pr-4 font-medium text-muted-foreground">Fisiere</th>
+                  <th className="pb-2 pr-4 font-medium text-muted-foreground">Prefix</th>
+                  <th className="pb-2 font-medium text-muted-foreground">Declansat de</th>
+                </tr>
+              </thead>
+              <tbody>
+                {backupHistory.map((entry) => (
+                  <tr key={entry.id} className="border-b border-border/50 last:border-0">
+                    <td className="py-2 pr-4 text-foreground whitespace-nowrap">
+                      {new Date(entry.createdAt).toLocaleString('ro-RO', {
+                        day: '2-digit', month: '2-digit', year: 'numeric',
+                        hour: '2-digit', minute: '2-digit',
+                      })}
+                    </td>
+                    <td className="py-2 pr-4">
+                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+                        entry.destination === 'hetzner'
+                          ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                          : 'bg-slate-100 text-slate-600 border border-slate-200'
+                      }`}>
+                        {entry.destination === 'hetzner' ? '☁ Hetzner' : '💾 Local'}
+                      </span>
+                    </td>
+                    <td className="py-2 pr-4 text-foreground">
+                      {entry.filesUploaded != null ? `${entry.filesUploaded} fișiere` : '—'}
+                    </td>
+                    <td className="py-2 pr-4 text-muted-foreground font-mono text-xs truncate max-w-[180px]" title={entry.prefix ?? ''}>
+                      {entry.prefix ?? '—'}
+                    </td>
+                    <td className="py-2 text-muted-foreground text-xs">
+                      {entry.triggeredBy === 'manual' ? 'manual' : entry.triggeredBy}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ShieldCheck, ExternalLink, ArrowRight } from "lucide-react";
-
-const ADMIN_CONSOLE_URL =
-  process.env.NEXT_PUBLIC_ADMIN_CONSOLE_URL || "http://localhost:4028";
+import { getRuntimeSettings } from "@/lib/server/runtimeSettings";
 
 export const metadata: Metadata = {
   title: "Admin Console Access",
@@ -14,6 +12,8 @@ export const metadata: Metadata = {
 };
 
 export default async function BackendGatewayPage() {
+  const { adminConsoleUrl } = await getRuntimeSettings();
+
   return (
     <main className="pt-24 pb-20 bg-slate-50 dark:bg-slate-950 min-h-screen">
       <section className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -34,7 +34,7 @@ export default async function BackendGatewayPage() {
 
           <div className="mt-8 flex flex-col sm:flex-row gap-3">
             <a
-              href={ADMIN_CONSOLE_URL}
+              href={adminConsoleUrl}
               target="_blank"
               rel="noreferrer"
               className="inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 hover:bg-red-700 text-white font-semibold px-5 py-3 transition-colors"
@@ -55,7 +55,7 @@ export default async function BackendGatewayPage() {
           <p className="mt-6 text-xs text-slate-500 dark:text-slate-400">
             If the console does not open, verify that the backend admin app is running on
             {" "}
-            <span className="font-semibold">{ADMIN_CONSOLE_URL}</span>.
+            <span className="font-semibold">{adminConsoleUrl}</span>.
           </p>
         </div>
       </section>

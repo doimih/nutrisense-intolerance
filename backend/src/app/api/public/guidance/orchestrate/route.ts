@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { NextRequest, NextResponse } from 'next/server';
-import { appendAiLog } from '@/lib/server/superadmin/store';
+import { appendAiLog, readDb } from '@/lib/server/superadmin/store';
 import { logAIEvent } from '@/lib/server/superadmin/aiLogging';
 
 export const runtime = 'nodejs';
@@ -286,18 +286,24 @@ export async function POST(request: NextRequest) {
   const sessionId = normalizeSessionId(request, body.sessionId);
   const userMessage = normalizeMessage(body.userMessage, lang);
 
-  const apiKey = (process.env.OPENAI_API_KEY ?? process.env.AI_API_KEY ?? '').trim();
+  const dbSettings = readDb().settings;
+  const aiBrain = dbSettings?.aiBrain;
+
+  const dbApiKey = dbSettings?.ai?.apiKeyMasked ?? '';
+  const isPlaceholder = !dbApiKey || dbApiKey.includes('****');
+  const apiKey = (!isPlaceholder ? dbApiKey : (process.env.OPENAI_API_KEY ?? process.env.AI_API_KEY ?? '')).trim();
+
   if (!apiKey) {
     return NextResponse.json(
-      { error: 'AI_API_KEY not configured. Set OPENAI_API_KEY or AI_API_KEY in the environment.' },
+      { error: 'AI API key not configured. Set it in Settings → AI in the admin panel.' },
       { status: 503 },
     );
   }
 
-  const model = (process.env.AI_PRIMARY_MODEL ?? 'gpt-4o').trim();
-  const fallbackModel = (process.env.AI_FALLBACK_MODEL ?? 'gpt-4o-mini').trim();
-  const temperature = Math.max(0, Math.min(1, Number(process.env.AI_TEMPERATURE ?? '0.4')));
-  const maxTokens = Math.max(512, Math.min(4096, Number(process.env.AI_MAX_TOKENS ?? '1024')));
+  const model = (aiBrain?.defaultModel || process.env.AI_PRIMARY_MODEL || 'gpt-4o').trim();
+  const fallbackModel = (aiBrain?.fallbackModel || process.env.AI_FALLBACK_MODEL || 'gpt-4o-mini').trim();
+  const temperature = Math.max(0, Math.min(1, Number(aiBrain?.temperature ?? process.env.AI_TEMPERATURE ?? '0.4')));
+  const maxTokens = Math.max(512, Math.min(4096, Number(aiBrain?.maxTokens ?? process.env.AI_MAX_TOKENS ?? '1024')));
 
   const contextObj = asObject(body.context);
   const intolerances = asStringArray(body.intolerances ?? contextObj.intolerances);
@@ -314,7 +320,8 @@ export async function POST(request: NextRequest) {
   const userId = typeof body.userId === 'string' ? body.userId : 'anonymous';
   const userEmail = typeof body.userEmail === 'string' ? body.userEmail : 'unknown';
 
-  const systemPrompt = buildSystemPrompt(lang);
+  const dbSystemPrompt = aiBrain?.systemPrompt?.trim();
+  const systemPrompt = dbSystemPrompt && dbSystemPrompt.length > 20 ? dbSystemPrompt : buildSystemPrompt(lang);
   const userPrompt = buildUserPrompt({ lang, userMessage, intolerances, dietaryPreference, detailLevel, subscriptionTier, entries });
 
   const messages: OpenAIMessage[] = [

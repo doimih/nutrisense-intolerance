@@ -33,5 +33,9 @@ jest-test-results.json
 .vscode/
 .idea/
 
-# Optional: if using TurboRepo or monorepo
-turbo/
+# Env files with secrets
+.env
+.env.local
+.env.production
+.env.production.local
+data/superadmin-db.json

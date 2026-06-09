@@ -541,7 +541,7 @@ export default function AboutPage() {
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
-              href="/dashboard"
+              href="/auth/register"
               className="inline-flex items-center gap-2 rounded-xl bg-white px-7 py-3.5 text-base font-semibold text-emerald-700 transition hover:bg-emerald-50"
             >
               {t.section6.primaryCta}

@@ -8,7 +8,7 @@ import AuthCard from "@/components/AuthCard";
 import FormField, { Input } from "@/components/FormField";
 import Button from "@/components/Button";
 import ErrorAlert from "@/components/ErrorAlert";
-import { login } from "@/lib/api/auth";
+import { AuthApiError, login, resendVerificationEmail } from "@/lib/api/auth";
 import { useLanguage } from "@/components/LanguageProvider";
 import { getUiCopy } from "@/lib/i18n/ui";
 
@@ -18,15 +18,27 @@ export default function LoginPage() {
   const copy = getUiCopy(lang);
   const router = useRouter();
   const searchParams = useSearchParams();
+  const initialEmail = searchParams.get("email") || "";
   const redirectPath = searchParams.get("redirect");
+  const registered = searchParams.get("registered") === "1";
   const registerHref =
     redirectPath && redirectPath.startsWith("/dashboard")
       ? `/auth/register?redirect=${encodeURIComponent(redirectPath)}`
       : "/auth/register";
-  const [form, setForm] = useState({ email: "", password: "" });
+  const [form, setForm] = useState({ email: initialEmail, password: "" });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [resending, setResending] = useState(false);
   const [error, setError] = useState("");
+  const [info, setInfo] = useState(
+    registered
+      ? isRo
+        ? "Contul a fost creat. Verifica emailul pentru activare, apoi autentifica-te."
+        : "Account created. Check your email to activate it, then sign in."
+      : ""
+  );
+  const [verificationEmail, setVerificationEmail] = useState(initialEmail);
+  const [needsVerification, setNeedsVerification] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const validate = () => {
@@ -41,6 +53,7 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setNeedsVerification(false);
     const errors = validate();
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
@@ -55,9 +68,27 @@ export default function LoginPage() {
         redirectPath && redirectPath.startsWith("/dashboard") ? redirectPath : "/dashboard";
       router.push(safeRedirect);
     } catch (err: unknown) {
+      if (err instanceof AuthApiError && err.code === "EMAIL_NOT_VERIFIED") {
+        setNeedsVerification(true);
+        setVerificationEmail(err.email || form.email);
+      }
       setError(err instanceof Error ? err.message : isRo ? "Autentificare esuata." : "Sign in failed.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    setResending(true);
+    setError("");
+    try {
+      const result = await resendVerificationEmail(verificationEmail || form.email);
+      setInfo(result.message);
+      setNeedsVerification(false);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : isRo ? "A aparut o eroare." : "An error occurred.");
+    } finally {
+      setResending(false);
     }
   };
 
@@ -78,8 +109,29 @@ export default function LoginPage() {
         </>
       }
     >
+      {info && (
+        <ErrorAlert type="info" message={info} className="mb-4" onDismiss={() => setInfo("")} />
+      )}
       {error && (
         <ErrorAlert message={error} className="mb-4" onDismiss={() => setError("")} />
+      )}
+
+      {needsVerification && (
+        <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/20 p-3 space-y-3">
+          <p className="text-sm text-amber-900 dark:text-amber-300">
+            {isRo
+              ? "Trebuie sa-ti verifici emailul inainte de a accesa platforma."
+              : "You must verify your email before accessing the platform."}
+          </p>
+          <Button
+            type="button"
+            onClick={handleResendVerification}
+            loading={resending}
+            fullWidth
+          >
+            {isRo ? "Retrimite emailul de verificare" : "Resend verification email"}
+          </Button>
+        </div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">

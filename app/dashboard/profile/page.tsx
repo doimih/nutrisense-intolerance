@@ -10,12 +10,14 @@ import ErrorAlert from "@/components/ErrorAlert";
 import { PageLoader } from "@/components/LoadingOverlay";
 import { useLanguage } from "@/components/LanguageProvider";
 import { getProfile, updateProfile } from "@/lib/api/profile";
+import { getSessionUser } from "@/lib/api/auth";
 import { getDietaryLabel, getIntoleranceLabel } from "@/lib/i18n/labels";
 import type { UserProfile, Intolerance, DietaryPreference } from "@/types/profile";
 import {
   INTOLERANCE_LABELS,
   DIETARY_PREFERENCE_LABELS,
 } from "@/types/profile";
+import BillingSection from "./_components/BillingSection";
 
 const ALL_INTOLERANCES = Object.keys(INTOLERANCE_LABELS) as Intolerance[];
 
@@ -23,6 +25,7 @@ export default function ProfilePage() {
   const { lang } = useLanguage();
   const isRo = lang === "ro";
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [trialEndsAt, setTrialEndsAt] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -34,13 +37,14 @@ export default function ProfilePage() {
   });
 
   useEffect(() => {
-    getProfile().then((p) => {
+    Promise.all([getProfile(), getSessionUser()]).then(([p, user]) => {
       setProfile(p);
       setForm({
         name: p.name,
         dietaryPreference: p.dietaryPreference,
         intolerances: p.intolerances,
       });
+      if (user?.trialEndsAt) setTrialEndsAt(user.trialEndsAt);
       setLoading(false);
     });
   }, []);
@@ -211,6 +215,8 @@ export default function ProfilePage() {
           {saving ? (isRo ? "Se salveaza..." : "Saving...") : (isRo ? "Salveaza modificarile" : "Save changes")}
         </Button>
       </form>
+
+      <BillingSection trialEndsAt={trialEndsAt} lang={lang as "ro" | "en"} />
     </div>
   );
 }

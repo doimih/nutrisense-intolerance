@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { AUTH_COOKIE_NAME } from "@/lib/auth/session";
 import { readSessionToken } from "@/lib/auth/sessionToken";
+import { getEffectivePlanTier } from "@/lib/billing/features";
 import { getSubscriptionSnapshot } from "@/lib/server/subscriptionStore";
 
 export const runtime = "nodejs";
@@ -13,9 +14,13 @@ export async function GET(request: NextRequest) {
   }
 
   const email = session.user.email.trim().toLowerCase();
+  const [planTier, snapshot] = await Promise.all([
+    getEffectivePlanTier(email),
+    getSubscriptionSnapshot(email),
+  ]);
 
-  const snapshot = getSubscriptionSnapshot(email);
   return NextResponse.json({
+    planTier,
     subscription: snapshot ?? {
       email,
       planCode: null,

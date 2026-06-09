@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   Sparkles,
   BookOpen,
@@ -9,6 +10,7 @@ import {
   TrendingUp,
   AlertCircle,
   User,
+  CheckCircle2,
 } from "lucide-react";
 import Card from "@/components/Card";
 import Badge from "@/components/Badge";
@@ -52,6 +54,8 @@ export default function DashboardPage() {
   const { lang } = useLanguage();
   const isRo = lang === "ro";
   const locale = isRo ? "ro-RO" : "en-US";
+  const searchParams = useSearchParams();
+  const billingStatus = searchParams.get("billing");
   const [user, setUser] = useState<UserType | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [lastGuidance, setLastGuidance] = useState<GuidanceHistoryEntry | null>(null);
@@ -90,6 +94,17 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
+      {billingStatus === "success" && (
+        <div className="flex items-center gap-3 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 px-4 py-3">
+          <CheckCircle2 className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0" />
+          <p className="text-sm font-medium text-green-800 dark:text-green-300">
+            {isRo
+              ? "Plata a fost efectuata cu succes! Abonamentul tau este activ."
+              : "Payment successful! Your subscription is now active."}
+          </p>
+        </div>
+      )}
+
       {error && (
         <ErrorAlert
           message={error}

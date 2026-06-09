@@ -344,7 +344,7 @@ export default function WhyAiPage() {
           </div>
           <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link
-              href="/dashboard"
+              href="/auth/register"
               className="inline-flex items-center gap-2 rounded-xl bg-white px-7 py-3.5 text-base font-semibold text-emerald-700 transition hover:bg-emerald-50"
             >
               Începe analiza intoleranțelor tale

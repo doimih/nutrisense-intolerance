@@ -12,7 +12,9 @@ import {
   runDeterministicGuidance,
   sanitizeGuidanceResult,
 } from "@/lib/server/guidance/engine";
-import type { GuidanceGenerateInput, SubscriptionTier } from "@/lib/server/guidance/types";
+import { getEffectivePlanTier, tierAllows, cappedDetailLevel } from "@/lib/billing/features";
+import { mineSimilarPatterns, deriveUserProblemFromMonitoring } from "@/lib/server/userProblemsStore";
+import type { GuidanceGenerateInput, PlanTier, SubscriptionTier } from "@/lib/server/guidance/types";
 import type { DetailLevel, GuidanceResult, MealExample, MonitoringContextItem } from "@/types/guidance";
 import type { DietaryPreference, Intolerance } from "@/types/profile";
 
@@ -94,8 +96,9 @@ function normalizeMonitoringEntries(value: unknown): MonitoringContextItem[] {
   return valid.slice(0, 80);
 }
 
-function toMonitoringContextFromStore(email: string): MonitoringContextItem[] {
-  return listMonitoringEntriesByUser(email).slice(0, 80).map((entry) => ({
+async function toMonitoringContextFromStore(email: string): Promise<MonitoringContextItem[]> {
+  const entries = await listMonitoringEntriesByUser(email);
+  return entries.slice(0, 80).map((entry) => ({
     date: entry.date,
     hour: entry.mealTime || "unknown",
     consumedFoods: entry.consumedFoods,
@@ -286,7 +289,11 @@ function extractGuidanceFromOrchestrator(
   );
 }
 
-async function runRealOrchestrator(input: GuidanceGenerateInput, userId: string): Promise<GuidanceResult | null> {
+async function runRealOrchestrator(
+  input: GuidanceGenerateInput,
+  userId: string,
+  dbPatterns?: Awaited<ReturnType<typeof mineSimilarPatterns>>
+): Promise<GuidanceResult | null> {
   const settings = await getRuntimeSettings();
   const backendUrl = settings.backendUrl?.replace(/\/$/, "");
   if (!backendUrl) return null;
@@ -320,6 +327,13 @@ async function runRealOrchestrator(input: GuidanceGenerateInput, userId: string)
         dietType: input.dietaryPreference,
         intolerances: input.intolerances,
         subscriptionTier: input.subscriptionTier,
+      },
+      databasePatterns: dbPatterns ?? {
+        similarCases: [],
+        commonTriggers: [],
+        commonIngredients: [],
+        successfulAdjustments: [],
+        improvementPatterns: [],
       },
     }),
     signal: AbortSignal.timeout(45_000),
@@ -357,25 +371,39 @@ export async function POST(request: NextRequest) {
 
   const lang = getLanguage(request);
   const email = session.user.email.trim().toLowerCase();
-  const profile = getProfileForUser(session.user);
+
+  const effectiveTier = await getEffectivePlanTier(email);
+  if (!tierAllows(effectiveTier, "basic")) {
+    return NextResponse.json({ error: "Plan activ necesar pentru a accesa recomandarile.", code: "plan_required" }, { status: 403 });
+  }
+
+  const safeDetailLevel = cappedDetailLevel(effectiveTier, body.detailLevel);
+
+  const [profile, snapshot] = await Promise.all([
+    getProfileForUser(session.user),
+    getSubscriptionSnapshot(email),
+  ]);
 
   const monitoringFromBody = normalizeMonitoringEntries(body.monitoringEntries);
   const monitoringEntries =
-    monitoringFromBody.length > 0 ? monitoringFromBody : toMonitoringContextFromStore(email);
+    monitoringFromBody.length > 0
+      ? monitoringFromBody
+      : await toMonitoringContextFromStore(email);
 
-  const snapshot = getSubscriptionSnapshot(email);
-  const subscriptionTier = resolveSubscriptionTier(snapshot?.status ?? "none");
+  const planTier: PlanTier = effectiveTier;
+  const subscriptionTier: SubscriptionTier = planTier !== "none" ? "active" : resolveSubscriptionTier(snapshot?.status ?? "none");
 
   const input: GuidanceGenerateInput = {
     intolerances: isIntoleranceArray(body.intolerances) ? body.intolerances : profile.intolerances,
     dietaryPreference: isDietaryPreference(body.dietaryPreference)
       ? body.dietaryPreference
       : profile.dietaryPreference,
-    detailLevel: body.detailLevel,
+    detailLevel: safeDetailLevel,
     monitoringEntries,
     userEmail: email,
     lang,
     subscriptionTier,
+    planTier,
   };
 
   const prompt = buildGuidancePrompt(input);
@@ -391,7 +419,8 @@ export async function POST(request: NextRequest) {
   const key = dedupeKey(email, fingerprint);
   const cached = dedupeCache.get(key);
   if (cached) {
-    const existing = listGuidanceByUser(email).find((item) => item.result.id === cached.resultId);
+    const history = await listGuidanceByUser(email);
+    const existing = history.find((item) => item.result.id === cached.resultId);
     if (existing) {
       return NextResponse.json({ result: existing.result, deduped: true });
     }
@@ -400,8 +429,24 @@ export async function POST(request: NextRequest) {
   const startedAt = Date.now();
   let result: GuidanceResult | null = null;
 
+  // Derive/update user's problem profile and mine cross-user patterns in parallel
+  const userFoods = monitoringEntries.flatMap((e) => e.consumedFoods);
+  const userSymptoms = monitoringEntries.flatMap((e) => e.symptoms);
+  const [dbPatterns] = await Promise.all([
+    mineSimilarPatterns(email, userSymptoms, userFoods),
+    deriveUserProblemFromMonitoring(
+      email,
+      monitoringEntries.map((e) => ({
+        symptoms: e.symptoms,
+        consumedFoods: e.consumedFoods,
+        symptomsIntensity: e.symptomsIntensity,
+        mealTime: e.hour,
+      }))
+    ).catch(() => undefined),
+  ]);
+
   try {
-    result = await runRealOrchestrator(input, session.user.id);
+    result = await runRealOrchestrator(input, session.user.id, dbPatterns);
   } catch {
     result = null;
   }
@@ -414,7 +459,7 @@ export async function POST(request: NextRequest) {
     };
   }
 
-  appendGuidanceRecord({
+  await appendGuidanceRecord({
     id: `gh_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
     userEmail: email,
     generatedAt: new Date().toISOString(),
@@ -435,6 +480,7 @@ export async function POST(request: NextRequest) {
     meta: {
       latencyMs: Date.now() - startedAt,
       subscriptionTier,
+      planTier,
     },
   });
 }

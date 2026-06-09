@@ -16,17 +16,30 @@ const contentSecurityPolicy = [
   scriptSrc,
   connectSrc,
   "font-src 'self' data:;",
+  "upgrade-insecure-requests;",
+  "block-all-mixed-content;",
   "frame-ancestors 'none';",
 ].join(" ");
 
 const nextConfig = {
   reactStrictMode: true,
   output: "standalone",
-  webpack(config, { dev }) {
+  experimental: {
+    // Enable instrumentation.ts (stable in Next.js 14.1+, requires explicit opt-in until v15)
+    instrumentationHook: true,
+    // Keep postgres.js (Node-only) out of the webpack browser bundle
+    serverComponentsExternalPackages: ["postgres"],
+  },
+  webpack(config, { dev, isServer }) {
     if (dev) {
       // Prevent flaky dev cache corruption on Windows that breaks CSS/chunk loading.
       config.cache = false;
     }
+    // postgres.js uses native Node.js modules (net, tls, etc.) — must not be bundled
+    if (!isServer) {
+      config.resolve.fallback = { ...config.resolve.fallback, net: false, tls: false, fs: false };
+    }
+    config.externals = [...(config.externals ?? []), "postgres"];
     return config;
   },
   async headers() {

@@ -23,6 +23,10 @@ function id(prefix: string): string {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
+function generateInternalToken(): string {
+  return `iet_${Date.now()}_${Math.random().toString(36).slice(2, 14)}${Math.random().toString(36).slice(2, 14)}`;
+}
+
 function seedDb(): SuperadminDb {
   const email = (process.env.SUPERADMIN_EMAIL || 'design@doimih.net').trim().toLowerCase();
   const password = process.env.SUPERADMIN_PASSWORD || 'PassTemp123!';
@@ -39,7 +43,7 @@ function seedDb(): SuperadminDb {
     mustChangePassword: false,
     twoFactorSecret: null,
     status: 'active',
-    plan: 'enterprise',
+    plan: 'pro_plus',
     sessionVersion: 1,
     sessionInvalidBefore: 0,
     createdAt: ts,
@@ -51,7 +55,7 @@ function seedDb(): SuperadminDb {
     id: id('sub'),
     userId: superadmin.id,
     userEmail: superadmin.email,
-    plan: 'enterprise',
+    plan: 'pro_plus',
     status: 'active',
     stripeSubscriptionId: 'sub_demo_superadmin',
     currentPeriodEnd: ts,
@@ -142,6 +146,7 @@ export function readDb(): SuperadminDb {
   ensureDbFile();
   const raw = readFileSync(DB_PATH, 'utf8');
   const parsed = JSON.parse(raw) as SuperadminDb;
+  const hadToken = !!parsed.settings?.internalEmailToken;
   parsed.users = parsed.users.map((user) => ({
     ...user,
     sessionVersion: user.sessionVersion || 1,
@@ -155,6 +160,19 @@ export function readDb(): SuperadminDb {
       backendUrl: parsed.settings?.app?.backendUrl || 'https://backend.nutrisense-i.eu',
       adminConsoleUrl:
         parsed.settings?.app?.adminConsoleUrl || parsed.settings?.app?.backendUrl || 'https://backend.nutrisense-i.eu',
+    },
+    stripe: {
+      publishableKeyMasked: parsed.settings?.stripe?.publishableKeyMasked ?? '',
+      secretKeyMasked: parsed.settings?.stripe?.secretKeyMasked ?? '',
+      webhookSecretMasked: parsed.settings?.stripe?.webhookSecretMasked ?? '',
+      billingMode: parsed.settings?.stripe?.billingMode ?? 'subscription',
+      currency: parsed.settings?.stripe?.currency ?? 'eur',
+      trialDays: parsed.settings?.stripe?.trialDays ?? '14',
+      products: parsed.settings?.stripe?.products ?? {
+        basic: { productId: '', priceId: '' },
+        pro: { productId: '', priceId: '' },
+        pro_plus: { productId: '', priceId: '' },
+      },
     },
     twoFactor: {
       globalEnabled: parsed.settings?.twoFactor?.globalEnabled || false,
@@ -170,10 +188,12 @@ export function readDb(): SuperadminDb {
       smtpHost: '',
       smtpPort: '587',
       smtpUser: '',
+      smtpPass: '',
       fromEmail: '',
       fromName: 'NutriAID',
       encryption: 'tls',
     },
+    internalEmailToken: parsed.settings?.internalEmailToken ?? generateInternalToken(),
     aiBrain: parsed.settings?.aiBrain ?? {
       defaultModel: process.env.AI_PRIMARY_MODEL || 'gpt-4o',
       fallbackModel: process.env.AI_FALLBACK_MODEL || 'gpt-4o-mini',
@@ -200,14 +220,56 @@ export function readDb(): SuperadminDb {
         reminderTime: '08:00',
       },
     },
-    backup: parsed.settings?.backup ?? {
-      schedule: 'daily',
-      retention: '30',
-      destination: 'local',
+    pricing: {
+      basic: parsed.settings?.pricing?.basic ?? {
+        name: 'Basic',
+        description: 'Ideal pentru cei care vor sa inceapa.',
+        amount: '9.99',
+        currency: 'eur',
+        interval: 'month',
+        features: ['introducerea meselor', 'introducerea simptomelor', 'corelatii de baza', 'alimente suspecte', 'alimente sigure', 'evolutia simptomelor'],
+      },
+      pro: parsed.settings?.pricing?.pro ?? {
+        name: 'Pro',
+        description: 'Cel mai popular. Perfect pentru claritate rapida.',
+        amount: '14.99',
+        currency: 'eur',
+        interval: 'month',
+        features: ['tot din Basic', 'analiza AI avansata', 'detectarea combinatiilor problematice', 'recomandari personalizate', 'planuri alimentare adaptate', 'rapoarte zilnice', 'evolutie detaliata'],
+      },
+      pro_plus: parsed.settings?.pricing?.pro_plus ?? {
+        name: 'Pro+',
+        description: 'Pentru cei care vor maximul de precizie.',
+        amount: '35.99',
+        currency: 'eur',
+        interval: 'month',
+        features: ['tot din Pro', 'analiza AI extinsa', 'predictii avansate', 'detectarea reactiilor intarziate complexe', 'ghidare premium', 'suport prioritar', 'actualizari personalizate in timp real'],
+      },
+    },
+    backup: {
+      schedule: parsed.settings?.backup?.schedule ?? 'daily',
+      retention: parsed.settings?.backup?.retention ?? '30',
+      destination: parsed.settings?.backup?.destination ?? 'local',
+      hetzner: parsed.settings?.backup?.hetzner ?? {
+        region: 'eu-central',
+        endpoint: '',
+        bucket: '',
+        accessKey: '',
+        secretKey: '',
+      },
+    },
+    recaptcha: parsed.settings?.recaptcha ?? {
+      enabled: false,
+      siteKey: '',
+      secretKey: '',
+      scoreThreshold: '0.5',
     },
   };
   if (!Array.isArray(parsed.AI_Logs)) {
     parsed.AI_Logs = [];
+  }
+  if (!hadToken) {
+    writeFileSync(DB_PATH, JSON.stringify(parsed, null, 2), 'utf8');
   }
   return parsed;
 }

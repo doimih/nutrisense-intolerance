@@ -1,4 +1,7 @@
 import "server-only";
+import { eq } from "drizzle-orm";
+import { db } from "@/lib/db";
+import { subscriptions } from "@/lib/db/schema";
 import type { BillingPlanCode } from "@/lib/billing/plans";
 
 export type SubscriptionStatus =
@@ -21,31 +24,60 @@ export type SubscriptionSnapshot = {
   updatedAt: string;
 };
 
-const subscriptionByEmail = new Map<string, SubscriptionSnapshot>();
-
 function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
 }
 
-export function upsertSubscriptionSnapshot(
+export async function upsertSubscriptionSnapshot(
   email: string,
   payload: Omit<SubscriptionSnapshot, "email" | "updatedAt">
-): SubscriptionSnapshot {
+): Promise<SubscriptionSnapshot> {
   const normalizedEmail = normalizeEmail(email);
-  const next: SubscriptionSnapshot = {
+  const updatedAt = new Date().toISOString();
+
+  await db
+    .insert(subscriptions)
+    .values({
+      email: normalizedEmail,
+      planCode: payload.planCode,
+      status: payload.status,
+      stripeCustomerId: payload.stripeCustomerId,
+      stripeSubscriptionId: payload.stripeSubscriptionId,
+      updatedAt,
+    })
+    .onConflictDoUpdate({
+      target: subscriptions.email,
+      set: {
+        planCode: payload.planCode,
+        status: payload.status,
+        stripeCustomerId: payload.stripeCustomerId,
+        stripeSubscriptionId: payload.stripeSubscriptionId,
+        updatedAt,
+      },
+    });
+
+  return {
     email: normalizedEmail,
     planCode: payload.planCode,
     status: payload.status,
     stripeCustomerId: payload.stripeCustomerId,
     stripeSubscriptionId: payload.stripeSubscriptionId,
-    updatedAt: new Date().toISOString(),
+    updatedAt,
   };
-
-  subscriptionByEmail.set(normalizedEmail, next);
-  return next;
 }
 
-export function getSubscriptionSnapshot(email: string): SubscriptionSnapshot | null {
+export async function getSubscriptionSnapshot(email: string): Promise<SubscriptionSnapshot | null> {
   const normalizedEmail = normalizeEmail(email);
-  return subscriptionByEmail.get(normalizedEmail) ?? null;
+  const row = await db.query.subscriptions.findFirst({
+    where: eq(subscriptions.email, normalizedEmail),
+  });
+  if (!row) return null;
+  return {
+    email: row.email,
+    planCode: row.planCode as BillingPlanCode | null,
+    status: row.status as SubscriptionStatus,
+    stripeCustomerId: row.stripeCustomerId,
+    stripeSubscriptionId: row.stripeSubscriptionId,
+    updatedAt: row.updatedAt,
+  };
 }

@@ -1,32 +1,19 @@
-import "server-only";
-import Stripe from "stripe";
+import 'server-only';
+import Stripe from 'stripe';
+import { getStripeServerConfig } from '@/lib/server/stripeSettings';
 
-let stripeClient: Stripe | null = null;
-
-function getStripeApiKey(): string {
-  const raw = process.env.STRIPE_SECRET_KEY ?? process.env.STRIPE_RESTRICTED_KEY;
-  if (!raw) {
-    throw new Error("Stripe API key is missing. Set STRIPE_RESTRICTED_KEY or STRIPE_SECRET_KEY.");
+export async function getStripeServerClient(): Promise<Stripe> {
+  const config = await getStripeServerConfig();
+  if (!config.secretKey) {
+    throw new Error('Stripe secret key is not configured. Set it in Admin → Settings → Stripe.');
   }
-
-  return raw.trim();
+  return new Stripe(config.secretKey, { apiVersion: '2026-05-27.dahlia' });
 }
 
-export function getStripeServerClient(): Stripe {
-  if (stripeClient) return stripeClient;
-
-  stripeClient = new Stripe(getStripeApiKey(), {
-    apiVersion: "2026-05-27.dahlia",
-  });
-
-  return stripeClient;
-}
-
-export function getStripeWebhookSecret(): string {
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-  if (!webhookSecret) {
-    throw new Error("Stripe webhook secret is missing. Set STRIPE_WEBHOOK_SECRET.");
+export async function getStripeWebhookSecret(): Promise<string> {
+  const config = await getStripeServerConfig();
+  if (!config.webhookSecret) {
+    throw new Error('Stripe webhook secret is not configured. Set it in Admin → Settings → Stripe.');
   }
-
-  return webhookSecret.trim();
+  return config.webhookSecret;
 }

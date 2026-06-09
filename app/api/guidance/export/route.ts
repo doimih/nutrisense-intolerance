@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Authentication required." }, { status: 401 });
   }
 
-  const history = listGuidanceByUser(session.user.email).map((entry) => entry.result);
+  const history = (await listGuidanceByUser(session.user.email)).map((entry) => entry.result);
   return NextResponse.json({
     exportedAt: new Date().toISOString(),
     history,

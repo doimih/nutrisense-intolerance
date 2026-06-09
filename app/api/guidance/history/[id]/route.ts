@@ -15,7 +15,7 @@ export async function GET(
     return NextResponse.json({ error: "Authentication required." }, { status: 401 });
   }
 
-  const item = getGuidanceByIdForUser(session.user.email, context.params.id);
+  const item = await getGuidanceByIdForUser(session.user.email, context.params.id);
   if (!item) {
     return NextResponse.json({ error: "Guidance entry not found." }, { status: 404 });
   }

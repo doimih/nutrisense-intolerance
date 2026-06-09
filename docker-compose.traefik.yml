@@ -1,0 +1,124 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: nutriaid-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-nutriaid}
+      POSTGRES_USER: ${POSTGRES_USER:-nutriaid}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-nutriaid_db_secret}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - default
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-nutriaid} -d ${POSTGRES_DB:-nutriaid}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: nutriaid-frontend:prod
+    container_name: nutriaid-frontend
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-https://nutrisense-i.eu}
+      BACKEND_URL: ${BACKEND_URL:-https://backend.nutrisense-i.eu}
+      NEXT_PUBLIC_ADMIN_CONSOLE_URL: ${NEXT_PUBLIC_ADMIN_CONSOLE_URL:-https://backend.nutrisense-i.eu}
+      AUTH_SESSION_SECRET: ${AUTH_SESSION_SECRET:-change-me-front-secret}
+      FRONTEND_SUPERADMIN_EMAIL: ${FRONTEND_SUPERADMIN_EMAIL:-design@doimih.net}
+      FRONTEND_SUPERADMIN_PASSWORD: ${FRONTEND_SUPERADMIN_PASSWORD:-PassTemp123!}
+      BACKEND_INTERNAL_URL: http://backend:4028
+      SMTP_PASS: ${SMTP_PASS:-}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-nutriaid}:${POSTGRES_PASSWORD:-nutriaid_db_secret}@postgres:5432/${POSTGRES_DB:-nutriaid}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      backend:
+        condition: service_started
+    volumes:
+      - frontend_data:/app/data
+    expose:
+      - "3000"
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: ${TRAEFIK_NETWORK:-traefik_public}
+      traefik.http.routers.nutrisense_i_http.rule: Host(`${TRAEFIK_HOST:-nutrisense-i.eu}`) || Host(`www.${TRAEFIK_HOST:-nutrisense-i.eu}`)
+      traefik.http.routers.nutrisense_i_http.entrypoints: ${TRAEFIK_ENTRYPOINT_HTTP:-web}
+      traefik.http.routers.nutrisense_i_http.middlewares: nutrisense_i_https_redirect
+      traefik.http.middlewares.nutrisense_i_https_redirect.redirectscheme.scheme: https
+      traefik.http.middlewares.nutrisense_i_https_redirect.redirectscheme.permanent: "true"
+      traefik.http.routers.nutrisense_i_https.rule: Host(`${TRAEFIK_HOST:-nutrisense-i.eu}`) || Host(`www.${TRAEFIK_HOST:-nutrisense-i.eu}`)
+      traefik.http.routers.nutrisense_i_https.entrypoints: ${TRAEFIK_ENTRYPOINT_HTTPS:-websecure}
+      traefik.http.routers.nutrisense_i_https.tls: "true"
+      traefik.http.routers.nutrisense_i_https.tls.certresolver: ${TRAEFIK_CERTRESOLVER:-letsencrypt}
+      traefik.http.routers.nutrisense_i_https.tls.domains[0].main: ${TRAEFIK_HOST:-nutrisense-i.eu}
+      traefik.http.routers.nutrisense_i_https.tls.domains[0].sans: www.${TRAEFIK_HOST:-nutrisense-i.eu}
+      traefik.http.routers.nutrisense_i_https.service: nutrisense_i
+      traefik.http.routers.nutrisense_i_https.middlewares: nutrisense_i_www_to_apex,nutrisense_i_security_headers
+      traefik.http.middlewares.nutrisense_i_www_to_apex.redirectregex.regex: ^https://www\\.(.*)
+      traefik.http.middlewares.nutrisense_i_www_to_apex.redirectregex.replacement: https://$${1}
+      traefik.http.middlewares.nutrisense_i_www_to_apex.redirectregex.permanent: "true"
+      traefik.http.middlewares.nutrisense_i_security_headers.headers.stsSeconds: "31536000"
+      traefik.http.middlewares.nutrisense_i_security_headers.headers.stsIncludeSubdomains: "true"
+      traefik.http.middlewares.nutrisense_i_security_headers.headers.stsPreload: "true"
+      traefik.http.services.nutrisense_i.loadbalancer.server.port: "3000"
+    networks:
+      - default
+      - traefik
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: nutriaid-backend:prod
+    container_name: nutriaid-backend
+    environment:
+      NODE_ENV: production
+      PORT: 4028
+      NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-https://nutrisense-i.eu}
+      SUPERADMIN_SESSION_SECRETS: ${SUPERADMIN_SESSION_SECRETS:-change-me-back-secret}
+      SUPERADMIN_EMAIL: ${SUPERADMIN_EMAIL:-design@doimih.net}
+      SUPERADMIN_PASSWORD: ${SUPERADMIN_PASSWORD:-PassTemp123!}
+      SUPERADMIN_TOTP_ISSUER: ${SUPERADMIN_TOTP_ISSUER:-NutriSense Admin}
+      AI_PRIMARY_MODEL: ${AI_PRIMARY_MODEL:-gpt-4o}
+      AI_FALLBACK_MODEL: ${AI_FALLBACK_MODEL:-gemini-1.5-pro}
+      AI_API_KEY: ${AI_API_KEY:-}
+      FRONTEND_INTERNAL_URL: http://frontend:3000
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: ${TRAEFIK_NETWORK:-traefik_public}
+      traefik.http.routers.nutrisense_backend_http.rule: Host(`${BACKEND_HOST:-backend.nutrisense-i.eu}`)
+      traefik.http.routers.nutrisense_backend_http.entrypoints: ${TRAEFIK_ENTRYPOINT_HTTP:-web}
+      traefik.http.routers.nutrisense_backend_http.middlewares: nutrisense_backend_https_redirect
+      traefik.http.middlewares.nutrisense_backend_https_redirect.redirectscheme.scheme: https
+      traefik.http.middlewares.nutrisense_backend_https_redirect.redirectscheme.permanent: "true"
+      traefik.http.routers.nutrisense_backend_https.rule: Host(`${BACKEND_HOST:-backend.nutrisense-i.eu}`)
+      traefik.http.routers.nutrisense_backend_https.entrypoints: ${TRAEFIK_ENTRYPOINT_HTTPS:-websecure}
+      traefik.http.routers.nutrisense_backend_https.tls: "true"
+      traefik.http.routers.nutrisense_backend_https.tls.certresolver: ${TRAEFIK_CERTRESOLVER:-letsencrypt}
+      traefik.http.routers.nutrisense_backend_https.service: nutrisense_backend
+      traefik.http.services.nutrisense_backend.loadbalancer.server.port: "4028"
+    expose:
+      - "4028"
+    volumes:
+      - backend_data:/app/data
+    networks:
+      - default
+      - traefik
+    restart: unless-stopped
+
+networks:
+  traefik:
+    external: true
+    name: ${TRAEFIK_NETWORK:-traefik_public}
+
+volumes:
+  frontend_data:
+  backend_data:
+  postgres_data:

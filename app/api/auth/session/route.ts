@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { AUTH_COOKIE_NAME } from "@/lib/auth/session";
 import { readSessionToken } from "@/lib/auth/sessionToken";
+import { getUserPlan, getUserTrialEndsAt } from "@/lib/server/authStore";
+
+export const runtime = "nodejs";
 
 export async function GET(request: NextRequest) {
   const token = request.cookies.get(AUTH_COOKIE_NAME)?.value;
@@ -21,5 +24,7 @@ export async function GET(request: NextRequest) {
     return response;
   }
 
-  return NextResponse.json({ user: session.user });
+  const plan = await getUserPlan(session.user.email);
+  const trialEndsAt = await getUserTrialEndsAt(session.user.email);
+  return NextResponse.json({ user: { ...session.user, plan, trialEndsAt } });
 }

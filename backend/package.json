@@ -52,12 +52,14 @@
     "test:master": "node --test --experimental-transform-types tests/master/master.test.ts"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1064.0",
     "@dhiwise/component-tagger": "^1.0.15",
     "@heroicons/react": "^2.2.0",
     "@tailwindcss/forms": "^0.5.10",
     "@tailwindcss/typography": "^0.5.16",
     "lucide-react": "^1.7.0",
     "next": "15.5.18",
+    "nodemailer": "^8.0.10",
     "nutriaid-intolerances": "file:..",
     "react": "19.0.3",
     "react-dom": "19.0.3",
@@ -69,6 +71,7 @@
     "@eslint/eslintrc": "^3",
     "@netlify/plugin-nextjs": "^5.11.1",
     "@types/node": "^20",
+    "@types/nodemailer": "^8.0.0",
     "@types/react": "19.0.3",
     "@types/react-dom": "19.0.3",
     "@typescript-eslint/eslint-plugin": "^8.29.0",

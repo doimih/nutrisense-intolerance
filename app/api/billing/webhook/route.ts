@@ -6,6 +6,7 @@ import {
   type SubscriptionStatus,
   upsertSubscriptionSnapshot,
 } from "@/lib/server/subscriptionStore";
+import { setUserPlan } from "@/lib/server/authStore";
 
 export const runtime = "nodejs";
 
@@ -41,8 +42,9 @@ export async function POST(request: NextRequest) {
 
   let event: Stripe.Event;
   try {
-    const stripe = getStripeServerClient();
-    event = stripe.webhooks.constructEvent(payload, signature, getStripeWebhookSecret());
+    const stripe = await getStripeServerClient();
+    const webhookSecret = await getStripeWebhookSecret();
+    event = stripe.webhooks.constructEvent(payload, signature, webhookSecret);
   } catch (error) {
     return NextResponse.json(
       {
@@ -58,17 +60,20 @@ export async function POST(request: NextRequest) {
   switch (event.type) {
     case "checkout.session.completed": {
       const session = event.data.object as Stripe.Checkout.Session;
-      const email = session.customer_details?.email;
+      const email = session.customer_details?.email ?? (session.metadata?.email as string | undefined);
       const planCode = extractPlanCode(session.metadata?.planCode);
 
       if (email) {
-        upsertSubscriptionSnapshot(email, {
+        await upsertSubscriptionSnapshot(email, {
           planCode,
           status: "active",
           stripeCustomerId: typeof session.customer === "string" ? session.customer : null,
           stripeSubscriptionId:
             typeof session.subscription === "string" ? session.subscription : null,
         });
+        if (planCode) {
+          await setUserPlan(email, planCode);
+        }
       }
       break;
     }
@@ -76,16 +81,20 @@ export async function POST(request: NextRequest) {
     case "customer.subscription.updated":
     case "customer.subscription.deleted": {
       const subscription = event.data.object as Stripe.Subscription;
-      const metadataEmail = subscription.metadata?.email;
+      const metadataEmail = subscription.metadata?.email as string | undefined;
       const planCode = extractPlanCode(subscription.metadata?.planCode);
+      const subscriptionStatus = toSubscriptionStatus(subscription.status);
 
       if (metadataEmail) {
-        upsertSubscriptionSnapshot(metadataEmail, {
+        await upsertSubscriptionSnapshot(metadataEmail, {
           planCode,
-          status: toSubscriptionStatus(subscription.status),
+          status: subscriptionStatus,
           stripeCustomerId: typeof subscription.customer === "string" ? subscription.customer : null,
           stripeSubscriptionId: subscription.id,
         });
+        if (planCode && (subscriptionStatus === "active" || subscriptionStatus === "trialing")) {
+          await setUserPlan(metadataEmail, planCode);
+        }
       }
       break;
     }

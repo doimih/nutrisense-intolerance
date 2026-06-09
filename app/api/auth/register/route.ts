@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { AUTH_COOKIE_MAX_AGE_SECONDS, AUTH_COOKIE_NAME } from "@/lib/auth/session";
-import { createSessionToken } from "@/lib/auth/sessionToken";
 import { createUser } from "@/lib/server/authStore";
+import { sendVerificationEmail } from "@/lib/server/email";
 import { checkRateLimit, getClientIp } from "@/lib/server/rateLimit";
 
 type RegisterBody = {
@@ -14,6 +13,8 @@ type RegisterBody = {
 
 export const runtime = "nodejs";
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export async function POST(request: NextRequest) {
   const ip = getClientIp(request.headers);
   const limit = checkRateLimit({
@@ -24,12 +25,7 @@ export async function POST(request: NextRequest) {
   if (!limit.ok) {
     return NextResponse.json(
       { error: "Too many registration attempts. Try again later." },
-      {
-        status: 429,
-        headers: {
-          "Retry-After": String(limit.retryAfterSeconds),
-        },
-      }
+      { status: 429, headers: { "Retry-After": String(limit.retryAfterSeconds) } }
     );
   }
 
@@ -48,22 +44,22 @@ export async function POST(request: NextRequest) {
   if (!name || !email || !password || !confirmPassword) {
     return NextResponse.json({ error: "All fields are required." }, { status: 400 });
   }
-
+  if (!EMAIL_REGEX.test(email)) {
+    return NextResponse.json({ error: "Please provide a valid email address." }, { status: 400 });
+  }
   if (!body.acceptTerms) {
     return NextResponse.json({ error: "You must accept the terms to continue." }, { status: 400 });
   }
-
   if (password.length < 8) {
     return NextResponse.json({ error: "Password must be at least 8 characters long." }, { status: 400 });
   }
-
   if (password !== confirmPassword) {
     return NextResponse.json({ error: "Passwords do not match." }, { status: 400 });
   }
 
-  let user;
+  let created;
   try {
-    user = createUser({ name, email, password });
+    created = await createUser({ name, email, password });
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Could not create account." },
@@ -71,19 +67,23 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const token = await createSessionToken(
-    { id: user.id, name: user.name, email: user.email, role: user.role },
-    AUTH_COOKIE_MAX_AGE_SECONDS
+  // Send verification email — errors are logged server-side, never exposed to client
+  try {
+    await sendVerificationEmail({
+      email: created.user.email,
+      name: created.user.name,
+      token: created.verificationToken,
+    });
+  } catch {
+    // sendVerificationEmail never throws, safety net only
+  }
+
+  return NextResponse.json(
+    {
+      ok: true,
+      email: created.user.email,
+      message: "Account created. Please check your email to activate your account.",
+    },
+    { status: 201 }
   );
-
-  const response = NextResponse.json({ user });
-  response.cookies.set(AUTH_COOKIE_NAME, token, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    maxAge: AUTH_COOKIE_MAX_AGE_SECONDS,
-  });
-
-  return response;
 }

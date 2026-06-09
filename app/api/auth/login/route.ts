@@ -44,10 +44,23 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Email and password are required." }, { status: 400 });
   }
 
-  const user = authenticateUser(email, password);
-  if (!user) {
+  const auth = await authenticateUser(email, password);
+  if (auth.status === "invalid_credentials") {
     return NextResponse.json({ error: "Invalid email or password." }, { status: 401 });
   }
+
+  if (auth.status === "email_not_verified") {
+    return NextResponse.json(
+      {
+        error: "You must verify your email before accessing the platform.",
+        code: "EMAIL_NOT_VERIFIED",
+        email: auth.user.email,
+      },
+      { status: 403 }
+    );
+  }
+
+  const user = auth.user;
 
   const token = await createSessionToken(
     { id: user.id, name: user.name, email: user.email, role: user.role },

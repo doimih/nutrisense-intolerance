@@ -1,12 +1,13 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Sparkles, CheckCircle2, XCircle, UtensilsCrossed, Lightbulb, AlertTriangle } from "lucide-react";
+import { Sparkles, CheckCircle2, XCircle, UtensilsCrossed, Lightbulb, AlertTriangle, Lock, Zap } from "lucide-react";
 import Card, { CardHeader, CardTitle } from "@/components/Card";
 import Button from "@/components/Button";
 import Badge from "@/components/Badge";
 import ErrorAlert from "@/components/ErrorAlert";
 import { PageLoader } from "@/components/LoadingOverlay";
+import Link from "next/link";
 import { useLanguage } from "@/components/LanguageProvider";
 import { getProfile } from "@/lib/api/profile";
 import { generateGuidance } from "@/lib/api/guidance";
@@ -15,9 +16,25 @@ import type { GuidanceResult, DetailLevel } from "@/types/guidance";
 import type { Intolerance, DietaryPreference } from "@/types/profile";
 import { INTOLERANCE_LABELS, DIETARY_PREFERENCE_LABELS } from "@/types/profile";
 
+type PlanTier = "none" | "basic" | "pro" | "pro_plus";
+
 const ALL_INTOLERANCES = Object.keys(INTOLERANCE_LABELS) as Intolerance[];
 
 const detailLevels: DetailLevel[] = ["basic", "detailed", "comprehensive"];
+
+function getPlanLabel(planTier: PlanTier, isRo: boolean): string {
+  if (planTier === "pro_plus") return "Pro+";
+  if (planTier === "pro") return "Pro";
+  if (planTier === "basic") return isRo ? "Basic" : "Basic";
+  return isRo ? "Fara plan activ" : "No active plan";
+}
+
+function getPlanColor(planTier: PlanTier): string {
+  if (planTier === "pro_plus") return "bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300";
+  if (planTier === "pro") return "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300";
+  if (planTier === "basic") return "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300";
+  return "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400";
+}
 
 function getDetailLabel(level: DetailLevel, isRo: boolean) {
   if (level === "basic") return isRo ? "De baza" : "Basic";
@@ -31,6 +48,17 @@ function getDetailDescription(level: DetailLevel, isRo: boolean) {
   return isRo ? "Ghid extins" : "Extended guide";
 }
 
+function getDetailRequiredPlan(level: DetailLevel): PlanTier {
+  if (level === "basic") return "basic";
+  if (level === "detailed") return "pro";
+  return "pro_plus";
+}
+
+function planAllows(userPlan: PlanTier, required: PlanTier): boolean {
+  const order: PlanTier[] = ["none", "basic", "pro", "pro_plus"];
+  return order.indexOf(userPlan) >= order.indexOf(required);
+}
+
 export default function GuidancePage() {
   const { lang } = useLanguage();
   const isRo = lang === "ro";
@@ -38,18 +66,29 @@ export default function GuidancePage() {
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState<GuidanceResult | null>(null);
+  const [planTier, setPlanTier] = useState<PlanTier>("none");
   const [form, setForm] = useState({
     intolerances: [] as Intolerance[],
     dietaryPreference: "normal" as DietaryPreference,
-    detailLevel: "detailed" as DetailLevel,
+    detailLevel: "basic" as DetailLevel,
   });
 
   useEffect(() => {
-    getProfile().then((p) => {
+    Promise.all([
+      getProfile(),
+      fetch("/api/billing/subscription").then((r) => r.ok ? r.json() : { planTier: "none" }),
+    ]).then(([p, sub]) => {
+      const tier: PlanTier = (sub as { planTier?: PlanTier }).planTier ?? "none";
+      setPlanTier(tier);
+      // Default detail level to max allowed by plan
+      const defaultDetail: DetailLevel =
+        tier === "pro_plus" ? "comprehensive" :
+        tier === "pro" ? "detailed" : "basic";
       setForm((f) => ({
         ...f,
         intolerances: p.intolerances,
         dietaryPreference: p.dietaryPreference,
+        detailLevel: defaultDetail,
       }));
       setLoadingProfile(false);
     });
@@ -84,24 +123,52 @@ export default function GuidancePage() {
 
   return (
     <div className="space-y-6 max-w-3xl">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-xl flex items-center justify-center">
-          <Sparkles className="w-5 h-5 text-green-600 dark:text-green-400" />
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-xl flex items-center justify-center">
+            <Sparkles className="w-5 h-5 text-green-600 dark:text-green-400" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-slate-900 dark:text-white">
+              {isRo ? "Recomandari generale" : "General guidance"}
+            </h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              {isRo ? "Personalizate pe baza intolerantelor selectate" : "Personalized based on selected intolerances"}
+            </p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-xl font-bold text-slate-900 dark:text-white">
-            {isRo ? "Recomandari generale" : "General guidance"}
-          </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            {isRo ? "Personalizate pe baza intolerantelor selectate" : "Personalized based on selected intolerances"}
-          </p>
-        </div>
+        <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${getPlanColor(planTier)}`}>
+          {getPlanLabel(planTier, isRo)}
+        </span>
       </div>
 
       {error && <ErrorAlert message={error} onDismiss={() => setError("")} />}
 
-      {/* Form */}
-      <Card bordered>
+      {planTier === "none" && (
+        <div className="relative rounded-2xl border-2 border-dashed border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/20 p-10 text-center">
+          <div className="w-14 h-14 bg-amber-100 dark:bg-amber-900/30 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <Lock className="w-7 h-7 text-amber-600 dark:text-amber-400" />
+          </div>
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">
+            {isRo ? "Perioada de probă a expirat" : "Free trial has ended"}
+          </h3>
+          <p className="text-sm text-slate-600 dark:text-slate-400 mb-6 max-w-md mx-auto">
+            {isRo
+              ? "Alege un plan pentru a accesa recomandările AI personalizate, analiza alimentară și ghidarea nutrițională."
+              : "Choose a plan to access personalized AI guidance, food analysis, and nutritional recommendations."}
+          </p>
+          <Link
+            href="/pricing"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded-xl transition-colors"
+          >
+            <Zap className="w-4 h-4" />
+            {isRo ? "Alege un plan" : "Choose a plan"}
+          </Link>
+        </div>
+      )}
+
+      {/* Form – hidden when no active plan */}
+      {planTier === "none" ? null : <Card bordered>
         <CardHeader>
           <CardTitle>{isRo ? "Configureaza recomandarile" : "Configure guidance"}</CardTitle>
         </CardHeader>
@@ -163,31 +230,43 @@ export default function GuidancePage() {
               {isRo ? "Nivel de detaliu" : "Detail level"}
             </p>
             <div className="grid grid-cols-3 gap-2">
-              {detailLevels.map((dl) => (
-                <button
-                  key={dl}
-                  type="button"
-                  onClick={() => setForm({ ...form, detailLevel: dl })}
-                  className={`p-3 rounded-xl border text-left transition-all ${
-                    form.detailLevel === dl
-                      ? "border-green-600 bg-green-50 dark:bg-green-950/30"
-                      : "border-gray-200 dark:border-slate-600 hover:border-green-300"
-                  }`}
-                >
-                  <p
-                    className={`text-sm font-semibold ${
-                      form.detailLevel === dl
-                        ? "text-green-700 dark:text-green-400"
-                        : "text-slate-700 dark:text-slate-300"
+              {detailLevels.map((dl) => {
+                const required = getDetailRequiredPlan(dl);
+                const locked = !planAllows(planTier, required);
+                const active = form.detailLevel === dl;
+                return (
+                  <button
+                    key={dl}
+                    type="button"
+                    disabled={locked}
+                    onClick={() => !locked && setForm({ ...form, detailLevel: dl })}
+                    title={locked ? (isRo ? `Necesita plan ${getPlanLabel(required, isRo)}` : `Requires ${getPlanLabel(required, isRo)} plan`) : undefined}
+                    className={`p-3 rounded-xl border text-left transition-all relative ${
+                      locked
+                        ? "border-gray-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 opacity-60 cursor-not-allowed"
+                        : active
+                          ? "border-green-600 bg-green-50 dark:bg-green-950/30"
+                          : "border-gray-200 dark:border-slate-600 hover:border-green-300"
                     }`}
                   >
-                    {getDetailLabel(dl, isRo)}
-                  </p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                    {getDetailDescription(dl, isRo)}
-                  </p>
-                </button>
-              ))}
+                    <div className="flex items-center justify-between mb-0.5">
+                      <p className={`text-sm font-semibold ${
+                        locked ? "text-slate-400 dark:text-slate-500"
+                          : active ? "text-green-700 dark:text-green-400"
+                          : "text-slate-700 dark:text-slate-300"
+                      }`}>
+                        {getDetailLabel(dl, isRo)}
+                      </p>
+                      {locked && <Lock className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />}
+                    </div>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      {locked
+                        ? (isRo ? `Plan ${getPlanLabel(required, isRo)}` : `${getPlanLabel(required, isRo)} plan`)
+                        : getDetailDescription(dl, isRo)}
+                    </p>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -201,7 +280,7 @@ export default function GuidancePage() {
             {generating ? (isRo ? "Se genereaza recomandarile..." : "Generating guidance...") : (isRo ? "Genereaza recomandari" : "Generate guidance")}
           </Button>
         </div>
-      </Card>
+      </Card>}
 
       {/* Results */}
       {result && (

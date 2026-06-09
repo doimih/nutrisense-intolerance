@@ -3,6 +3,27 @@ import type { AuthResponse, LoginRequest, RegisterRequest, User } from "@/types/
 type AuthApiResponse = {
   user?: User;
   error?: string;
+  code?: string;
+  email?: string;
+  ok?: boolean;
+  message?: string;
+};
+
+export class AuthApiError extends Error {
+  code?: string;
+  email?: string;
+
+  constructor(message: string, code?: string, email?: string) {
+    super(message);
+    this.code = code;
+    this.email = email;
+  }
+}
+
+export type RegisterResult = {
+  ok: boolean;
+  message: string;
+  email: string;
 };
 
 async function postAuth<TBody>(url: string, body: TBody): Promise<AuthApiResponse> {
@@ -16,7 +37,11 @@ async function postAuth<TBody>(url: string, body: TBody): Promise<AuthApiRespons
 
   const payload = (await response.json()) as AuthApiResponse;
   if (!response.ok) {
-    throw new Error(payload.error ?? "Authentication request failed.");
+    throw new AuthApiError(
+      payload.error ?? "Authentication request failed.",
+      payload.code,
+      payload.email
+    );
   }
 
   return payload;
@@ -38,19 +63,23 @@ export async function login(data: LoginRequest): Promise<AuthResponse> {
   };
 }
 
-export async function register(data: RegisterRequest): Promise<AuthResponse> {
+export async function register(data: RegisterRequest): Promise<RegisterResult> {
   const payload = await postAuth("/api/auth/register", data);
-  if (!payload.user) {
-    throw new Error("Missing user in register response.");
+  if (!payload.ok || !payload.email) {
+    throw new Error("Invalid register response.");
   }
 
   return {
-    user: payload.user,
-    tokens: {
-      accessToken: "",
-      refreshToken: "",
-      expiresIn: 60 * 60,
-    },
+    ok: true,
+    message: payload.message ?? "Account created. Please check your email to activate your account.",
+    email: payload.email,
+  };
+}
+
+export async function resendVerificationEmail(email: string): Promise<{ message: string }> {
+  const payload = await postAuth("/api/auth/resend-verification", { email });
+  return {
+    message: payload.message ?? "Verification email sent. Please check your inbox.",
   };
 }
 

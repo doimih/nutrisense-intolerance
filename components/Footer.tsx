@@ -5,12 +5,18 @@ import Link from "next/link";
 import { Leaf, Heart, Shield } from "lucide-react";
 import { useLanguage } from "@/components/LanguageProvider";
 import { getUiCopy } from "@/lib/i18n/ui";
+import { useCookies } from "@/components/CookieContext";
+import { usePathname } from "next/navigation";
 
 export default function Footer() {
   const { lang } = useLanguage();
   const isRo = lang === "ro";
   const copy = getUiCopy(lang);
   const currentYear = new Date().getFullYear();
+  const { openModal } = useCookies();
+  const pathname = usePathname();
+
+  if (pathname.startsWith("/auth")) return null;
 
   const legalLinks = [
     { href: "/legal/privacy-policy", label: isRo ? "Politica de Confidentialitate" : "Privacy Policy" },
@@ -46,7 +52,7 @@ export default function Footer() {
             </Link>
             <p className="text-sm leading-relaxed text-slate-400 mb-4">
               {isRo
-                ? "Un loc sigur pentru a intelege mai bine intolerantele alimentare si reactiile tale. Fara reclame, fara plati."
+                ? "Un loc sigur pentru a intelege mai bine intolerantele alimentare si reactiile tale. Fara reclame."
                 : "A safe place to better understand food intolerances and your reactions. No ads, no fees."}
             </p>
             <div className="flex items-center gap-1.5 text-xs text-slate-500">
@@ -86,6 +92,15 @@ export default function Footer() {
                   </Link>
                 </li>
               ))}
+              <li>
+                <button
+                  type="button"
+                  onClick={openModal}
+                  className="text-sm text-slate-400 hover:text-green-400 transition-colors text-left"
+                >
+                  {isRo ? "Preferințe Cookie" : "Cookie Preferences"}
+                </button>
+              </li>
             </ul>
           </div>
         </div>

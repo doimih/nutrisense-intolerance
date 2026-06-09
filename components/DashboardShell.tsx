@@ -15,13 +15,15 @@ import {
   Leaf,
   ChevronRight,
   ShieldCheck,
+  Shield,
 } from "lucide-react";
 import clsx from "clsx";
 import { getSessionUser, logout } from "@/lib/api/auth";
 import { useLanguage } from "@/components/LanguageProvider";
 import { getUiCopy } from "@/lib/i18n/ui";
+import TrialExpiredModal from "@/components/TrialExpiredModal";
 
-const ADMIN_CONSOLE_URL = process.env.NEXT_PUBLIC_ADMIN_CONSOLE_URL || "http://localhost:4028";
+const FALLBACK_ADMIN_CONSOLE_URL = "https://backend.nutrisense-i.eu";
 
 function NavItem({
   href,
@@ -69,18 +71,44 @@ export default function DashboardShell({ children }: { children: React.ReactNode
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isSuperadmin, setIsSuperadmin] = useState(false);
+  const [currentUser, setCurrentUser] = useState<{ id: string; name: string; email: string; plan?: string | null; trialEndsAt?: string | null } | null>(null);
+  const [adminConsoleUrl, setAdminConsoleUrl] = useState(FALLBACK_ADMIN_CONSOLE_URL);
+  const [showTrialModal, setShowTrialModal] = useState(false);
 
   useEffect(() => {
     let active = true;
     getSessionUser()
       .then((user) => {
-        if (active) {
-          const email = user?.email?.toLowerCase() ?? "";
-          setIsSuperadmin(user?.role === "superadmin" || email === "design@doimih.net");
+        if (active && user) {
+          setIsSuperadmin(user.role === "superadmin");
+          setCurrentUser({ id: user.id, name: user.name, email: user.email, plan: user.plan, trialEndsAt: user.trialEndsAt });
+          const trialExpired = user.trialEndsAt && new Date(user.trialEndsAt).getTime() <= Date.now();
+          const noPlan = !user.plan;
+          const notAdmin = user.role !== "superadmin";
+          if (trialExpired && noPlan && notAdmin) setShowTrialModal(true);
         }
       })
       .catch(() => {
         if (active) setIsSuperadmin(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+
+    fetch("/api/runtime-settings", { method: "GET" })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((payload: { settings?: { adminConsoleUrl?: string } } | null) => {
+        if (!active) return;
+        const nextUrl = payload?.settings?.adminConsoleUrl;
+        if (nextUrl) setAdminConsoleUrl(nextUrl);
+      })
+      .catch(() => {
+        if (active) setAdminConsoleUrl(FALLBACK_ADMIN_CONSOLE_URL);
       });
 
     return () => {
@@ -94,6 +122,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
     { href: "/dashboard/guidance", icon: Sparkles, label: isRo ? "Recomandari" : "Guidance" },
     { href: "/dashboard/history", icon: History, label: isRo ? "Istoric" : "History" },
     { href: "/dashboard/monitoring", icon: BookOpen, label: isRo ? "Jurnal" : "Journal" },
+    { href: "/dashboard/gdpr", icon: Shield, label: isRo ? "GDPR" : "GDPR" },
   ];
 
   const handleLogout = async () => {
@@ -120,7 +149,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
 
         {isSuperadmin && (
           <a
-            href={ADMIN_CONSOLE_URL}
+            href={adminConsoleUrl}
             target="_blank"
             rel="noreferrer"
             onClick={() => setSidebarOpen(false)}
@@ -132,13 +161,41 @@ export default function DashboardShell({ children }: { children: React.ReactNode
         )}
       </nav>
 
-      <div className="border-t border-gray-100 dark:border-slate-700 pt-4 mt-4">
-        {isSuperadmin && (
-          <div className="mb-3 px-3">
-            <span className="inline-flex items-center gap-1 rounded-full bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide">
-              <ShieldCheck className="w-3.5 h-3.5" />
-              SUPERADMIN
-            </span>
+      <div className="border-t border-gray-100 dark:border-slate-700 pt-4 mt-4 space-y-2">
+        {currentUser && (
+          <div className="flex items-center gap-3 px-3 py-2">
+            <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/40 flex items-center justify-center flex-shrink-0">
+              <span className="text-green-700 dark:text-green-300 text-xs font-bold">
+                {currentUser.name
+                  .split(" ")
+                  .map((n) => n[0])
+                  .join("")
+                  .slice(0, 2)
+                  .toUpperCase()}
+              </span>
+            </div>
+            <div className="min-w-0">
+              {currentUser.plan && (
+                <span className={
+                  currentUser.plan === "pro_plus"
+                    ? "inline-block text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md mb-0.5 bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300"
+                    : currentUser.plan === "pro"
+                    ? "inline-block text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md mb-0.5 bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300"
+                    : "inline-block text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md mb-0.5 bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300"
+                }>
+                  {currentUser.plan === "pro_plus" ? "Pro+" : currentUser.plan === "pro" ? "Pro" : "Basic"}
+                </span>
+              )}
+              <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate leading-tight">
+                {currentUser.name}
+              </p>
+              {isSuperadmin && (
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide text-red-600 dark:text-red-400">
+                  <ShieldCheck className="w-3 h-3" />
+                  Superadmin
+                </span>
+              )}
+            </div>
           </div>
         )}
         <button
@@ -192,6 +249,13 @@ export default function DashboardShell({ children }: { children: React.ReactNode
           )}
 
           <main className="flex-1 min-w-0">{children}</main>
+
+          {showTrialModal && currentUser && (
+            <TrialExpiredModal
+              userId={currentUser.id}
+              lang={lang as "ro" | "en"}
+            />
+          )}
         </div>
       </div>
     </div>

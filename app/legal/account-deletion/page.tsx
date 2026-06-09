@@ -35,7 +35,7 @@ export default function AccountDeletionPage() {
 
       <h3>Metoda 2: Prin email</h3>
       <ul>
-        <li>Trimite un email la contact@nutriaid.ro cu subiectul: &quot;Cerere ștergere cont&quot;.</li>
+        <li>Trimite un email la contact@nutriaid.eu cu subiectul: &quot;Cerere ștergere cont&quot;.</li>
         <li>Include în email adresa de email a contului de șters.</li>
         <li>Vom procesa cererea în termen de 30 de zile calendaristice.</li>
         <li>Vei primi confirmare la adresa furnizată.</li>
@@ -80,7 +80,7 @@ export default function AccountDeletionPage() {
         în format JSON sau CSV:
       </p>
       <ul>
-        <li>Trimite cerere la contact@nutriaid.ro cu subiectul &quot;Export date cont&quot;.</li>
+        <li>Trimite cerere la contact@nutriaid.eu cu subiectul &quot;Export date cont&quot;.</li>
         <li>Furnizăm exportul în termen de 30 de zile.</li>
         <li>Datele exportate includ: profilul, jurnalul și istoricul de recomandări.</li>
       </ul>
@@ -96,7 +96,7 @@ export default function AccountDeletionPage() {
       <h2>8. Contact</h2>
       <p>
         Pentru orice nedumeriri legate de ștergerea contului:
-        contact@nutriaid.ro
+        contact@nutriaid.eu
       </p>
     </LegalLayout>
   );

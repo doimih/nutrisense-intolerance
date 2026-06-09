@@ -1,77 +1,76 @@
 import "server-only";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { eq, desc } from "drizzle-orm";
+import { db } from "@/lib/db";
+import { guidanceHistory } from "@/lib/db/schema";
 import type { GuidanceDb, GuidanceHistoryRecord } from "@/lib/server/guidance/types";
 
-const DB_PATH = join(process.cwd(), "data", "guidance-db.json");
-
-function seedDb(): GuidanceDb {
-  return { history: [] };
-}
-
-function ensureDb(): void {
-  if (existsSync(DB_PATH)) return;
-  mkdirSync(dirname(DB_PATH), { recursive: true });
-  writeFileSync(DB_PATH, JSON.stringify(seedDb(), null, 2), "utf8");
-}
+void (null as unknown as GuidanceDb); // keep import for type compat
 
 function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
 }
 
-function readDb(): GuidanceDb {
-  ensureDb();
-  return JSON.parse(readFileSync(DB_PATH, "utf8")) as GuidanceDb;
+function rowToRecord(row: typeof guidanceHistory.$inferSelect): GuidanceHistoryRecord {
+  return {
+    id: row.id,
+    userEmail: row.userEmail,
+    generatedAt: row.generatedAt,
+    source: row.source as "ai" | "fallback",
+    requestFingerprint: row.requestFingerprint,
+    prompt: row.prompt,
+    monitoringEntries: row.monitoringEntries as GuidanceHistoryRecord["monitoringEntries"],
+    result: row.result as GuidanceHistoryRecord["result"],
+  };
 }
 
-function writeDb(next: GuidanceDb): void {
-  ensureDb();
-  writeFileSync(DB_PATH, JSON.stringify(next, null, 2), "utf8");
+export async function appendGuidanceRecord(record: GuidanceHistoryRecord): Promise<void> {
+  await db.insert(guidanceHistory).values({
+    id: record.id,
+    userEmail: normalizeEmail(record.userEmail),
+    generatedAt: record.generatedAt,
+    source: record.source,
+    requestFingerprint: record.requestFingerprint,
+    prompt: record.prompt,
+    monitoringEntries: record.monitoringEntries as object[],
+    result: record.result as object,
+  });
 }
 
-export function appendGuidanceRecord(record: GuidanceHistoryRecord): void {
-  const db = readDb();
-  db.history.unshift(record);
-  db.history = db.history.slice(0, 5000);
-  writeDb(db);
-}
-
-export function listGuidanceByUser(email: string): GuidanceHistoryRecord[] {
+export async function listGuidanceByUser(email: string): Promise<GuidanceHistoryRecord[]> {
   const normalized = normalizeEmail(email);
-  return readDb().history.filter((item) => normalizeEmail(item.userEmail) === normalized);
+  const rows = await db.query.guidanceHistory.findMany({
+    where: eq(guidanceHistory.userEmail, normalized),
+    orderBy: [desc(guidanceHistory.generatedAt)],
+  });
+  return rows.map(rowToRecord);
 }
 
-export function getGuidanceByIdForUser(email: string, id: string): GuidanceHistoryRecord | null {
+export async function getGuidanceByIdForUser(email: string, id: string): Promise<GuidanceHistoryRecord | null> {
   const normalized = normalizeEmail(email);
-  return (
-    readDb().history.find(
-      (item) =>
-        (item.id === id || item.result.id === id) &&
-        normalizeEmail(item.userEmail) === normalized
-    ) || null
+  const rows = await db.query.guidanceHistory.findMany({
+    where: eq(guidanceHistory.userEmail, normalized),
+  });
+  const match = rows.find(
+    (row) => (row.id === id || (row.result as { id?: string })?.id === id)
   );
+  return match ? rowToRecord(match) : null;
 }
 
-export function deleteGuidanceByIdForUser(email: string, id: string): boolean {
+export async function deleteGuidanceByIdForUser(email: string, id: string): Promise<boolean> {
   const normalized = normalizeEmail(email);
-  const db = readDb();
-  const before = db.history.length;
-  db.history = db.history.filter(
-    (item) =>
-      !(
-        (item.id === id || item.result.id === id) &&
-        normalizeEmail(item.userEmail) === normalized
-      )
+  const rows = await db.query.guidanceHistory.findMany({
+    where: eq(guidanceHistory.userEmail, normalized),
+  });
+  const match = rows.find(
+    (row) => (row.id === id || (row.result as { id?: string })?.id === id)
   );
-  writeDb(db);
-  return db.history.length < before;
+  if (!match) return false;
+  await db.delete(guidanceHistory).where(eq(guidanceHistory.id, match.id));
+  return true;
 }
 
-export function deleteAllGuidanceForUser(email: string): number {
+export async function deleteAllGuidanceForUser(email: string): Promise<number> {
   const normalized = normalizeEmail(email);
-  const db = readDb();
-  const before = db.history.length;
-  db.history = db.history.filter((item) => normalizeEmail(item.userEmail) !== normalized);
-  writeDb(db);
-  return before - db.history.length;
+  const result = await db.delete(guidanceHistory).where(eq(guidanceHistory.userEmail, normalized));
+  return result.count;
 }
