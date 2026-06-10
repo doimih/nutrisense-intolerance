@@ -111,16 +111,16 @@ export async function PATCH(request: NextRequest) {
 
   // Sync new password to frontend user store so both systems stay in lockstep
   const frontendUrl = process.env.FRONTEND_INTERNAL_URL || 'http://frontend:3000';
-  const internalToken = readDb().settings?.internalEmailToken;
-  if (!internalToken) {
-    appendLog({ source: 'server', level: 'warn', message: 'sync-superadmin-password: internalEmailToken not set, skipping frontend sync' });
+  const syncSecret = process.env.INTERNAL_SYNC_SECRET;
+  if (!syncSecret) {
+    appendLog({ source: 'server', level: 'warn', message: 'sync-superadmin-password: INTERNAL_SYNC_SECRET not set, skipping frontend sync' });
   } else {
     try {
       const syncRes = await fetch(`${frontendUrl}/api/internal/sync-superadmin-password`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${internalToken}`,
+          Authorization: `Bearer ${syncSecret}`,
         },
         body: JSON.stringify({ newPassword }),
       });

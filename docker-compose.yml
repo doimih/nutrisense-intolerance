@@ -33,6 +33,7 @@ services:
       FRONTEND_SUPERADMIN_EMAIL: ${FRONTEND_SUPERADMIN_EMAIL:-design@doimih.net}
       FRONTEND_SUPERADMIN_PASSWORD: ${FRONTEND_SUPERADMIN_PASSWORD:-PassTemp123!}
       BACKEND_INTERNAL_URL: http://backend:4028
+      INTERNAL_SYNC_SECRET: ${INTERNAL_SYNC_SECRET:-change-me-sync-secret-min32chars!!}
       SMTP_PASS: ${SMTP_PASS:-}
       DATABASE_URL: postgresql://${POSTGRES_USER:-nutriaid}:${POSTGRES_PASSWORD:-nutriaid_db_secret}@postgres:5432/${POSTGRES_DB:-nutriaid}
     labels:
@@ -90,6 +91,7 @@ services:
       AI_FALLBACK_MODEL: ${AI_FALLBACK_MODEL:-gemini-1.5-pro}
       AI_API_KEY: ${AI_API_KEY:-}
       FRONTEND_INTERNAL_URL: http://frontend:3000
+      INTERNAL_SYNC_SECRET: ${INTERNAL_SYNC_SECRET:-change-me-sync-secret-min32chars!!}
     volumes:
       - backend_data:/app/data
     labels:
