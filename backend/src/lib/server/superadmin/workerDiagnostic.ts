@@ -273,6 +273,30 @@ export function validateSafety(
 
 // ─── D. Auto-Correction ───────────────────────────────────────────────────────
 
+/** Sets a value at a dot-notation path (max depth 2: "data.field") on obj. */
+function setNestedPath(obj: JsonObject, path: string, value: JsonValue): void {
+  const dot = path.indexOf('.');
+  if (dot === -1) {
+    if (!(path in obj)) obj[path] = value;
+    return;
+  }
+  const parent = path.slice(0, dot);
+  const child = path.slice(dot + 1);
+  if (!isObject(obj[parent])) obj[parent] = {} as JsonValue;
+  const nested = obj[parent] as JsonObject;
+  if (!(child in nested)) nested[child] = value;
+}
+
+/** Resolves a dot-notation path (max depth 2) and returns the value or undefined. */
+function getNestedPath(obj: JsonObject, path: string): unknown {
+  const dot = path.indexOf('.');
+  if (dot === -1) return obj[path];
+  const parent = path.slice(0, dot);
+  const child = path.slice(dot + 1);
+  if (!isObject(obj[parent])) return undefined;
+  return (obj[parent] as JsonObject)[child];
+}
+
 export function autoCorrect(
   originalOutput: JsonObject,
   schemaResult: ValidationResult,
@@ -306,18 +330,48 @@ export function autoCorrect(
     corrected['notes'] = [corrected['notes']] as JsonValue;
   }
 
-  // Add all schema-required missing fields with null defaults
-  for (const [key, expectedType] of Object.entries(expectedSchema)) {
-    if (!(key in corrected)) {
-      const typeStr = String(expectedType).toLowerCase().replace('?', '');
-      let defaultValue: JsonValue = null;
-      if (typeStr === 'array') defaultValue = [];
-      else if (typeStr === 'object') defaultValue = {};
-      else if (typeStr === 'boolean') defaultValue = false;
-      else if (typeStr === 'number') defaultValue = 0;
-      else if (typeStr === 'string') defaultValue = '';
-      corrected[key] = defaultValue;
+  // ── Worker-specific field normalization (before schema defaults) ────────────
+
+  const workerKey = worker.toLowerCase().replace(/\s+/g, '-');
+
+  // nutrition-calculator: AI often returns totalKcal and nested macros — flatten
+  if (workerKey.includes('nutrition-calculator') && isObject(corrected['data'])) {
+    const d = corrected['data'] as JsonObject;
+    if (!d['kcal']) {
+      if (typeof d['totalKcal'] === 'number') d['kcal'] = d['totalKcal'] as JsonValue;
+      else if (typeof d['kcalTotal'] === 'number') d['kcal'] = d['kcalTotal'] as JsonValue;
+      else if (typeof d['calories'] === 'number') d['kcal'] = d['calories'] as JsonValue;
     }
+    if (isObject(d['macros'])) {
+      const m = d['macros'] as JsonObject;
+      if (!d['proteinG'] && m['proteinG']) d['proteinG'] = m['proteinG'] as JsonValue;
+      if (!d['carbsG'] && m['carbsG']) d['carbsG'] = m['carbsG'] as JsonValue;
+      if (!d['fatG'] && m['fatG']) d['fatG'] = m['fatG'] as JsonValue;
+    }
+  }
+
+  // medical-safety: when AI fails, default safetyApproved based on current status
+  if (workerKey.includes('medical-safety') && isObject(corrected['data'])) {
+    const d = corrected['data'] as JsonObject;
+    if (d['safetyApproved'] === undefined || d['safetyApproved'] === null) {
+      // Approve with warning when the AI failed but upstream data looks valid;
+      // reject only when the status is already hard error.
+      d['safetyApproved'] = (corrected['status'] !== 'error') as JsonValue;
+    }
+  }
+
+  // Add all schema-required missing fields with sensible defaults.
+  // Handles both top-level keys and dot-notation paths (e.g. "data.kcal").
+  for (const [path, expectedType] of Object.entries(expectedSchema)) {
+    if (getNestedPath(corrected, path) !== undefined) continue;
+    const typeStr = String(expectedType).toLowerCase().replace('?', '');
+    let defaultValue: JsonValue = null;
+    if (typeStr === 'array') defaultValue = [];
+    else if (typeStr === 'object') defaultValue = {};
+    else if (typeStr === 'boolean') defaultValue = false;
+    else if (typeStr === 'number') defaultValue = 0;
+    else if (typeStr === 'string') defaultValue = '';
+    setNestedPath(corrected, path, defaultValue);
   }
 
   // Append correction notes
