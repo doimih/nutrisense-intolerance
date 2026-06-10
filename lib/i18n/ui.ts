@@ -85,6 +85,7 @@ export type UiCopy = {
   };
   footer: {
     app: string;
+    knowledge: string;
     legal: string;
     secure: string;
     disclaimerTitle: string;
@@ -185,6 +186,7 @@ const uiCopy: Record<AppLanguage, UiCopy> = {
     },
     footer: {
       app: "Aplicatie",
+      knowledge: "Knowledge Hub",
       legal: "Legal",
       secure: "Datele tale sunt in siguranta",
       disclaimerTitle: "Disclaimer medical:",
@@ -283,6 +285,7 @@ const uiCopy: Record<AppLanguage, UiCopy> = {
     },
     footer: {
       app: "App",
+      knowledge: "Knowledge Hub",
       legal: "Legal",
       secure: "Your data is secure",
       disclaimerTitle: "Medical disclaimer:",

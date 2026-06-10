@@ -23,7 +23,7 @@ import { useLanguage } from "@/components/LanguageProvider";
 import { getUiCopy } from "@/lib/i18n/ui";
 import TrialExpiredModal from "@/components/TrialExpiredModal";
 
-const FALLBACK_ADMIN_CONSOLE_URL = "https://backend.nutrisense-i.eu";
+const FALLBACK_ADMIN_CONSOLE_URL = "https://backend.nutriaid.eu";
 
 function NavItem({
   href,
@@ -175,26 +175,55 @@ export default function DashboardShell({ children }: { children: React.ReactNode
               </span>
             </div>
             <div className="min-w-0">
-              {currentUser.plan && (
-                <span className={
-                  currentUser.plan === "pro_plus"
-                    ? "inline-block text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md mb-0.5 bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300"
-                    : currentUser.plan === "pro"
-                    ? "inline-block text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md mb-0.5 bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300"
-                    : "inline-block text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md mb-0.5 bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300"
-                }>
-                  {currentUser.plan === "pro_plus" ? "Pro+" : currentUser.plan === "pro" ? "Pro" : "Basic"}
-                </span>
-              )}
+              {(() => {
+                if (isSuperadmin) {
+                  return (
+                    <span className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md mb-0.5 bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300">
+                      <ShieldCheck className="w-2.5 h-2.5" />
+                      Admin
+                    </span>
+                  );
+                }
+                if (currentUser.plan === "pro_plus") {
+                  return (
+                    <span className="inline-block text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md mb-0.5 bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300">
+                      Pro+
+                    </span>
+                  );
+                }
+                if (currentUser.plan === "pro") {
+                  return (
+                    <span className="inline-block text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md mb-0.5 bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
+                      Pro
+                    </span>
+                  );
+                }
+                if (currentUser.plan === "basic") {
+                  return (
+                    <span className="inline-block text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md mb-0.5 bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300">
+                      Basic
+                    </span>
+                  );
+                }
+                // No plan — show trial status
+                const trialActive = currentUser.trialEndsAt && new Date(currentUser.trialEndsAt).getTime() > Date.now();
+                if (trialActive) {
+                  const daysLeft = Math.ceil((new Date(currentUser.trialEndsAt!).getTime() - Date.now()) / 86_400_000);
+                  return (
+                    <span className="inline-block text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md mb-0.5 bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
+                      {isRo ? `Trial · ${daysLeft}z` : `Trial · ${daysLeft}d`}
+                    </span>
+                  );
+                }
+                return (
+                  <span className="inline-block text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md mb-0.5 bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400">
+                    {isRo ? "Fără plan" : "Free"}
+                  </span>
+                );
+              })()}
               <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate leading-tight">
                 {currentUser.name}
               </p>
-              {isSuperadmin && (
-                <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide text-red-600 dark:text-red-400">
-                  <ShieldCheck className="w-3 h-3" />
-                  Superadmin
-                </span>
-              )}
             </div>
           </div>
         )}

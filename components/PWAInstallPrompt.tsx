@@ -54,7 +54,7 @@ export default function PWAInstallPrompt() {
         promptRef.current = window.__pwaInstallEvent;
         window.__pwaInstallEvent = null;
         setPlatform('android');
-        const t = window.setTimeout(() => setShow(true), 4000);
+        const t = window.setTimeout(() => setShow(true), 10000);
         return () => window.clearTimeout(t);
       }
 
@@ -63,7 +63,7 @@ export default function PWAInstallPrompt() {
         e.preventDefault();
         promptRef.current = e as unknown as BeforeInstallPromptEvent;
         setPlatform('android');
-        window.setTimeout(() => setShow(true), 4000);
+        window.setTimeout(() => setShow(true), 10000);
       };
       window.addEventListener('beforeinstallprompt', handler);
       return () => window.removeEventListener('beforeinstallprompt', handler);
@@ -71,7 +71,7 @@ export default function PWAInstallPrompt() {
 
     if (p === 'ios' && isSafariBrowser()) {
       setPlatform('ios');
-      const t = window.setTimeout(() => setShow(true), 4000);
+      const t = window.setTimeout(() => setShow(true), 10000);
       return () => window.clearTimeout(t);
     }
   }, []);

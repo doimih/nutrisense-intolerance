@@ -51,16 +51,21 @@ export async function POST(request: NextRequest) {
 
   const from = emailSettings.fromEmail
     ? `"${emailSettings.fromName || 'NutriAID'}" <${emailSettings.fromEmail}>`
-    : 'no-reply@nutrisense-i.eu';
+    : 'no-reply@nutriaid.eu';
 
-  await transport.sendMail({
-    from,
-    to: body.to,
-    ...(body.replyTo ? { replyTo: body.replyTo } : {}),
-    subject: body.subject,
-    text: body.text,
-    html: body.html,
-  });
+  try {
+    await transport.sendMail({
+      from,
+      to: body.to,
+      ...(body.replyTo ? { replyTo: body.replyTo } : {}),
+      subject: body.subject,
+      text: body.text,
+      html: body.html,
+    });
+  } catch (sendErr: unknown) {
+    const msg = sendErr instanceof Error ? sendErr.message : String(sendErr);
+    return NextResponse.json({ error: `Failed to send email: ${msg}` }, { status: 500 });
+  }
 
   return NextResponse.json({ ok: true });
 }

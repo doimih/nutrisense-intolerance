@@ -85,16 +85,11 @@ function normalizeEntries(value: unknown): MonitoringEntry[] {
 
 // ─── Prompt ───────────────────────────────────────────────────────────────────
 
-function buildSystemPrompt(lang: 'ro' | 'en'): string {
+// The JSON format block is always injected — it must never be overridden by admin
+// custom prompts, otherwise parseGuidanceJson throws and falls back to deterministic.
+function buildJsonFormatBlock(lang: 'ro' | 'en'): string {
   if (lang === 'ro') {
-    return `Esti un asistent de nutritie non-medical specializat in sensibilitati alimentare.
-REGULI STRICTE:
-- Nu da diagnostice, nu prescrie tratamente, medicamente sau suplimente.
-- Nu folosi cuvinte absolute: "intotdeauna", "niciodata", "garantat", "cert", "100%".
-- Raspunde EXCLUSIV in format JSON valid, fara text in afara JSON-ului.
-- Recomandarile descriu probabilitati si corelatii din jurnal, nu sfat medical.
-
-FORMAT JSON OBLIGATORIU:
+    return `FORMAT JSON OBLIGATORIU — Raspunde EXCLUSIV in JSON valid, FARA text in afara JSON-ului:
 {
   "recommendedFoods": ["aliment1", "aliment2", ...],
   "avoidFoods": ["aliment1", "aliment2", ...],
@@ -107,15 +102,7 @@ FORMAT JSON OBLIGATORIU:
   "warnings": ["avertisment1"]
 }`;
   }
-
-  return `You are a non-medical nutrition assistant specializing in food sensitivities.
-STRICT RULES:
-- No diagnoses, treatments, medications, or supplement recommendations.
-- Do not use absolute language: "always", "never", "guaranteed", "certain", "100%".
-- Respond EXCLUSIVELY in valid JSON with no text outside the JSON.
-- Recommendations describe journal-based probabilities and correlations, not medical advice.
-
-REQUIRED JSON FORMAT:
+  return `REQUIRED JSON FORMAT — Respond EXCLUSIVELY in valid JSON, NO text outside the JSON:
 {
   "recommendedFoods": ["food1", "food2", ...],
   "avoidFoods": ["food1", "food2", ...],
@@ -127,6 +114,40 @@ REQUIRED JSON FORMAT:
   "disclaimer": "These recommendations are indicative and are not medical advice.",
   "warnings": ["warning1"]
 }`;
+}
+
+function buildSystemPrompt(lang: 'ro' | 'en'): string {
+  if (lang === 'ro') {
+    return `Esti un asistent de nutritie non-medical specializat in sensibilitati alimentare.
+
+REGULI STRICTE:
+- Nu da diagnostice, nu prescrie tratamente, medicamente sau suplimente.
+- Nu folosi cuvinte absolute: "intotdeauna", "niciodata", "garantat", "cert", "100%".
+- Recomandarile descriu probabilitati si corelatii din jurnal, nu sfat medical.
+
+ANALIZA CERUTA:
+1. REACTII INTARZIATE: Daca o intrare din jurnal are campul "latency" intre 30 si 2880 minute SI are simptome, alimentele din acea masa sunt SUSPECTE. Noteaza aceste alimente in avoidFoods si mentioneaza latenta in generalTips.
+2. COMBINATII PROBLEMATICE: Identifica perechi de alimente care apar impreuna in mai multe intrari cu simptome. Mentioneaza combinatiile detectate in generalTips.
+3. ALIMENTE SIGURE: Alimentele care apar frecvent in intrari FARA simptome sunt probabil sigure. Pune-le in recommendedFoods.
+4. INTENSITATE: Pondereaza importanta unui aliment cu intensitatea simptomelor (campul "intensity", scala 1-10). Intensitate >= 7 = risc ridicat.
+
+${buildJsonFormatBlock('ro')}`;
+  }
+
+  return `You are a non-medical nutrition assistant specializing in food sensitivities.
+
+STRICT RULES:
+- No diagnoses, treatments, medications, or supplement recommendations.
+- Do not use absolute language: "always", "never", "guaranteed", "certain", "100%".
+- Recommendations describe journal-based probabilities and correlations, not medical advice.
+
+REQUIRED ANALYSIS:
+1. DELAYED REACTIONS: If a journal entry has a "latency" field between 30 and 2880 minutes AND has symptoms, the foods in that meal are SUSPECTED. Note these foods in avoidFoods and mention the latency in generalTips.
+2. PROBLEMATIC COMBINATIONS: Identify food pairs that appear together in multiple entries with symptoms. Mention detected combinations in generalTips.
+3. SAFE FOODS: Foods that appear frequently in entries WITHOUT symptoms are likely safe. Put them in recommendedFoods.
+4. INTENSITY: Weight the importance of a food by symptom intensity (field "intensity", scale 1-10). Intensity >= 7 = high risk.
+
+${buildJsonFormatBlock('en')}`;
 }
 
 function buildUserPrompt(params: {
@@ -164,14 +185,20 @@ function buildUserPrompt(params: {
     lines.push('MONITORING_JOURNAL: empty');
   }
 
-  if (subscriptionTier === 'active') {
+  // Translate detailLevel into concrete numeric requirements so the AI knows
+  // exactly how much content to produce — not just a label.
+  if (detailLevel === 'comprehensive') {
     lines.push(lang === 'ro'
-      ? 'NIVEL_DETALIU: raspuns complet cu 3 sfaturi generale si 2 exemple de mese.'
-      : 'DETAIL: full response with 3 general tips and 2 meal examples.');
+      ? 'NIVEL_DETALIU COMPLET: minim 12 alimente recomandate variate, minim 8 alimente de evitat, minim 3 exemple de mese complet diferite, minim 5 sfaturi generale detaliate. Nu repeta ingrediente intre mese. Nu folosi raspunsuri scurte.'
+      : 'DETAIL LEVEL COMPREHENSIVE: min 12 varied recommended foods, min 8 foods to avoid, min 3 fully distinct meal examples, min 5 detailed general tips. Do not repeat ingredients across meals. Do not give short answers.');
+  } else if (detailLevel === 'detailed') {
+    lines.push(lang === 'ro'
+      ? 'NIVEL_DETALIU DETALIAT: minim 8 alimente recomandate, minim 5 alimente de evitat, minim 2 exemple de mese diferite, minim 3 sfaturi generale.'
+      : 'DETAIL LEVEL DETAILED: min 8 recommended foods, min 5 foods to avoid, min 2 distinct meal examples, min 3 general tips.');
   } else {
     lines.push(lang === 'ro'
-      ? 'NIVEL_DETALIU: raspuns concis cu 2 sfaturi generale si 2 exemple de mese.'
-      : 'DETAIL: concise response with 2 general tips and 2 meal examples.');
+      ? 'NIVEL_DETALIU DE BAZA: minim 4 alimente recomandate, minim 3 alimente de evitat, 1 exemplu de masa, 2 sfaturi generale.'
+      : 'DETAIL LEVEL BASIC: min 4 recommended foods, min 3 foods to avoid, 1 meal example, 2 general tips.');
   }
 
   return lines.join('\n');
@@ -321,7 +348,11 @@ export async function POST(request: NextRequest) {
   const userEmail = typeof body.userEmail === 'string' ? body.userEmail : 'unknown';
 
   const dbSystemPrompt = aiBrain?.systemPrompt?.trim();
-  const systemPrompt = dbSystemPrompt && dbSystemPrompt.length > 20 ? dbSystemPrompt : buildSystemPrompt(lang);
+  // Admin custom prompt is prepended as ADDITIONAL INSTRUCTIONS — the mandatory
+  // JSON format block is always appended so parseGuidanceJson never fails.
+  const systemPrompt = dbSystemPrompt && dbSystemPrompt.length > 20
+    ? `INSTRUCTIUNI SUPLIMENTARE ADMINISTRATOR:\n${dbSystemPrompt}\n\n${buildJsonFormatBlock(lang)}`
+    : buildSystemPrompt(lang);
   const userPrompt = buildUserPrompt({ lang, userMessage, intolerances, dietaryPreference, detailLevel, subscriptionTier, entries });
 
   const messages: OpenAIMessage[] = [
@@ -402,6 +433,8 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({
     ok: true,
     provider: usedModel,
+    modelUsed: usedModel,
+    usedFallbackModel: usedFallback,
     sessionId,
     latencyMs,
     result,

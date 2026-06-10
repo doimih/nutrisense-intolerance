@@ -237,7 +237,7 @@ export function validateSafety(
 
   // Check against known allergens
   const knownAllergenHits: string[] = [];
-  detectRestrictedTerms(allTerms, COMMON_ALLERGENS, 'Common allergen', knownAllergenHits);
+  detectRestrictedTerms(allTerms, [...COMMON_ALLERGENS], 'Common allergen', knownAllergenHits);
   // Only flag if user hasn't declared them (if no allergy list supplied, flag all)
   if (allergies.length === 0) {
     errors.push(...knownAllergenHits);

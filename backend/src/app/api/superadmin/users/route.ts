@@ -398,6 +398,18 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: 'User not found or invalid payload.' }, { status: 404 });
   }
 
+  // Sync plan change to platform auth-db (admin-source users may also have a platform account)
+  if (body.action === 'upgrade' || body.action === 'downgrade' || body.action === 'reset-subscription') {
+    const internalToken = readDb().settings?.internalEmailToken ?? '';
+    if (internalToken && updated.email) {
+      const planToSync = updated.plan ?? 'free';
+      void mutatePlatformUser(internalToken, updated.id, 'set-plan', {
+        plan: planToSync,
+        email: updated.email,
+      });
+    }
+  }
+
   appendAuditEvent({
     actorUserId: auth.session.userId,
     actorEmail: auth.session.email,

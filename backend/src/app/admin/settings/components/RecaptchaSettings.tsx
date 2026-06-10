@@ -62,7 +62,7 @@ function HelpModal({ onClose }: { onClose: () => void }) {
             {[
               <>Mergi la{' '}<a href="https://www.google.com/recaptcha/admin" target="_blank" rel="noopener noreferrer" className="text-primary underline">google.com/recaptcha/admin</a></>,
               <>Creeaza un nou site — selecteaza tipul <strong>reCAPTCHA v3</strong></>,
-              <>Adauga domeniul tau (ex. <code className="text-xs bg-muted px-1.5 py-0.5 rounded font-mono">nutrisense-i.eu</code>)</>,
+              <>Adauga domeniul tau (ex. <code className="text-xs bg-muted px-1.5 py-0.5 rounded font-mono">nutriaid.eu</code>)</>,
               <>Copiaza <strong>Site Key</strong> si <strong>Secret Key</strong> in campurile din setari</>,
               <>Salveaza si testeaza conexiunea cu butonul &quot;Testeaza conexiunea&quot;</>,
             ].map((step, i) => (

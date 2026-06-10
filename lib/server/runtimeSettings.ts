@@ -47,9 +47,9 @@ const DEFAULT_PWA: PWASettings = {
 };
 
 const FALLBACK_SETTINGS: RuntimeSettings = {
-  siteUrl: 'https://nutrisense-i.eu',
-  backendUrl: 'https://backend.nutrisense-i.eu',
-  adminConsoleUrl: 'https://backend.nutrisense-i.eu',
+  siteUrl: 'https://nutriaid.eu',
+  backendUrl: 'https://backend.nutriaid.eu',
+  adminConsoleUrl: 'https://backend.nutriaid.eu',
   internalEmailToken: null,
   recaptcha: { enabled: false, siteKey: '', scoreThreshold: '0.5' },
   pricing: {
@@ -64,7 +64,7 @@ function getBackendSettingsUrl(): string {
   const backendUrl =
     process.env.BACKEND_INTERNAL_URL ||
     process.env.BACKEND_URL ||
-    'https://backend.nutrisense-i.eu';
+    'https://backend.nutriaid.eu';
   return `${backendUrl.replace(/\/$/, '')}/api/public/settings`;
 }
 

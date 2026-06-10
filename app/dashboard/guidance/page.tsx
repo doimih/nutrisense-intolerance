@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Sparkles, CheckCircle2, XCircle, UtensilsCrossed, Lightbulb, AlertTriangle, Lock, Zap } from "lucide-react";
+import { Sparkles, CheckCircle2, XCircle, UtensilsCrossed, Lightbulb, AlertTriangle, Lock, Zap, FileDown } from "lucide-react";
 import Card, { CardHeader, CardTitle } from "@/components/Card";
 import Button from "@/components/Button";
 import Badge from "@/components/Badge";
@@ -380,6 +380,18 @@ export default function GuidancePage() {
             <p className="text-xs text-orange-700 dark:text-orange-400">
               <strong>{isRo ? "Disclaimer medical:" : "Medical disclaimer:"}</strong> {result.disclaimer}
             </p>
+          </div>
+
+          {/* PDF Export */}
+          <div className="flex justify-end">
+            <a
+              href="/api/guidance/pdf"
+              download="nutriaid_raport.pdf"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-green-600 hover:bg-green-700 text-white text-sm font-semibold transition-colors"
+            >
+              <FileDown className="w-4 h-4" />
+              {isRo ? "Exportă raport PDF" : "Export PDF report"}
+            </a>
           </div>
         </div>
       )}

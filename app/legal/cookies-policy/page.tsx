@@ -100,7 +100,7 @@ export default function CookiesPolicyPage() {
 
       <h2>7. Contact</h2>
       <p>
-        Întrebări despre utilizarea cookie-urilor: contact@nutriaid.ro
+        Întrebări despre utilizarea cookie-urilor: contact@nutriaid.eu
       </p>
     </LegalLayout>
   );

@@ -72,6 +72,65 @@ function topItems(map: Map<string, number>, limit: number): string[] {
     .map(([item]) => item);
 }
 
+// Foods appearing in entries where symptoms arrived 30 min–48 h after eating
+function delayedReactionFoods(entries: MonitoringContextItem[]): Map<string, number> {
+  const scores = new Map<string, number>();
+  for (const entry of entries) {
+    const latency = entry.reactionLatencyMinutes;
+    if (latency === null || latency === undefined) continue;
+    if (latency < 30 || latency > 2880) continue;
+    if (entry.symptoms.length === 0) continue;
+    const weight = Math.max(1, entry.symptomsIntensity || 1);
+    for (const food of entry.consumedFoods) {
+      const key = food.trim().toLowerCase();
+      if (!key) continue;
+      scores.set(key, (scores.get(key) || 0) + weight);
+    }
+  }
+  return scores;
+}
+
+type FoodCombo = { foods: [string, string]; score: number };
+
+// Food pairs that co-occur in entries with symptoms (min 2 co-occurrences)
+function foodCombinationRisks(entries: MonitoringContextItem[]): FoodCombo[] {
+  const pairScores = new Map<string, FoodCombo>();
+  for (const entry of entries) {
+    if (entry.symptoms.length === 0) continue;
+    const weight = Math.max(1, entry.symptomsIntensity || 1);
+    const foods = Array.from(new Set(entry.consumedFoods.map((f) => f.trim().toLowerCase()).filter(Boolean)));
+    for (let i = 0; i < foods.length; i++) {
+      for (let j = i + 1; j < foods.length; j++) {
+        const key = [foods[i], foods[j]].sort().join("||");
+        const existing = pairScores.get(key);
+        if (existing) {
+          existing.score += weight;
+        } else {
+          pairScores.set(key, { foods: [foods[i], foods[j]], score: weight });
+        }
+      }
+    }
+  }
+  return Array.from(pairScores.values())
+    .filter((p) => p.score >= 2)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 5);
+}
+
+function dataConfidenceLabel(count: number, lang: "ro" | "en"): string | null {
+  if (count < 5) {
+    return lang === "ro"
+      ? `Date insuficiente: ${count} intrare${count === 1 ? "" : "i"} înregistrate. Adaugă cel puțin 5 mese pentru primele corelații.`
+      : `Insufficient data: ${count} entr${count === 1 ? "y" : "ies"} logged. Add at least 5 meals for first correlations.`;
+  }
+  if (count < 15) {
+    return lang === "ro"
+      ? `Date în curs de acumulare (${count} intrări). Corelațiile devin mai precise după 15+ înregistrări.`
+      : `Data accumulating (${count} entries). Correlations become more precise after 15+ entries.`;
+  }
+  return null;
+}
+
 type PlanLimits = {
   maxRecommendedFoods: number;
   maxAvoidFoods: number;
@@ -282,17 +341,49 @@ export function buildGuidancePrompt(input: GuidanceGenerateInput): string {
   return lines.join("\n");
 }
 
+function applyDetailLevelToLimits(limits: PlanLimits, detailLevel: string): PlanLimits {
+  if (detailLevel === 'comprehensive') {
+    return {
+      ...limits,
+      maxRecommendedFoods: Math.max(limits.maxRecommendedFoods, 12),
+      maxAvoidFoods: Math.max(limits.maxAvoidFoods, 8),
+      maxMealExamples: Math.max(limits.maxMealExamples, 3),
+      maxTips: Math.max(limits.maxTips, 5),
+    };
+  }
+  if (detailLevel === 'detailed') {
+    return {
+      ...limits,
+      maxRecommendedFoods: Math.max(limits.maxRecommendedFoods, 8),
+      maxAvoidFoods: Math.max(limits.maxAvoidFoods, 5),
+      maxMealExamples: Math.max(limits.maxMealExamples, 2),
+      maxTips: Math.max(limits.maxTips, 3),
+    };
+  }
+  // basic — use plan limits as-is
+  return limits;
+}
+
 export function runDeterministicGuidance(input: GuidanceGenerateInput): GuidanceResult {
   const entries = input.monitoringEntries;
-  const limits = getPlanLimits(input.planTier);
+  const limits = applyDetailLevelToLimits(getPlanLimits(input.planTier), input.detailLevel);
 
   const frequentFoods = topItems(foodCounts(entries), limits.maxRecommendedFoods);
   const highRiskFoods = topItems(symptomWeightedFoods(entries), limits.maxAvoidFoods);
+
+  // Delayed reaction analysis (pro / pro_plus only)
+  const delayedRisk = limits.delayedReactionDetection
+    ? topItems(delayedReactionFoods(entries), Math.ceil(limits.maxAvoidFoods / 2))
+    : [];
+
+  // Combination risk analysis (pro / pro_plus only)
+  const combos = limits.comboAnalysis ? foodCombinationRisks(entries) : [];
 
   const avoidSeed = new Set<string>([
     ...baseAvoidByIntolerance(input.intolerances, input.lang),
     ...dietaryAvoidByPreference(input.dietaryPreference, input.lang),
     ...highRiskFoods,
+    ...delayedRisk,
   ]);
 
   const recommendedSeed = new Set<string>(
@@ -304,30 +395,48 @@ export function runDeterministicGuidance(input: GuidanceGenerateInput): Guidance
     for (const item of defaults) recommendedSeed.add(item);
   }
 
-  const warnings = input.lang === "ro"
-    ? [
-        "Corelatiile sunt orientative si depind de consecventa jurnalului.",
-        "Testeaza ajustarile in pasi mici, pe intervale de 2-3 zile.",
-      ]
-    : [
-        "Correlations are indicative and depend on journal consistency.",
-        "Test adjustments in small steps over 2-3 day windows.",
-      ];
+  // Data confidence warning (threshold: < 5 entries)
+  const confidenceNote = dataConfidenceLabel(entries.length, input.lang);
+
+  const warnings: string[] = [];
+  if (confidenceNote) warnings.push(confidenceNote);
+  warnings.push(
+    ...(input.lang === "ro"
+      ? [
+          "Corelatiile sunt orientative si depind de consecventa jurnalului.",
+          "Testeaza ajustarile in pasi mici, pe intervale de 2-3 zile.",
+        ]
+      : [
+          "Correlations are indicative and depend on journal consistency.",
+          "Test adjustments in small steps over 2-3 day windows.",
+        ])
+  );
+
+  // Combination tips from detected risky pairs
+  const comboTips = combos.slice(0, 2).map((c) =>
+    input.lang === "ro"
+      ? `Combinație detectată: ${c.foods[0]} + ${c.foods[1]} — a apărut repetat cu simptome.`
+      : `Detected combination: ${c.foods[0]} + ${c.foods[1]} — appeared repeatedly with symptoms.`
+  );
 
   const allTips = input.lang === "ro"
     ? [
         "Prioritizeaza mesele simple cu putine ingrediente noi.",
         "Observa reactiile intarziate la 2h, 6h si 24h.",
         "Daca intensitatea depaseste frecvent 7/10, solicita evaluare medicala.",
-        ...(limits.comboAnalysis ? ["Analiza combinatiilor: evita introducerea simultana a mai mult de 2 alimente noi."] : []),
-        ...(limits.delayedReactionDetection ? ["Detectarea reactiilor complexe: inregistreaza simptomele si dupa 24h de la masa."] : []),
+        ...comboTips,
+        ...(limits.delayedReactionDetection && delayedRisk.length > 0
+          ? [`Reactii intarziate detectate (30–48h) pentru: ${delayedRisk.slice(0, 3).join(", ")}.`]
+          : []),
       ]
     : [
         "Prioritize simple meals with few new ingredients.",
         "Observe delayed reactions at 2h, 6h, and 24h.",
         "If intensity often exceeds 7/10, seek medical evaluation.",
-        ...(limits.comboAnalysis ? ["Combination analysis: avoid introducing more than 2 new foods simultaneously."] : []),
-        ...(limits.delayedReactionDetection ? ["Complex delayed reaction detection: log symptoms even 24h after a meal."] : []),
+        ...comboTips,
+        ...(limits.delayedReactionDetection && delayedRisk.length > 0
+          ? [`Delayed reactions detected (30–48h) for: ${delayedRisk.slice(0, 3).join(", ")}.`]
+          : []),
       ];
 
   const result: GuidanceResult = {

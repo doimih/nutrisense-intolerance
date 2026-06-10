@@ -14,6 +14,7 @@ import { superviseWorkerExecution } from '@/ai/supervisor/WorkerSupervisor';
 import type { SupervisionContext, SupervisionReport } from '@/ai/supervisor/WorkerSupervisor';
 import { logOrchestratorEvent } from '@/lib/server/superadmin/aiLogging';
 import { getDefaultModelConfig } from '@/ai/autoCorrector';
+import { createRealWorkerExecutor } from '@/ai/realWorkerExecutor';
 
 // ─── Intent detection ─────────────────────────────────────────────────────────
 
@@ -138,6 +139,7 @@ export type OrchestratorContext = {
   intolerances?: string[];
   allergies?: string[];
   nutritionalGoals?: NutritionalGoals;
+  lang?: 'ro' | 'en';
 };
 
 export type WorkerExecutionRecord = {
@@ -161,13 +163,18 @@ export type OrchestratorResult = {
 
 export async function runOrchestrator(
   ctx: OrchestratorContext,
-  executor: WorkerExecutor = defaultWorkerExecutor,
+  executor?: WorkerExecutor,
 ): Promise<OrchestratorResult> {
   const started = Date.now();
   const intent = detectIntent(ctx.userMessage);
   const workerSequence = [...INTENT_WORKER_ROUTES[intent]];
+  const lang = ctx.lang ?? 'ro';
 
   const modelConfig = getDefaultModelConfig();
+
+  // Use real AI executor when API key is configured; fall back to stub otherwise.
+  const resolvedExecutor: WorkerExecutor =
+    executor ?? (modelConfig.apiKey ? createRealWorkerExecutor(modelConfig, lang) : defaultWorkerExecutor);
 
   const supervisionCtx: SupervisionContext = {
     sessionId: ctx.sessionId,
@@ -196,7 +203,7 @@ export async function runOrchestrator(
     const workerStart = Date.now();
 
     // 1. Run worker
-    const rawOutput = await executor(workerId, accumulatedContext, ctx);
+    const rawOutput = await resolvedExecutor(workerId, accumulatedContext, ctx);
 
     // 2–6. Supervise (validate + auto-correct)
     const report = await superviseWorkerExecution(

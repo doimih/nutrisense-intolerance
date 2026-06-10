@@ -11,6 +11,7 @@ import { autoCorrect as ruleBasedCorrect, validateSchema, validateLogic, validat
 import { buildCorrectionPrompt, CORRECTION_SYSTEM_MESSAGE } from '@/ai/prompts/correctionPrompt';
 import { logModelFallback } from '@/logging/aiLogger';
 import type { ValidationResult } from '@/lib/server/superadmin/workerDiagnosticTypes';
+import { readDb } from '@/lib/server/superadmin/store';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -45,17 +46,35 @@ export type CorrectionResult = {
   correctionMs: number;
 };
 
-// ─── Default model config (reads from env) ────────────────────────────────────
+// ─── Default model config (reads from DB, falls back to env) ─────────────────
 
 export function getDefaultModelConfig(): ModelConfig {
-  return {
-    primaryModel: process.env.AI_PRIMARY_MODEL ?? 'gpt-4o',
-    fallbackModel: process.env.AI_FALLBACK_MODEL ?? 'gemini-1.5-pro',
-    apiKey: process.env.OPENAI_API_KEY ?? process.env.AI_API_KEY ?? null,
-    temperature: Number(process.env.AI_TEMPERATURE ?? '0.3'),
-    maxTokens: Number(process.env.AI_MAX_TOKENS ?? '2048'),
-    orchestratorUrl: process.env.AI_ORCHESTRATOR_URL ?? null,
-  };
+  try {
+    const db = readDb();
+    const aiBrain = db.settings?.aiBrain;
+    const dbApiKeyRaw = db.settings?.ai?.apiKeyMasked ?? '';
+    const isPlaceholder = !dbApiKeyRaw || dbApiKeyRaw.includes('****');
+    const apiKey =
+      (!isPlaceholder ? dbApiKeyRaw : (process.env.OPENAI_API_KEY ?? process.env.AI_API_KEY ?? '')).trim() || null;
+    return {
+      primaryModel: (aiBrain?.defaultModel || process.env.AI_PRIMARY_MODEL || 'gpt-4o').trim(),
+      fallbackModel: (aiBrain?.fallbackModel || process.env.AI_FALLBACK_MODEL || 'gpt-4o-mini').trim(),
+      apiKey,
+      temperature: Math.max(0, Math.min(1, Number(aiBrain?.temperature ?? process.env.AI_TEMPERATURE ?? '0.4'))),
+      maxTokens: Math.max(512, Math.min(4096, Number(aiBrain?.maxTokens ?? process.env.AI_MAX_TOKENS ?? '1024'))),
+      orchestratorUrl: aiBrain?.orchestratorUrl?.trim() || process.env.AI_ORCHESTRATOR_URL || null,
+    };
+  } catch {
+    // DB not accessible yet (e.g. cold start) — use env vars
+    return {
+      primaryModel: (process.env.AI_PRIMARY_MODEL ?? 'gpt-4o').trim(),
+      fallbackModel: (process.env.AI_FALLBACK_MODEL ?? 'gpt-4o-mini').trim(),
+      apiKey: (process.env.OPENAI_API_KEY ?? process.env.AI_API_KEY ?? '').trim() || null,
+      temperature: Number(process.env.AI_TEMPERATURE ?? '0.4'),
+      maxTokens: Number(process.env.AI_MAX_TOKENS ?? '1024'),
+      orchestratorUrl: process.env.AI_ORCHESTRATOR_URL ?? null,
+    };
+  }
 }
 
 // ─── AI client ────────────────────────────────────────────────────────────────

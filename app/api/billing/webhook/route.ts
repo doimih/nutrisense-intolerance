@@ -6,7 +6,7 @@ import {
   type SubscriptionStatus,
   upsertSubscriptionSnapshot,
 } from "@/lib/server/subscriptionStore";
-import { setUserPlan } from "@/lib/server/authStore";
+import { setUserPlan, removeUserPlan } from "@/lib/server/authStore";
 
 export const runtime = "nodejs";
 
@@ -94,6 +94,12 @@ export async function POST(request: NextRequest) {
         });
         if (planCode && (subscriptionStatus === "active" || subscriptionStatus === "trialing")) {
           await setUserPlan(metadataEmail, planCode);
+        } else if (
+          subscriptionStatus === "canceled" ||
+          subscriptionStatus === "incomplete_expired" ||
+          subscriptionStatus === "unpaid"
+        ) {
+          await removeUserPlan(metadataEmail);
         }
       }
       break;

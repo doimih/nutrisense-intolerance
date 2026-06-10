@@ -50,7 +50,7 @@ const copy = {
     subtitle: 'Have a question, issue, or suggestion? Send us a message and we will reply quickly.',
     infoTitle: 'Contact details',
     emailLabel: 'Support email',
-    emailValue: 'contact@nutriaid.ro',
+    emailValue: 'contact@nutriaid.eu',
     hoursLabel: 'Support hours',
     hoursValue: 'Monday - Friday, 09:00 - 18:00',
     responseLabel: 'Response time',
@@ -184,7 +184,7 @@ export default function ContactPage() {
   const labelCls = 'block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1';
 
   return (
-    <div className="pt-24 pb-20 bg-slate-50 dark:bg-slate-950">
+    <div className="pb-20 bg-slate-50 dark:bg-slate-950">
       {/* Hero */}
       <section className="relative overflow-hidden border-y border-emerald-100 dark:border-emerald-900/40 bg-gradient-to-b from-emerald-100 via-white to-slate-50 dark:from-emerald-950/30 dark:via-slate-950 dark:to-slate-950">
         <div className="absolute inset-0 pointer-events-none">
@@ -310,6 +310,44 @@ export default function ContactPage() {
               </div>
             </form>
           )}
+        </div>
+      </section>
+
+      {/* GEO Summary + mini-FAQ */}
+      <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-14 space-y-10">
+        <div className="rounded-2xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/20 p-6">
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-3">
+            {lang === 'ro' ? "Contact NutriAID Intolerances" : "Contact NutriAID Intolerances"}
+          </h2>
+          <p className="text-slate-700 dark:text-slate-300">
+            {lang === 'ro'
+              ? "Echipa NutriAID Intolerances răspunde la toate mesajele în maxim 24–48 ore în zilele lucrătoare. Ne poți contacta pentru întrebări despre aplicație, probleme tehnice, solicitări GDPR (acces, rectificare, ștergere date) sau sugestii de îmbunătățire. Adresa noastră de email este contact@nutriaid.eu. Nu oferim consultanță medicală sau nutrițională — pentru acestea recomandăm contactarea unui specialist."
+              : "The NutriAID Intolerances team responds to all messages within 24–48 hours on business days. You can contact us for questions about the application, technical issues, GDPR requests (data access, rectification, deletion), or improvement suggestions. Our email address is contact@nutriaid.eu. We do not provide medical or nutritional consultancy — for these we recommend contacting a specialist."}
+          </p>
+        </div>
+        <div>
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-4">
+            {lang === 'ro' ? "Întrebări despre contact și suport" : "Questions about contact and support"}
+          </h2>
+          <dl className="space-y-3">
+            {(lang === 'ro'
+              ? [
+                  { q: "Cât timp durează să primesc un răspuns?", a: "Răspundem la toate mesajele în maxim 24–48 ore în zilele lucrătoare (luni–vineri)." },
+                  { q: "Cum solicit ștergerea datelor mele (GDPR)?", a: "Trimiți un email la contact@nutriaid.eu cu subiectul 'Solicitare ștergere date GDPR' și procesăm solicitarea în maxim 30 de zile." },
+                  { q: "Pot raporta o problemă tehnică prin formularul de contact?", a: "Da. Selectează subiectul 'Problemă tehnică', descrie problema și adaugă capturi de ecran dacă este posibil — te ajutăm rapid." },
+                ]
+              : [
+                  { q: "How long does it take to receive a response?", a: "We respond to all messages within 24–48 hours on business days (Monday–Friday)." },
+                  { q: "How do I request deletion of my data (GDPR)?", a: "Send an email to contact@nutriaid.eu with the subject 'GDPR Data Deletion Request' and we process the request within 30 days." },
+                  { q: "Can I report a technical issue through the contact form?", a: "Yes. Select the subject 'Technical issue', describe the problem and add screenshots if possible — we will help you quickly." },
+                ]
+            ).map((item) => (
+              <div key={item.q} className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-5">
+                <dt className="font-semibold text-slate-900 dark:text-white mb-2">{item.q}</dt>
+                <dd className="text-slate-600 dark:text-slate-400 text-sm m-0">{item.a}</dd>
+              </div>
+            ))}
+          </dl>
         </div>
       </section>
     </div>

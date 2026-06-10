@@ -27,7 +27,7 @@ function getBackendStripeConfigUrl(): string {
   const base =
     process.env.BACKEND_INTERNAL_URL ||
     process.env.BACKEND_URL ||
-    'https://backend.nutrisense-i.eu';
+    'https://backend.nutriaid.eu';
   return `${base.replace(/\/$/, '')}/api/internal/stripe-config`;
 }
 

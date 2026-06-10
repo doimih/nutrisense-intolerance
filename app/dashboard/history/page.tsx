@@ -280,7 +280,7 @@ export default function HistoryPage() {
       )}
 
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 bg-teal-100 dark:bg-teal-900/30 rounded-xl flex items-center justify-center">
+        <div className="w-10 h-10 bg-teal-100 dark:bg-teal-900/30 rounded-xl flex items-center justify-center flex-shrink-0">
           <History className="w-5 h-5 text-teal-600 dark:text-teal-400" />
         </div>
         <div>

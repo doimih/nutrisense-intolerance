@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
   const to = auth.session.email;
   const from = emailSettings.fromEmail
     ? `"${emailSettings.fromName || 'NutriAID'}" <${emailSettings.fromEmail}>`
-    : `"NutriAID" <noreply@nutrisense-i.eu>`;
+    : `"NutriAID" <noreply@nutriaid.eu>`;
 
   try {
     const transport = nodemailer.createTransport({

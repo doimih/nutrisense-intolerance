@@ -601,30 +601,30 @@ export default function HomePage() {
               {t.hero.secondaryCta}
             </Link>
           </div>
-          <div className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <ul className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 list-none p-0">
             {t.hero.trustItems.map((item) => (
-              <div
+              <li
                 key={item}
                 className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm dark:border-white/10 dark:bg-white/5 dark:text-slate-200 dark:shadow-none"
               >
                 <CheckCircle2 className="h-4 w-4 text-emerald-500 dark:text-emerald-300" />
                 <span>{item}</span>
-              </div>
+              </li>
             ))}
-          </div>
+          </ul>
         </div>
       </section>
 
       <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8">
         <h2 className="text-3xl font-bold text-slate-900 dark:text-white sm:text-4xl">{t.symptoms.title}</h2>
         <p className="mt-5 text-lg text-slate-600 dark:text-slate-300">{t.symptoms.intro}</p>
-        <div className="mt-8 grid gap-3 sm:grid-cols-2">
+        <ul className="mt-8 grid gap-3 sm:grid-cols-2 list-none p-0">
           {t.symptoms.items.map((item) => (
-            <div key={item} className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-700 shadow-sm dark:border-white/10 dark:bg-slate-900/70 dark:text-slate-200 dark:shadow-none">
+            <li key={item} className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-700 shadow-sm dark:border-white/10 dark:bg-slate-900/70 dark:text-slate-200 dark:shadow-none">
               {item}
-            </div>
+            </li>
           ))}
-        </div>
+        </ul>
         <div className="mt-8 rounded-2xl border border-amber-200 bg-amber-50 p-6 dark:border-amber-300/20 dark:bg-amber-300/5">
           <p className="text-sm font-semibold uppercase tracking-widest text-amber-700 dark:text-amber-200/90">
             {lang === "ro" ? "Poate ai auzit" : "Maybe you heard"}
@@ -683,16 +683,16 @@ export default function HomePage() {
         </div>
         <div className="mt-16">
           <h3 className="text-2xl font-bold text-slate-900 dark:text-white">{t.testimonials.commonTitle}</h3>
-          <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <ul className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 list-none p-0">
             {t.testimonials.commonPoints.map((point) => (
-              <div
+              <li
                 key={point}
                 className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-700 dark:border-white/10 dark:bg-slate-900 dark:text-slate-200"
               >
                 {point}
-              </div>
+              </li>
             ))}
-          </div>
+          </ul>
           <div className="mt-8 space-y-2 text-lg font-medium text-slate-900 dark:text-white">
             {t.testimonials.commonEnding.map((line) => (
               <p key={line}>{line}</p>
@@ -761,13 +761,13 @@ export default function HomePage() {
         <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8">
           <h2 className="text-3xl font-bold text-slate-900 dark:text-white sm:text-4xl">{t.audience.title}</h2>
           <p className="mt-4 text-lg text-slate-600 dark:text-slate-300">{t.audience.intro}</p>
-          <div className="mt-6 grid gap-3 sm:grid-cols-2">
+          <ul className="mt-6 grid gap-3 sm:grid-cols-2 list-none p-0">
             {t.audience.items.map((item) => (
-              <div key={item} className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-700 dark:border-white/10 dark:bg-slate-950 dark:text-slate-200">
+              <li key={item} className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-700 dark:border-white/10 dark:bg-slate-950 dark:text-slate-200">
                 {item}
-              </div>
+              </li>
             ))}
-          </div>
+          </ul>
           <p className="mt-6 text-lg font-medium text-slate-900 dark:text-white">{t.audience.ending}</p>
         </div>
       </section>

@@ -363,21 +363,29 @@ export function generateMetadata(): Metadata {
   const lang = getServerLanguage();
   const t = copy[lang];
 
+  const isRo = lang === "ro";
   return {
-    title: lang === "ro" ? "Ghidul tău în 7 zile" : "Your 7-Day Guide",
+    title: isRo ? "Ghidul tău în 7 zile — NutriAID Intolerances" : "Your 7-Day Guide — NutriAID Intolerances",
     description: t.metaDescription,
     alternates: {
       canonical: "/about",
+    },
+    openGraph: {
+      title: isRo ? "Ghidul tău în 7 zile cu NutriAID" : "Your 7-Day Guide with NutriAID",
+      description: t.metaDescription,
+      url: "/about",
+      locale: isRo ? "ro_RO" : "en_US",
     },
   };
 }
 
 export default function AboutPage() {
   const lang = getServerLanguage();
+  const isRo = lang === "ro";
   const t = copy[lang];
 
   return (
-    <div className="pt-24 pb-20 bg-slate-50 dark:bg-slate-950">
+    <div className="pb-20 bg-slate-50 dark:bg-slate-950">
       <section className="relative overflow-hidden border-y border-emerald-100 dark:border-emerald-900/40 bg-gradient-to-b from-emerald-100 via-white to-slate-50 dark:from-emerald-950/30 dark:via-slate-950 dark:to-slate-950">
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute -top-16 right-0 h-64 w-64 rounded-full bg-emerald-300/30 blur-3xl" />
@@ -404,16 +412,16 @@ export default function AboutPage() {
           {t.section1.title}
         </h2>
         <p className="text-slate-700 dark:text-slate-300 mb-6">{t.section1.intro}</p>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-7">
+        <ul className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-7 list-none p-0">
           {t.section1.bullets.map((item) => (
-            <div
+            <li
               key={item}
               className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 text-slate-700 dark:text-slate-200"
             >
               {item}
-            </div>
+            </li>
           ))}
-        </div>
+        </ul>
         <p className="rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 p-6 text-lg font-semibold text-slate-900 dark:text-emerald-100">
           {t.section1.ending}
         </p>
@@ -475,16 +483,16 @@ export default function AboutPage() {
           {t.section3.title}
         </h2>
         <p className="text-slate-700 dark:text-slate-300 mb-6">{t.section3.intro}</p>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-7">
+        <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-7 list-none p-0">
           {t.section3.bullets.map((item) => (
-            <div
+            <li
               key={item}
               className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 text-slate-700 dark:text-slate-200"
             >
               {item}
-            </div>
+            </li>
           ))}
-        </div>
+        </ul>
         <p className="rounded-2xl border border-cyan-200 dark:border-cyan-800 bg-cyan-50 dark:bg-cyan-950/20 p-6 text-lg text-slate-900 dark:text-cyan-100 font-medium">
           {t.section3.ending}
         </p>
@@ -513,19 +521,57 @@ export default function AboutPage() {
           {t.section5.title}
         </h2>
         <p className="text-slate-700 dark:text-slate-300 mb-6">{t.section5.intro}</p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
+        <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-6 list-none p-0">
           {t.section5.bullets.map((item) => (
-            <div
+            <li
               key={item}
               className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3 text-slate-800 dark:text-slate-200"
             >
               {item}
-            </div>
+            </li>
           ))}
-        </div>
+        </ul>
         <p className="rounded-2xl border border-emerald-200 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-950/20 p-6 text-lg text-slate-900 dark:text-emerald-100 font-medium">
           {t.section5.ending}
         </p>
+      </section>
+
+      {/* GEO Summary + mini-FAQ */}
+      <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-14 space-y-10">
+        <div className="rounded-2xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/20 p-6">
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-3">
+            {isRo ? "Despre NutriAID Intolerances" : "About NutriAID Intolerances"}
+          </h2>
+          <p className="text-slate-700 dark:text-slate-300">
+            {isRo
+              ? "NutriAID Intolerances este o aplicație AI specializată în monitorizarea și analiza intoleranțelor alimentare. Înregistrezi mesele și simptomele zilnic, iar AI-ul identifică corelații specifice corpului tău. Nu este o aplicație de slăbire și nu emite diagnostice — ci un instrument de auto-cunoaștere alimentară bazat pe datele tale. Procesul durează 3–7 zile pentru primele observații și devine mai precis pe măsură ce adaugi mai multe date. Toate datele sunt stocate conform GDPR și nu sunt partajate cu terți."
+              : "NutriAID Intolerances is an AI application specialized in monitoring and analyzing food intolerances. You log meals and symptoms daily, and the AI identifies correlations specific to your body. It is not a weight loss app and does not issue diagnoses — it is a food self-awareness tool based on your data. The process takes 3–7 days for first observations and becomes more accurate as you add more data. All data is stored in accordance with GDPR and is not shared with third parties."}
+          </p>
+        </div>
+        <div>
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-4">
+            {isRo ? "Întrebări frecvente despre NutriAID" : "Frequently asked questions about NutriAID"}
+          </h2>
+          <dl className="space-y-3">
+            {(isRo
+              ? [
+                  { q: "Cât durează să văd primele rezultate?", a: "Primele corelații apar după 3–7 zile de înregistrare consistentă a meselor și simptomelor." },
+                  { q: "NutriAID înlocuiește un medic sau nutriționist?", a: "Nu. NutriAID este un instrument de monitorizare și auto-cunoaștere, nu o sursă de diagnostice medicale." },
+                  { q: "Datele mele sunt private?", a: "Da. Datele nu sunt vândute sau partajate cu terți. Ai drept de ștergere completă conform GDPR oricând." },
+                ]
+              : [
+                  { q: "How long until I see first results?", a: "First correlations appear after 3–7 days of consistent meal and symptom logging." },
+                  { q: "Does NutriAID replace a doctor or nutritionist?", a: "No. NutriAID is a monitoring and self-awareness tool, not a source of medical diagnoses." },
+                  { q: "Is my data private?", a: "Yes. Data is not sold or shared with third parties. You have the right to complete deletion under GDPR at any time." },
+                ]
+            ).map((item) => (
+              <div key={item.q} className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-5">
+                <dt className="font-semibold text-slate-900 dark:text-white mb-2">{item.q}</dt>
+                <dd className="text-slate-600 dark:text-slate-400 text-sm m-0">{item.a}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
       </section>
 
       <section className="relative overflow-hidden bg-gradient-to-br from-emerald-700 to-cyan-700 dark:from-emerald-900 dark:to-cyan-900">

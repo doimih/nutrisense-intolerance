@@ -10,7 +10,7 @@ import { useLanguage } from "@/components/LanguageProvider";
 import { getUiCopy } from "@/lib/i18n/ui";
 
 const THEME_STORAGE_KEY = "ns_theme";
-const FALLBACK_ADMIN_CONSOLE_URL = "https://backend.nutrisense-i.eu";
+const FALLBACK_ADMIN_CONSOLE_URL = "https://backend.nutriaid.eu";
 
 export default function Navbar() {
   const { lang } = useLanguage();
@@ -98,8 +98,6 @@ export default function Navbar() {
     router.push("/");
   };
 
-  if (pathname.startsWith("/auth")) return null;
-
   const navLinks = [
     { href: "/", label: copy.nav.home },
     { href: "/about", label: copy.nav.about },
@@ -130,14 +128,14 @@ export default function Navbar() {
           </span>
         </Link>
 
-        {/* Desktop links */}
-        <div className="hidden md:flex items-center gap-1">
+        {/* Desktop links — visible only from lg (1024px) up */}
+        <div className="hidden lg:flex items-center gap-0.5">
           {navLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
               className={clsx(
-                "px-3 py-2 text-sm font-medium rounded-lg transition-colors",
+                "px-2.5 py-2 text-sm font-medium rounded-lg transition-colors whitespace-nowrap",
                 pathname === link.href
                   ? "text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-950/30"
                   : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-slate-800"
@@ -166,7 +164,7 @@ export default function Navbar() {
                   href={adminConsoleUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-bold uppercase tracking-wide text-red-700 bg-red-100 dark:text-red-300 dark:bg-red-950/40 rounded-lg"
+                  className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-bold uppercase tracking-wide text-red-700 bg-red-100 dark:text-red-300 dark:bg-red-950/40 rounded-lg"
                 >
                   <ShieldCheck className="w-3.5 h-3.5" />
                   Superadmin
@@ -174,14 +172,14 @@ export default function Navbar() {
               )}
               <Link
                 href="/dashboard"
-                className="hidden md:flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                className="hidden lg:flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
               >
                 <LayoutDashboard className="w-4 h-4" />
                 {copy.nav.dashboard}
               </Link>
               <button
                 onClick={handleLogout}
-                className="hidden md:flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg transition-colors"
+                className="hidden lg:flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg transition-colors"
               >
                 <LogOut className="w-4 h-4" />
                 {copy.nav.signOut}
@@ -191,23 +189,23 @@ export default function Navbar() {
             <>
               <Link
                 href="/auth/login"
-                className="hidden md:block px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                className="hidden lg:block px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
               >
                 {copy.nav.signIn}
               </Link>
               <Link
                 href="/auth/register"
-                className="hidden md:block px-4 py-2 text-sm font-medium bg-green-600 hover:bg-green-700 text-white rounded-lg shadow-sm transition-colors"
+                className="hidden lg:block px-4 py-2 text-sm font-medium bg-green-600 hover:bg-green-700 text-white rounded-lg shadow-sm transition-colors"
               >
                 {copy.nav.signUp}
               </Link>
             </>
           )}
 
-          {/* Mobile menu button */}
+          {/* Hamburger — visible below lg */}
           <button
             onClick={() => setMobileOpen(!mobileOpen)}
-            className="md:hidden p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
+            className="lg:hidden p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
             aria-label={copy.nav.menu}
           >
             {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -215,9 +213,9 @@ export default function Navbar() {
         </div>
       </nav>
 
-      {/* Mobile menu */}
+      {/* Mobile / tablet menu — visible below lg */}
       {mobileOpen && (
-        <div className="md:hidden bg-white dark:bg-slate-900 border-t border-gray-100 dark:border-slate-800 px-4 pb-4 pt-2 shadow-lg">
+        <div className="lg:hidden bg-white dark:bg-slate-900 border-t border-gray-100 dark:border-slate-800 px-4 pb-4 pt-2 shadow-lg">
           {navLinks.map((link) => (
             <Link
               key={link.href}
@@ -244,7 +242,7 @@ export default function Navbar() {
                     className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-red-700 bg-red-50 dark:text-red-300 dark:bg-red-950/30 rounded-lg mb-1"
                   >
                     <ShieldCheck className="w-4 h-4" />
-                    Superadmin Console
+                    {isRo ? "Consolă Superadmin" : "Superadmin Console"}
                   </a>
                 )}
                 <Link

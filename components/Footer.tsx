@@ -37,13 +37,25 @@ export default function Footer() {
     { href: "/auth/login", label: copy.nav.signIn },
   ];
 
+  const knowledgeLinks = [
+    { href: "/knowledge-hub", label: isRo ? "Toate articolele" : "All articles" },
+    { href: "/knowledge-hub/ce-este-nutriaid", label: isRo ? "Ce este NutriAID?" : "What is NutriAID?" },
+    { href: "/knowledge-hub/cum-functioneaza-ai", label: isRo ? "Cum funcționează AI?" : "How AI works" },
+    { href: "/knowledge-hub/analiza-meselor", label: isRo ? "Analiza meselor" : "Meal analysis" },
+    { href: "/knowledge-hub/analiza-simptomelor", label: isRo ? "Analiza simptomelor" : "Symptom analysis" },
+    { href: "/knowledge-hub/plan-alimentar-ai", label: isRo ? "Plan alimentar AI" : "AI meal plan" },
+    { href: "/knowledge-hub/siguranta-alimentara", label: isRo ? "Siguranță alimentară" : "Food safety AI" },
+    { href: "/knowledge-hub/pdf-uri-generate", label: isRo ? "PDF-uri generate" : "Generated PDFs" },
+    { href: "/knowledge-hub/gdpr-confidentialitate", label: isRo ? "GDPR & Confidențialitate" : "GDPR & Privacy" },
+  ];
+
   return (
     <footer className="bg-slate-900 dark:bg-slate-950 text-slate-400">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-8">
         {/* Top section */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mb-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 mb-10">
           {/* Brand */}
-          <div>
+          <div className="sm:col-span-2 lg:col-span-1">
             <Link href="/" className="flex items-center gap-2.5 mb-4">
               <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
                 <Leaf className="w-4 h-4 text-white" />
@@ -66,6 +78,23 @@ export default function Footer() {
             <h3 className="text-white font-semibold text-sm mb-4">{copy.footer.app}</h3>
             <ul className="space-y-2">
               {appLinks.map((link) => (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    className="text-sm text-slate-400 hover:text-green-400 transition-colors"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Knowledge Hub links */}
+          <div>
+            <h3 className="text-white font-semibold text-sm mb-4">{copy.footer.knowledge}</h3>
+            <ul className="space-y-2">
+              {knowledgeLinks.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
@@ -102,6 +131,35 @@ export default function Footer() {
                 </button>
               </li>
             </ul>
+          </div>
+        </div>
+
+        {/* SAL / SOL — obligatoriu ANPC România */}
+        <div className="border-t border-slate-800 pt-6 mb-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 rounded-lg bg-slate-800/50 border border-slate-700/50">
+            <p className="text-xs text-slate-400 font-semibold shrink-0">
+              {isRo ? "Soluționarea litigiilor:" : "Dispute resolution:"}
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <a
+                href="https://anpc.ro/ce-este-sal/"
+                target="_blank"
+                rel="noreferrer noopener"
+                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-blue-900/40 border border-blue-700/50 text-xs font-semibold text-blue-300 hover:bg-blue-900/70 transition-colors"
+              >
+                <Shield className="w-3.5 h-3.5 text-blue-400" />
+                SAL — {isRo ? "Soluționarea Alternativă a Litigiilor" : "Alternative Dispute Resolution"}
+              </a>
+              <a
+                href="https://ec.europa.eu/consumers/odr"
+                target="_blank"
+                rel="noreferrer noopener"
+                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-indigo-900/40 border border-indigo-700/50 text-xs font-semibold text-indigo-300 hover:bg-indigo-900/70 transition-colors"
+              >
+                <Shield className="w-3.5 h-3.5 text-indigo-400" />
+                SOL — {isRo ? "Soluționarea Online a Litigiilor (UE)" : "Online Dispute Resolution (EU)"}
+              </a>
+            </div>
           </div>
         </div>
 

@@ -1,4 +1,4 @@
-/* eslint-disable no-console */
+6/* eslint-disable no-console */
 const base = process.env.SUPERADMIN_BASE_URL || 'http://localhost:4028';
 const rootBase = process.env.ROOT_BASE_URL || 'http://localhost:3000';
 const superadminEmail = process.env.SUPERADMIN_EMAIL || 'design@doimih.net';

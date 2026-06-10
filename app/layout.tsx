@@ -93,6 +93,27 @@ export default async function RootLayout({
     inLanguage: "ro-RO",
   };
 
+  const softwareSchema = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: siteTitle,
+    applicationCategory: "HealthApplication",
+    operatingSystem: "Web, iOS, Android",
+    url: siteUrl,
+    description:
+      "Aplicație AI pentru monitorizarea intoleranțelor alimentare. Analizează mesele și simptomele tale, identifică corelații și generează planuri alimentare personalizate.",
+    offers: {
+      "@type": "Offer",
+      price: "0",
+      priceCurrency: "EUR",
+    },
+    provider: {
+      "@type": "Organization",
+      name: siteTitle,
+      url: siteUrl,
+    },
+  };
+
   return (
     <html lang={lang} suppressHydrationWarning>
       <body className="min-h-screen flex flex-col">
@@ -119,6 +140,7 @@ export default async function RootLayout({
           <CookieSystem>
             <StructuredData data={organizationSchema} />
             <StructuredData data={websiteSchema} />
+            <StructuredData data={softwareSchema} />
             <Navbar />
             <main className="flex-1">{children}</main>
             <Footer />

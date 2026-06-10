@@ -5,12 +5,20 @@ export function generateMetadata(): Metadata {
   const isRo = getServerLanguage() === "ro";
 
   return {
-    title: isRo ? "Contact" : "Contact",
+    title: isRo ? "Contact — NutriAID Intolerances" : "Contact — NutriAID Intolerances",
     description: isRo
-      ? "Contact NutriAID Intolerances: email, program suport si formular de contact."
-      : "Contact NutriAID Intolerances: support email, support hours, and contact form.",
+      ? "Contactează echipa NutriAID Intolerances: suport prin email, program Luni-Vineri, răspuns în 24 ore."
+      : "Contact NutriAID Intolerances support team: email, Monday to Friday, response within 24 hours.",
     alternates: {
       canonical: "/contact",
+    },
+    openGraph: {
+      title: isRo ? "Contact — NutriAID Intolerances" : "Contact — NutriAID Intolerances",
+      description: isRo
+        ? "Ai o întrebare sau o problemă? Scrie-ne și revenim în cel mult 24 de ore."
+        : "Have a question or issue? Send us a message and we will reply within 24 hours.",
+      url: "/contact",
+      locale: isRo ? "ro_RO" : "en_US",
     },
   };
 }

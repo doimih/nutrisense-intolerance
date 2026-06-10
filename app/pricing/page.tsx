@@ -1,10 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { ArrowRight, BadgeCheck, ShieldCheck, Sparkles } from "lucide-react";
 import { getServerLanguage } from "@/lib/i18n/server";
 import BillingCancelledNotice from "./_components/BillingCancelledNotice";
+import PlanCheckoutButton from "./_components/PlanCheckoutButton";
 import { getRuntimeSettings } from "@/lib/server/runtimeSettings";
 import type { BillingPlanCode } from "@/lib/billing/plans";
+import { AUTH_COOKIE_NAME } from "@/lib/auth/session";
+import { readSessionToken } from "@/lib/auth/sessionToken";
 
 export const dynamic = "force-dynamic";
 
@@ -309,20 +313,33 @@ export function generateMetadata(): Metadata {
   const lang = getServerLanguage();
   const t = copy[lang];
 
+  const isRo = lang === "ro";
   return {
-    title: lang === "ro" ? "Incepe acum - Preturi" : "Start Now - Pricing",
+    title: isRo ? "Prețuri — NutriAID Intolerances" : "Pricing — NutriAID Intolerances",
     description: t.metaDescription,
     alternates: {
       canonical: "/pricing",
+    },
+    openGraph: {
+      title: isRo ? "Planuri și prețuri — NutriAID Intolerances" : "Plans & Pricing — NutriAID Intolerances",
+      description: t.metaDescription,
+      url: "/pricing",
+      locale: isRo ? "ro_RO" : "en_US",
     },
   };
 }
 
 export default async function PricingPage() {
   const lang = getServerLanguage();
+  const isRo = lang === "ro";
   const t = copy[lang];
   const settings = await getRuntimeSettings();
   const pricing = settings.pricing;
+
+  const cookieStore = await cookies();
+  const authCookie = cookieStore.get(AUTH_COOKIE_NAME)?.value;
+  const session = authCookie ? await readSessionToken(authCookie) : null;
+  const isLoggedIn = !!session;
 
   function formatPrice(amount: string, currency: string, interval: string, lang: 'ro' | 'en'): string {
     const curr = currency.toUpperCase();
@@ -345,7 +362,7 @@ export default async function PricingPage() {
   });
 
   return (
-    <div className="pt-24 pb-20 bg-slate-50 dark:bg-slate-950">
+    <div className="pb-20 bg-slate-50 dark:bg-slate-950">
       <BillingCancelledNotice lang={lang} />
       <section className="relative overflow-hidden border-y border-emerald-100 dark:border-emerald-900/40 bg-gradient-to-b from-emerald-100 via-white to-slate-50 dark:from-emerald-950/30 dark:via-slate-950 dark:to-slate-950">
         <div className="absolute inset-0 pointer-events-none">
@@ -355,7 +372,7 @@ export default async function PricingPage() {
         <div className="relative mx-auto w-full max-w-6xl px-4 py-24 sm:px-6 lg:px-8 lg:py-28 flex flex-col items-start text-left">
           <div className="inline-flex items-center gap-2 rounded-full bg-emerald-600/10 text-emerald-700 dark:text-emerald-300 px-4 py-1.5 text-sm font-semibold mb-6">
             <Sparkles className="h-4 w-4" />
-            Pricing + CTA
+            Preturi
           </div>
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-tight text-slate-900 dark:text-white max-w-5xl">
             {t.heroTitle}
@@ -370,14 +387,14 @@ export default async function PricingPage() {
 
       <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
         <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white mb-6">{t.section1.title}</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+        <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6 list-none p-0">
           {t.section1.bullets.map((item) => (
-            <div key={item} className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 text-slate-800 dark:text-slate-200">
+            <li key={item} className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 text-slate-800 dark:text-slate-200">
               <span className="text-emerald-600 dark:text-emerald-400 font-bold mr-2">✔</span>
               {item}
-            </div>
+            </li>
           ))}
-        </div>
+        </ul>
         <div className="space-y-1 text-lg font-semibold text-slate-900 dark:text-white">
           {t.section1.ending.map((line) => (
             <p key={line}>{line}</p>
@@ -424,29 +441,43 @@ export default async function PricingPage() {
                     </li>
                   ))}
                 </ul>
-                <div className="mt-6">
-                  <Link
-                    href="/auth/register"
-                    className="block w-full rounded-xl bg-emerald-600 px-4 py-2.5 text-center text-sm font-semibold text-white transition hover:bg-emerald-700"
-                  >
-                    {lang === "ro" ? "Continua catre plata" : "Continue to checkout"}
-                  </Link>
-                </div>
+                {isLoggedIn ? (
+                  <PlanCheckoutButton
+                    planCode={plan.code}
+                    label={lang === "ro" ? "Continua catre plata" : "Continue to checkout"}
+                    loginRequiredLabel={lang === "ro" ? "Autentificare necesara." : "Login required."}
+                    loadingLabel={lang === "ro" ? "Se incarca..." : "Loading..."}
+                  />
+                ) : (
+                  <div className="mt-6">
+                    <Link
+                      href="/auth/register"
+                      className="block w-full rounded-xl bg-emerald-600 px-4 py-2.5 text-center text-sm font-semibold text-white transition hover:bg-emerald-700"
+                    >
+                      {lang === "ro" ? "Continua catre plata" : "Continue to checkout"}
+                    </Link>
+                  </div>
+                )}
               </article>
             ))}
           </div>
+          <p className="mt-6 text-xs text-slate-500 dark:text-slate-400 max-w-2xl">
+            {isRo
+              ? "Prin activarea unui abonament plătit îți exprimi acordul expres pentru livrarea imediată a conținutului digital și renunți la dreptul de retragere de 14 zile prevăzut de OUG nr. 34/2014."
+              : "By activating a paid subscription you expressly consent to immediate delivery of digital content and waive the 14-day withdrawal right under applicable consumer law."}
+          </p>
         </div>
       </section>
 
       <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
         <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white mb-6">{t.section3.title}</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
+        <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-6 list-none p-0">
           {t.section3.bullets.map((item) => (
-            <div key={item} className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 text-slate-800 dark:text-slate-200">
+            <li key={item} className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 text-slate-800 dark:text-slate-200">
               {item}
-            </div>
+            </li>
           ))}
-        </div>
+        </ul>
         <p className="rounded-2xl border border-emerald-200 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-950/20 p-6 text-lg text-slate-900 dark:text-emerald-100 font-medium">
           {t.section3.ending}
         </p>
@@ -468,17 +499,55 @@ export default async function PricingPage() {
 
       <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
         <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white mb-6">{t.section5.title}</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
+        <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 mb-6 list-none p-0">
           {t.section5.checks.map((item) => (
-            <div key={item} className="rounded-xl border border-cyan-200 dark:border-cyan-800 bg-cyan-50 dark:bg-cyan-950/20 p-4 text-slate-900 dark:text-cyan-100 font-medium">
+            <li key={item} className="rounded-xl border border-cyan-200 dark:border-cyan-800 bg-cyan-50 dark:bg-cyan-950/20 p-4 text-slate-900 dark:text-cyan-100 font-medium">
               {`✔ ${item}`}
-            </div>
+            </li>
           ))}
-        </div>
+        </ul>
         <div className="space-y-1 text-lg font-semibold text-slate-900 dark:text-white">
           {t.section5.ending.map((line) => (
             <p key={line}>{line}</p>
           ))}
+        </div>
+      </section>
+
+      {/* GEO Summary + mini-FAQ */}
+      <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-14 space-y-10">
+        <div className="rounded-2xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/20 p-6">
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-3">
+            {isRo ? "Prețuri NutriAID Intolerances" : "NutriAID Intolerances Pricing"}
+          </h2>
+          <p className="text-slate-700 dark:text-slate-300">
+            {isRo
+              ? "NutriAID Intolerances oferă un plan gratuit cu funcționalități de bază și un plan Pro cu analiză AI completă. Planul gratuit permite înregistrarea meselor și simptomelor și vizualizarea istoricului. Planul Pro deblochează analiza AI a corelațiilor, planul alimentar personalizat și generarea rapoartelor PDF. Nu există contract pe termen lung — poți anula oricând. Prețul Pro este fix, fără costuri ascunse."
+              : "NutriAID Intolerances offers a free plan with basic features and a Pro plan with full AI analysis. The free plan allows meal and symptom logging and history viewing. The Pro plan unlocks AI correlation analysis, personalized food plans, and PDF report generation. There is no long-term contract — you can cancel at any time. The Pro price is fixed, with no hidden costs."}
+          </p>
+        </div>
+        <div>
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-4">
+            {isRo ? "Întrebări despre prețuri și planuri" : "Questions about pricing and plans"}
+          </h2>
+          <dl className="space-y-3">
+            {(isRo
+              ? [
+                  { q: "Pot folosi NutriAID gratuit?", a: "Da. Planul gratuit include înregistrarea meselor și simptomelor și vizualizarea istoricului fără limită de timp." },
+                  { q: "Ce include planul Pro față de cel gratuit?", a: "Planul Pro include analiză AI completă a corelațiilor, plan alimentar personalizat actualizat zilnic și generare rapoarte PDF." },
+                  { q: "Pot anula abonamentul Pro oricând?", a: "Da. Nu există perioadă minimă de contract. Anulezi oricând din setările contului, fără penalizări." },
+                ]
+              : [
+                  { q: "Can I use NutriAID for free?", a: "Yes. The free plan includes meal and symptom logging and history viewing with no time limit." },
+                  { q: "What does the Pro plan include compared to free?", a: "The Pro plan includes full AI correlation analysis, daily-updated personalized food plan, and PDF report generation." },
+                  { q: "Can I cancel the Pro subscription at any time?", a: "Yes. There is no minimum contract period. Cancel anytime from account settings, with no penalties." },
+                ]
+            ).map((item) => (
+              <div key={item.q} className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-5">
+                <dt className="font-semibold text-slate-900 dark:text-white mb-2">{item.q}</dt>
+                <dd className="text-slate-600 dark:text-slate-400 text-sm m-0">{item.a}</dd>
+              </div>
+            ))}
+          </dl>
         </div>
       </section>
 
@@ -487,7 +556,7 @@ export default async function PricingPage() {
         <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
           <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5 text-sm font-semibold text-white/90 mb-5">
             <ShieldCheck className="h-4 w-4" />
-            Start now
+            {isRo ? "Începe acum" : "Start now"}
           </div>
           <h2 className="text-3xl sm:text-5xl font-extrabold leading-tight text-white mb-6">
             {t.section6.title.map((line) => (

@@ -111,7 +111,7 @@ export default function TrialExpiredModal({ userId, lang }: Props) {
           <button
             onClick={dismiss}
             className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-            aria-label="Close"
+            aria-label={isRo ? "Închide" : "Close"}
           >
             <X className="w-5 h-5" />
           </button>

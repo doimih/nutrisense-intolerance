@@ -3,11 +3,13 @@ import { getRuntimeSettings } from "@/lib/server/runtimeSettings";
 import {
   listAllUsers,
   getUserById,
+  getUserByEmail,
   activateUserById,
   deactivateUserById,
   editUserById,
   setPasswordById,
   setUserPlanById,
+  removeUserPlan,
   deleteUserById,
   type AuthPlanCode,
 } from "@/lib/server/authStore";
@@ -62,7 +64,11 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: "userId and action are required." }, { status: 400 });
   }
 
-  const user = await getUserById(body.userId);
+  // Look up by ID first; fall back to email for admin-source plan syncs
+  let user = await getUserById(body.userId);
+  if (!user && body.email) {
+    user = await getUserByEmail(body.email);
+  }
   if (!user) {
     return NextResponse.json({ error: "User not found." }, { status: 404 });
   }
@@ -91,12 +97,16 @@ export async function PATCH(request: NextRequest) {
   }
 
   if (body.action === "set-plan") {
-    const validPlans: AuthPlanCode[] = ["basic", "pro", "pro_plus"];
-    const plan = body.plan as AuthPlanCode | undefined;
+    const validPlans: Array<AuthPlanCode | "free"> = ["free", "basic", "pro", "pro_plus"];
+    const plan = body.plan as AuthPlanCode | "free" | undefined;
     if (!plan || !validPlans.includes(plan)) {
-      return NextResponse.json({ error: "Invalid plan. Must be basic, pro, or pro_plus." }, { status: 400 });
+      return NextResponse.json({ error: "Invalid plan. Must be free, basic, pro, or pro_plus." }, { status: 400 });
     }
-    await setUserPlanById(body.userId, plan);
+    if (plan === "free") {
+      await removeUserPlan(user.email);
+    } else {
+      await setUserPlanById(user.id, plan);
+    }
   }
 
   if (body.action === "set-password") {

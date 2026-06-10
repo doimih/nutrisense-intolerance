@@ -26,9 +26,9 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3000
-      NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-https://nutrisense-i.eu}
-      BACKEND_URL: ${BACKEND_URL:-https://backend.nutrisense-i.eu}
-      NEXT_PUBLIC_ADMIN_CONSOLE_URL: ${NEXT_PUBLIC_ADMIN_CONSOLE_URL:-https://backend.nutrisense-i.eu}
+      NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-https://nutriaid.eu}
+      BACKEND_URL: ${BACKEND_URL:-https://backend.nutriaid.eu}
+      NEXT_PUBLIC_ADMIN_CONSOLE_URL: ${NEXT_PUBLIC_ADMIN_CONSOLE_URL:-https://backend.nutriaid.eu}
       AUTH_SESSION_SECRET: ${AUTH_SESSION_SECRET:-change-me-front-secret}
       FRONTEND_SUPERADMIN_EMAIL: ${FRONTEND_SUPERADMIN_EMAIL:-design@doimih.net}
       FRONTEND_SUPERADMIN_PASSWORD: ${FRONTEND_SUPERADMIN_PASSWORD:-PassTemp123!}
@@ -47,17 +47,17 @@ services:
     labels:
       traefik.enable: "true"
       traefik.docker.network: ${TRAEFIK_NETWORK:-traefik_public}
-      traefik.http.routers.nutrisense_i_http.rule: Host(`${TRAEFIK_HOST:-nutrisense-i.eu}`) || Host(`www.${TRAEFIK_HOST:-nutrisense-i.eu}`)
+      traefik.http.routers.nutrisense_i_http.rule: Host(`${TRAEFIK_HOST:-nutriaid.eu}`) || Host(`www.${TRAEFIK_HOST:-nutriaid.eu}`)
       traefik.http.routers.nutrisense_i_http.entrypoints: ${TRAEFIK_ENTRYPOINT_HTTP:-web}
       traefik.http.routers.nutrisense_i_http.middlewares: nutrisense_i_https_redirect
       traefik.http.middlewares.nutrisense_i_https_redirect.redirectscheme.scheme: https
       traefik.http.middlewares.nutrisense_i_https_redirect.redirectscheme.permanent: "true"
-      traefik.http.routers.nutrisense_i_https.rule: Host(`${TRAEFIK_HOST:-nutrisense-i.eu}`) || Host(`www.${TRAEFIK_HOST:-nutrisense-i.eu}`)
+      traefik.http.routers.nutrisense_i_https.rule: Host(`${TRAEFIK_HOST:-nutriaid.eu}`) || Host(`www.${TRAEFIK_HOST:-nutriaid.eu}`)
       traefik.http.routers.nutrisense_i_https.entrypoints: ${TRAEFIK_ENTRYPOINT_HTTPS:-websecure}
       traefik.http.routers.nutrisense_i_https.tls: "true"
       traefik.http.routers.nutrisense_i_https.tls.certresolver: ${TRAEFIK_CERTRESOLVER:-letsencrypt}
-      traefik.http.routers.nutrisense_i_https.tls.domains[0].main: ${TRAEFIK_HOST:-nutrisense-i.eu}
-      traefik.http.routers.nutrisense_i_https.tls.domains[0].sans: www.${TRAEFIK_HOST:-nutrisense-i.eu}
+      traefik.http.routers.nutrisense_i_https.tls.domains[0].main: ${TRAEFIK_HOST:-nutriaid.eu}
+      traefik.http.routers.nutrisense_i_https.tls.domains[0].sans: www.${TRAEFIK_HOST:-nutriaid.eu}
       traefik.http.routers.nutrisense_i_https.service: nutrisense_i
       traefik.http.routers.nutrisense_i_https.middlewares: nutrisense_i_www_to_apex,nutrisense_i_security_headers
       traefik.http.middlewares.nutrisense_i_www_to_apex.redirectregex.regex: ^https://www\\.(.*)
@@ -81,7 +81,7 @@ services:
     environment:
       NODE_ENV: production
       PORT: 4028
-      NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-https://nutrisense-i.eu}
+      NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-https://nutriaid.eu}
       SUPERADMIN_SESSION_SECRETS: ${SUPERADMIN_SESSION_SECRETS:-change-me-back-secret}
       SUPERADMIN_EMAIL: ${SUPERADMIN_EMAIL:-design@doimih.net}
       SUPERADMIN_PASSWORD: ${SUPERADMIN_PASSWORD:-PassTemp123!}
@@ -93,12 +93,12 @@ services:
     labels:
       traefik.enable: "true"
       traefik.docker.network: ${TRAEFIK_NETWORK:-traefik_public}
-      traefik.http.routers.nutrisense_backend_http.rule: Host(`${BACKEND_HOST:-backend.nutrisense-i.eu}`)
+      traefik.http.routers.nutrisense_backend_http.rule: Host(`${BACKEND_HOST:-backend.nutriaid.eu}`)
       traefik.http.routers.nutrisense_backend_http.entrypoints: ${TRAEFIK_ENTRYPOINT_HTTP:-web}
       traefik.http.routers.nutrisense_backend_http.middlewares: nutrisense_backend_https_redirect
       traefik.http.middlewares.nutrisense_backend_https_redirect.redirectscheme.scheme: https
       traefik.http.middlewares.nutrisense_backend_https_redirect.redirectscheme.permanent: "true"
-      traefik.http.routers.nutrisense_backend_https.rule: Host(`${BACKEND_HOST:-backend.nutrisense-i.eu}`)
+      traefik.http.routers.nutrisense_backend_https.rule: Host(`${BACKEND_HOST:-backend.nutriaid.eu}`)
       traefik.http.routers.nutrisense_backend_https.entrypoints: ${TRAEFIK_ENTRYPOINT_HTTPS:-websecure}
       traefik.http.routers.nutrisense_backend_https.tls: "true"
       traefik.http.routers.nutrisense_backend_https.tls.certresolver: ${TRAEFIK_CERTRESOLVER:-letsencrypt}

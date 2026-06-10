@@ -77,7 +77,7 @@ export default function DataRetentionPage() {
       </p>
       <ul>
         <li>Secțiunea Profil din aplicație → &quot;Șterge contul&quot;.</li>
-        <li>Email la: contact@nutriaid.ro, cu subiectul &quot;Cerere ștergere cont&quot;.</li>
+        <li>Email la: contact@nutriaid.eu, cu subiectul &quot;Cerere ștergere cont&quot;.</li>
       </ul>
       <p>
         Ștergerea este procesată în termen de 30 de zile și este permanentă
@@ -114,7 +114,7 @@ export default function DataRetentionPage() {
 
       <h2>5. Contact</h2>
       <p>
-        Întrebări despre retenția datelor: contact@nutriaid.ro
+        Întrebări despre retenția datelor: contact@nutriaid.eu
       </p>
     </LegalLayout>
   );

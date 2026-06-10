@@ -103,9 +103,9 @@ function seedDb(): SuperadminDb {
     AI_Logs: [],
     settings: {
       app: {
-        siteUrl: 'https://nutrisense-i.eu',
-        backendUrl: 'https://backend.nutrisense-i.eu',
-        adminConsoleUrl: 'https://backend.nutrisense-i.eu',
+        siteUrl: 'https://nutriaid.eu',
+        backendUrl: 'https://backend.nutriaid.eu',
+        adminConsoleUrl: 'https://backend.nutriaid.eu',
       },
       stripe: {
         publishableKeyMasked: 'pk_live_************',
@@ -156,10 +156,10 @@ export function readDb(): SuperadminDb {
   parsed.settings = {
     ...parsed.settings,
     app: {
-      siteUrl: parsed.settings?.app?.siteUrl || 'https://nutrisense-i.eu',
-      backendUrl: parsed.settings?.app?.backendUrl || 'https://backend.nutrisense-i.eu',
+      siteUrl: parsed.settings?.app?.siteUrl || 'https://nutriaid.eu',
+      backendUrl: parsed.settings?.app?.backendUrl || 'https://backend.nutriaid.eu',
       adminConsoleUrl:
-        parsed.settings?.app?.adminConsoleUrl || parsed.settings?.app?.backendUrl || 'https://backend.nutrisense-i.eu',
+        parsed.settings?.app?.adminConsoleUrl || parsed.settings?.app?.backendUrl || 'https://backend.nutriaid.eu',
     },
     stripe: {
       publishableKeyMasked: parsed.settings?.stripe?.publishableKeyMasked ?? '',

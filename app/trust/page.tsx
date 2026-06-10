@@ -365,21 +365,29 @@ export function generateMetadata(): Metadata {
   const lang = getServerLanguage();
   const t = copy[lang];
 
+  const isRo = lang === "ro";
   return {
-    title: lang === "ro" ? "De ce sa ai incredere in noi" : "Why Trust Us",
+    title: isRo ? "De ce să ai încredere în NutriAID Intolerances" : "Why Trust NutriAID Intolerances",
     description: t.metaDescription,
     alternates: {
       canonical: "/trust",
+    },
+    openGraph: {
+      title: isRo ? "De ce să ai încredere în NutriAID Intolerances" : "Why Trust NutriAID Intolerances",
+      description: t.metaDescription,
+      url: "/trust",
+      locale: isRo ? "ro_RO" : "en_US",
     },
   };
 }
 
 export default function TrustPage() {
   const lang = getServerLanguage();
+  const isRo = lang === "ro";
   const t = copy[lang];
 
   return (
-    <div className="pt-24 pb-20 bg-slate-50 dark:bg-slate-950">
+    <div className="pb-20 bg-slate-50 dark:bg-slate-950">
       <section className="relative overflow-hidden border-y border-cyan-100 dark:border-cyan-900/40 bg-gradient-to-b from-cyan-100 via-white to-slate-50 dark:from-cyan-950/30 dark:via-slate-950 dark:to-slate-950">
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute -top-12 right-0 h-64 w-64 rounded-full bg-cyan-300/30 blur-3xl" />
@@ -404,13 +412,13 @@ export default function TrustPage() {
       <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
         <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white mb-4">{t.section1.title}</h2>
         <p className="text-slate-700 dark:text-slate-300 mb-6">{t.section1.intro}</p>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
+        <ul className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6 list-none p-0">
           {t.section1.bullets.map((item) => (
-            <div key={item} className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 text-slate-700 dark:text-slate-200">
+            <li key={item} className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 text-slate-700 dark:text-slate-200">
               {item}
-            </div>
+            </li>
           ))}
-        </div>
+        </ul>
         <div className="rounded-2xl border border-cyan-200 dark:border-cyan-800 bg-cyan-50 dark:bg-cyan-950/20 p-6 space-y-1">
           {t.section1.ending.map((line) => (
             <p key={line} className="text-slate-900 dark:text-cyan-100 font-medium">{line}</p>
@@ -422,13 +430,13 @@ export default function TrustPage() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
           <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white mb-4">{t.section2.title}</h2>
           <p className="text-slate-700 dark:text-slate-300 mb-6">{t.section2.intro}</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
+          <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-6 list-none p-0">
             {t.section2.bullets.map((item) => (
-              <div key={item} className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950/50 p-4 text-slate-700 dark:text-slate-200">
+              <li key={item} className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950/50 p-4 text-slate-700 dark:text-slate-200">
                 {item}
-              </div>
+              </li>
             ))}
-          </div>
+          </ul>
           <div className="space-y-1 text-slate-900 dark:text-white font-medium">
             {t.section2.ending.map((line) => (
               <p key={line}>{line}</p>
@@ -470,13 +478,13 @@ export default function TrustPage() {
       <section className="border-y border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
           <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white mb-6">{t.section4.title}</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+          <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6 list-none p-0">
             {t.section4.bullets.map((item) => (
-              <div key={item} className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950/50 p-4 text-slate-700 dark:text-slate-200">
+              <li key={item} className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950/50 p-4 text-slate-700 dark:text-slate-200">
                 {item}
-              </div>
+              </li>
             ))}
-          </div>
+          </ul>
           <div className="rounded-2xl border border-cyan-200 dark:border-cyan-800 bg-cyan-50 dark:bg-cyan-950/20 p-6 space-y-1">
             {t.section4.ending.map((line) => (
               <p key={line} className="text-slate-900 dark:text-cyan-100 font-semibold">{line}</p>
@@ -487,13 +495,13 @@ export default function TrustPage() {
 
       <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
         <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white mb-6">{t.section5.title}</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
+        <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-6 list-none p-0">
           {t.section5.checks.map((item) => (
-            <div key={item} className="rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/20 p-4 text-slate-900 dark:text-emerald-100 font-medium">
+            <li key={item} className="rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/20 p-4 text-slate-900 dark:text-emerald-100 font-medium">
               {`✔ ${item}`}
-            </div>
+            </li>
           ))}
-        </div>
+        </ul>
         <p className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 text-lg text-slate-900 dark:text-white font-medium">
           {t.section5.ending}
         </p>
@@ -503,13 +511,13 @@ export default function TrustPage() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
           <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white mb-4">{t.section6.title}</h2>
           <p className="text-slate-700 dark:text-slate-300 mb-6">{t.section6.intro}</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+          <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6 list-none p-0">
             {t.section6.bullets.map((item) => (
-              <div key={item} className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950/50 p-4 text-slate-700 dark:text-slate-200">
+              <li key={item} className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950/50 p-4 text-slate-700 dark:text-slate-200">
                 {item}
-              </div>
+              </li>
             ))}
-          </div>
+          </ul>
           <div className="space-y-1 text-lg font-medium text-slate-900 dark:text-white">
             {t.section6.ending.map((line) => (
               <p key={line}>{line}</p>
@@ -538,16 +546,54 @@ export default function TrustPage() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
           <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white mb-4">{t.section8.title}</h2>
           <p className="text-slate-700 dark:text-slate-300 mb-6">{t.section8.intro}</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
+          <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-6 list-none p-0">
             {t.section8.bullets.map((item) => (
-              <div key={item} className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950/50 p-4 text-slate-700 dark:text-slate-200">
+              <li key={item} className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950/50 p-4 text-slate-700 dark:text-slate-200">
                 {item}
-              </div>
+              </li>
             ))}
-          </div>
+          </ul>
           <p className="rounded-2xl border border-cyan-200 dark:border-cyan-800 bg-cyan-50 dark:bg-cyan-950/20 p-6 text-lg font-semibold text-slate-900 dark:text-cyan-100">
             {t.section8.ending}
           </p>
+        </div>
+      </section>
+
+      {/* GEO Summary + mini-FAQ */}
+      <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-14 space-y-10">
+        <div className="rounded-2xl border border-cyan-200 dark:border-cyan-800 bg-cyan-50 dark:bg-cyan-950/20 p-6">
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-3">
+            {isRo ? "Siguranță și confidențialitate la NutriAID" : "Safety and privacy at NutriAID"}
+          </h2>
+          <p className="text-slate-700 dark:text-slate-300">
+            {isRo
+              ? "NutriAID Intolerances respectă pe deplin Regulamentul GDPR. Datele tale de sănătate sunt stocate criptat și nu sunt vândute sau partajate cu terți în niciun scop comercial. Colectăm exclusiv datele furnizate voluntar de tine — mese, simptome, preferințe. Nu există tracking de comportament sau profilare comercială. Poți solicita ștergerea completă a datelor tale oricând prin email la contact@nutriaid.eu, iar procesăm solicitarea în maxim 30 de zile."
+              : "NutriAID Intolerances fully complies with GDPR. Your health data is stored encrypted and is not sold or shared with third parties for any commercial purpose. We collect exclusively data voluntarily provided by you — meals, symptoms, preferences. There is no behavioral tracking or commercial profiling. You can request complete deletion of your data at any time by email at contact@nutriaid.eu, and we process the request within 30 days."}
+          </p>
+        </div>
+        <div>
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-4">
+            {isRo ? "Întrebări despre siguranță și confidențialitate" : "Questions about safety and privacy"}
+          </h2>
+          <dl className="space-y-3">
+            {(isRo
+              ? [
+                  { q: "NutriAID respectă GDPR?", a: "Da. Toate datele sunt procesate conform Regulamentului General privind Protecția Datelor (GDPR) al Uniunii Europene." },
+                  { q: "Datele mele de sănătate sunt vândute?", a: "Nu. Datele tale nu sunt vândute sau partajate cu terți în niciun scop comercial." },
+                  { q: "Pot cere ștergerea completă a datelor mele?", a: "Da. Trimiți email la contact@nutriaid.eu și procesăm solicitarea de ștergere completă în maxim 30 de zile." },
+                ]
+              : [
+                  { q: "Does NutriAID comply with GDPR?", a: "Yes. All data is processed in accordance with the EU General Data Protection Regulation (GDPR)." },
+                  { q: "Is my health data sold?", a: "No. Your data is not sold or shared with third parties for any commercial purpose." },
+                  { q: "Can I request complete deletion of my data?", a: "Yes. Send an email to contact@nutriaid.eu and we process the complete deletion request within 30 days." },
+                ]
+            ).map((item) => (
+              <div key={item.q} className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-5">
+                <dt className="font-semibold text-slate-900 dark:text-white mb-2">{item.q}</dt>
+                <dd className="text-slate-600 dark:text-slate-400 text-sm m-0">{item.a}</dd>
+              </div>
+            ))}
+          </dl>
         </div>
       </section>
 

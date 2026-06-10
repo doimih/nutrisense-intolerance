@@ -96,7 +96,7 @@ export default function SecurityPolicyPage() {
       <h2>7. Contact securitate</h2>
       <p>
         Pentru probleme de securitate: security@nutriaid.ro<br />
-        Pentru alte întrebări: contact@nutriaid.ro
+        Pentru alte întrebări: contact@nutriaid.eu
       </p>
     </LegalLayout>
   );

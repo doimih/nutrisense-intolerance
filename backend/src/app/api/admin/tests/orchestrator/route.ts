@@ -29,10 +29,13 @@ export async function POST(request: NextRequest) {
 
   const sessionId = sid(request);
 
+  const rawLang = typeof raw['lang'] === 'string' && raw['lang'] === 'en' ? 'en' : 'ro';
+
   const ctx: OrchestratorContext = {
     sessionId,
     userId: auth.session.userId,
     userMessage,
+    lang: rawLang,
     userProfile: (raw['userProfile'] as OrchestratorContext['userProfile']) ?? {},
     intolerances: Array.isArray(raw['intolerances']) ? (raw['intolerances'] as string[]) : [],
     allergies: Array.isArray(raw['allergies']) ? (raw['allergies'] as string[]) : [],

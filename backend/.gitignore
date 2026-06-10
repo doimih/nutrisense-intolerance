@@ -38,4 +38,4 @@ jest-test-results.json
 .env.local
 .env.production
 .env.production.local
-data/superadmin-db.json
+data/

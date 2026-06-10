@@ -95,7 +95,7 @@ export default function PrivacyPolicyPage() {
       </ul>
       <p>
         Pentru exercitarea acestor drepturi, contactează-ne la
-        contact@nutriaid.ro. Răspundem în termen de 30 de zile.
+        contact@nutriaid.eu. Răspundem în termen de 30 de zile.
       </p>
 
       <h2>8. Cookie-uri</h2>
@@ -127,7 +127,7 @@ export default function PrivacyPolicyPage() {
         Pentru orice întrebări privind confidențialitatea datelor, contactează-ne:
       </p>
       <ul>
-        <li>Email: contact@nutriaid.ro</li>
+        <li>Email: contact@nutriaid.eu</li>
         <li>Adresă: [Adresa operatorului de date]</li>
       </ul>
       <p>

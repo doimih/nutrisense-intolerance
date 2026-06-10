@@ -8,6 +8,7 @@ import {
 } from '@/lib/server/superadmin/auth';
 import {
   appendAuditEvent,
+  appendLog,
   appendSecurityEvent,
   mutateDb,
   readDb,
@@ -107,6 +108,40 @@ export async function PATCH(request: NextRequest) {
     userId: updatedUser.id,
     message: 'All active sessions invalidated after password change',
   });
+
+  // Sync new password to frontend user store so both systems stay in lockstep
+  const frontendUrl = process.env.FRONTEND_INTERNAL_URL || 'http://frontend:3000';
+  const internalToken = readDb().settings?.internalEmailToken;
+  if (!internalToken) {
+    appendLog({ source: 'server', level: 'warn', message: 'sync-superadmin-password: internalEmailToken not set, skipping frontend sync' });
+  } else {
+    try {
+      const syncRes = await fetch(`${frontendUrl}/api/internal/sync-superadmin-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${internalToken}`,
+        },
+        body: JSON.stringify({ newPassword }),
+      });
+      if (!syncRes.ok) {
+        const errBody = await syncRes.json().catch(() => ({})) as { error?: string };
+        appendLog({
+          source: 'server',
+          level: 'warn',
+          message: `sync-superadmin-password: frontend returned ${syncRes.status} — ${errBody.error ?? 'unknown error'}`,
+        });
+      } else {
+        appendLog({ source: 'server', level: 'info', message: 'sync-superadmin-password: frontend updated successfully' });
+      }
+    } catch (err: unknown) {
+      appendLog({
+        source: 'server',
+        level: 'warn',
+        message: `sync-superadmin-password: fetch failed — ${err instanceof Error ? err.message : String(err)}`,
+      });
+    }
+  }
 
   const token = createSessionToken({
     userId: updatedUser.id,

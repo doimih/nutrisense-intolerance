@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
 
   const diagRequest: DiagnosticRequest = {
     worker: workerId,
-    input: (raw['input'] as Record<string, unknown>) ?? {},
+    input: ((raw['input'] as DiagnosticRequest['input']) ?? {}),
     output: outputPayload as DiagnosticRequest['output'],
     expectedSchema,
     intolerances: Array.isArray(raw['intolerances']) ? raw['intolerances'] as string[] : [],

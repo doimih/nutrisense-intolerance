@@ -41,7 +41,7 @@ Services:
 - It is standalone for server usage (no host port publishing), so it will not occupy ports used by other services.
 - Required env vars in .env:
 	- TRAEFIK_HOST=nustrisense-i.eu
-	- TRAEFIK_HOST_ALT=nutrisense-i.eu
+	- TRAEFIK_HOST_ALT=nutriaid.eu
 	- TRAEFIK_NETWORK=traefik
 	- TRAEFIK_CERTRESOLVER=letsencrypt
 	- TRAEFIK_ENTRYPOINT_HTTP=web,http

@@ -87,7 +87,7 @@ function buildContactText(name: string, email: string, subject: string, message:
     message,
     '',
     '---',
-    'Trimis prin formularul de contact de pe nutrisense-i.eu',
+    'Trimis prin formularul de contact de pe nutriaid.eu',
   ].join('\n');
 }
 

@@ -6,7 +6,7 @@ export function getDashboardSnapshot() {
   const activeSubscriptions = db.subscriptions.filter((s) => s.status === 'active').length;
   const mrr = db.subscriptions
     .filter((s) => s.status === 'active')
-    .reduce((sum, s) => sum + (s.plan === 'enterprise' ? 99 : s.plan === 'pro' ? 29 : 0), 0);
+    .reduce((sum, s) => sum + (s.plan === 'pro_plus' ? 49 : s.plan === 'pro' ? 29 : s.plan === 'basic' ? 9 : 0), 0);
 
   const stripeErrors = db.logs.filter(
     (l) => l.source === 'stripe-webhook' && l.level === 'error'

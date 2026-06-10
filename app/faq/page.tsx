@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, HelpCircle, ShieldCheck } from "lucide-react";
 import { getServerLanguage } from "@/lib/i18n/server";
@@ -428,12 +429,60 @@ const copy: Record<"ro" | "en", FaqPageCopy> = {
   },
 };
 
+export function generateMetadata(): Metadata {
+  const lang = getServerLanguage();
+  const isRo = lang === "ro";
+
+  return {
+    title: isRo ? "Întrebări Frecvente — NutriAID Intolerances" : "Frequently Asked Questions — NutriAID Intolerances",
+    description: isRo
+      ? "Găsește răspunsuri la toate întrebările despre NutriAID Intolerances: cum funcționează AI-ul, ce simptome analizează, siguranță și confidențialitate."
+      : "Find answers to all your questions about NutriAID Intolerances: how the AI works, which symptoms it analyzes, safety, and privacy.",
+    alternates: {
+      canonical: "/faq",
+    },
+    openGraph: {
+      title: isRo ? "Întrebări Frecvente — NutriAID Intolerances" : "FAQ — NutriAID Intolerances",
+      description: isRo
+        ? "Tot ce trebuie să știi înainte să începi: AI, simptome, rezultate, siguranță, prețuri."
+        : "Everything you need to know before starting: AI, symptoms, results, safety, pricing.",
+      url: "/faq",
+      locale: isRo ? "ro_RO" : "en_US",
+    },
+  };
+}
+
+function buildFaqSchema(sections: FaqSection[]) {
+  const allItems = sections.flatMap((s) => s.items);
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: allItems.map((item) => ({
+      "@type": "Question",
+      name: item.question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: [
+          ...(item.paragraphs ?? []),
+          ...(item.bullets ?? []),
+        ].join(" "),
+      },
+    })),
+  };
+}
+
 export default function FaqPage() {
   const lang = getServerLanguage();
+  const isRo = lang === "ro";
   const t = copy[lang];
+  const faqSchema = buildFaqSchema(t.sections);
 
   return (
-    <div className="pt-24 pb-20 bg-slate-50 dark:bg-slate-950">
+    <div className="pb-20 bg-slate-50 dark:bg-slate-950">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
       <section className="relative overflow-hidden border-y border-cyan-100 dark:border-cyan-900/40 bg-gradient-to-b from-cyan-100 via-white to-slate-50 dark:from-cyan-950/30 dark:via-slate-950 dark:to-slate-950">
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute -top-10 right-0 h-64 w-64 rounded-full bg-cyan-300/30 blur-3xl" />
@@ -492,6 +541,44 @@ export default function FaqPage() {
           </section>
         ))}
       </div>
+
+      {/* GEO Summary + mini-FAQ */}
+      <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-14 space-y-10">
+        <div className="rounded-2xl border border-cyan-200 dark:border-cyan-800 bg-cyan-50 dark:bg-cyan-950/20 p-6">
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-3">
+            {isRo ? "Despre intoleranțele alimentare și NutriAID" : "About food intolerances and NutriAID"}
+          </h2>
+          <p className="text-slate-700 dark:text-slate-300">
+            {isRo
+              ? "Intoleranțele alimentare sunt reacții întârziate ale sistemului digestiv la anumite alimente sau combinații de alimente — diferite de alergii, care sunt imediate și implică sistemul imunitar. Simptomele tipice includ balonare, dureri abdominale, oboseală sau cefalee apărute la 2–48 ore după masă. NutriAID identifică aceste corelații prin analiza AI a datelor tale de mese și simptome. Procesul nu necesită analize medicale și funcționează în paralel cu orice tratament sau recomandare medicală."
+              : "Food intolerances are delayed reactions of the digestive system to certain foods or food combinations — different from allergies, which are immediate and involve the immune system. Typical symptoms include bloating, abdominal pain, fatigue, or headaches appearing 2–48 hours after eating. NutriAID identifies these correlations through AI analysis of your meal and symptom data. The process requires no medical tests and works in parallel with any medical treatment or recommendation."}
+          </p>
+        </div>
+        <div>
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-4">
+            {isRo ? "Cele mai căutate întrebări despre intoleranțe" : "Most searched questions about intolerances"}
+          </h2>
+          <dl className="space-y-3">
+            {(isRo
+              ? [
+                  { q: "Care este diferența dintre intoleranță și alergie alimentară?", a: "Alergia este o reacție imediată a sistemului imunitar (minute) și poate fi periculoasă. Intoleranța este o reacție digestivă întârziată (ore sau zile), inconfortabilă dar nu periculoasă." },
+                  { q: "Pot identifica intoleranțele fără analize medicale?", a: "Da. Monitorizarea sistematică a meselor și simptomelor urmată de analiza corelațiilor (prin NutriAID sau manual) poate identifica intoleranțele fără analize." },
+                  { q: "Cât timp durează să confirm o intoleranță alimentară?", a: "Cu NutriAID, primele corelații clare apar după 1–2 săptămâni de înregistrare consistentă. Confirmarea completă necesită de obicei 3–4 săptămâni." },
+                ]
+              : [
+                  { q: "What is the difference between food intolerance and allergy?", a: "Allergy is an immediate immune system reaction (minutes) and can be dangerous. Intolerance is a delayed digestive reaction (hours or days), uncomfortable but not dangerous." },
+                  { q: "Can I identify intolerances without medical tests?", a: "Yes. Systematic monitoring of meals and symptoms followed by correlation analysis (via NutriAID or manually) can identify intolerances without tests." },
+                  { q: "How long does it take to confirm a food intolerance?", a: "With NutriAID, the first clear correlations appear after 1–2 weeks of consistent logging. Full confirmation usually takes 3–4 weeks." },
+                ]
+            ).map((item) => (
+              <div key={item.q} className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-5">
+                <dt className="font-semibold text-slate-900 dark:text-white mb-2">{item.q}</dt>
+                <dd className="text-slate-600 dark:text-slate-400 text-sm m-0">{item.a}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      </section>
 
       <section className="relative overflow-hidden bg-gradient-to-br from-cyan-700 to-emerald-700 dark:from-cyan-900 dark:to-emerald-900">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.18),transparent_35%)]" />

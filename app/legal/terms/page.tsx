@@ -6,7 +6,7 @@ export const metadata: Metadata = { title: "Termeni și Condiții" };
 
 export default function TermsPage() {
   return (
-    <LegalLayout title="Termeni și Condiții de Utilizare" lastUpdated="1 ianuarie 2025">
+    <LegalLayout title="Termeni și Condiții de Utilizare" lastUpdated="10 iunie 2025">
       <p>
         Acești Termeni și Condiții (&quot;Termenii&quot;) guvernează utilizarea aplicației
         web NutriAID Intolerances (&quot;Aplicația&quot;, &quot;Serviciul&quot;). Prin crearea
@@ -92,7 +92,59 @@ export default function TermsPage() {
         cronice.
       </p>
 
-      <h2>7. Proprietate intelectuală</h2>
+      <h2>7. Delimitarea față de profesia de dietetician (Legea nr. 256/2015)</h2>
+      <p>
+        Profesia de dietetician este reglementată în România prin Legea nr. 256/2015.{" "}
+        <strong>
+          Platforma NutriAID Intolerances nu prestează servicii de dietetică în sensul
+          Legii nr. 256/2015 și nu înlocuiește intervențiile nutriționale ghidate de un
+          dietetician autorizat.
+        </strong>
+      </p>
+      <p>
+        Recomandările generate de platforma noastră sunt produse exclusiv pe baza datelor
+        introduse de utilizator, prin algoritmi informatici și modele de inteligență artificială,
+        fără implicarea unui profesionist în domeniul nutriției sau dieteticii. Acestea au
+        caracter exclusiv informativ și orientativ.
+      </p>
+      <p>
+        Pentru orice problemă de sănătate legată de alimentație, intoleranțe sau alergii,
+        recomandăm consultarea unui dietetician autorizat, medic nutriționist sau
+        alt specialist în sănătate cu drept de liberă practică.
+      </p>
+
+      <h2>8. Dreptul de retragere — conținut digital (OUG nr. 34/2014)</h2>
+      <p>
+        În conformitate cu Ordonanța de Urgență nr. 34/2014 privind drepturile consumatorilor
+        în cadrul contractelor încheiate cu profesioniștii, consumatorii beneficiază, în
+        principiu, de un drept de retragere de 14 zile calendaristice.
+      </p>
+      <p>
+        <strong>
+          Cu toate acestea, prin activarea unui abonament plătit pe platforma NutriAID
+          Intolerances, utilizatorul consimte în mod expres la livrarea imediată a conținutului
+          digital și, în consecință, își pierde dreptul de retragere de 14 zile, în
+          conformitate cu art. 16 lit. m) din OUG nr. 34/2014.
+        </strong>
+      </p>
+      <p>
+        Această pierdere a dreptului de retragere intervine deoarece:
+      </p>
+      <ul>
+        <li>Serviciul este un conținut digital furnizat pe un suport imaterial.</li>
+        <li>Accesul la funcționalitățile plătite devine disponibil imediat după confirmarea plății.</li>
+        <li>
+          Utilizatorul și-a exprimat acordul prealabil expres prin inițierea procedurii
+          de checkout și activarea abonamentului.
+        </li>
+      </ul>
+      <p>
+        Anularea unui abonament activ se poate face oricând din secțiunea <em>Profil → Abonament</em>{" "}
+        sau prin contactarea noastră la contact@nutriaid.eu. Anularea oprește reînnoirea
+        automată, dar nu generează rambursarea perioadei deja plătite și utilizate.
+      </p>
+
+      <h2>9. Proprietate intelectuală</h2>
       <p>
         Toate drepturile de proprietate intelectuală asupra Aplicației,
         inclusiv codul sursă, designul, mărcile și conținutul, aparțin
@@ -104,28 +156,28 @@ export default function TermsPage() {
         proprietatea ta.
       </p>
 
-      <h2>8. Modificări ale serviciului</h2>
+      <h2>10. Modificări ale serviciului</h2>
       <p>
         Ne rezervăm dreptul de a modifica, suspenda sau întrerupe orice
         parte a Serviciului, cu sau fără notificare prealabilă. Modificările
         semnificative vor fi anunțate cu cel puțin 30 de zile înainte.
       </p>
 
-      <h2>9. Modificări ale termenilor</h2>
+      <h2>11. Modificări ale termenilor</h2>
       <p>
         Putem revizui acești Termeni periodic. Continuarea utilizării
         Aplicației după publicarea modificărilor constituie acceptul lor.
         Dacă nu ești de acord cu noii Termeni, poți șterge contul.
       </p>
 
-      <h2>10. Rezilierea</h2>
+      <h2>12. Rezilierea</h2>
       <p>
         Poți șterge contul oricând. Ne rezervăm dreptul de a suspenda sau
         închide conturile care încalcă acești Termeni, fără notificare
         prealabilă în cazul încălcărilor grave.
       </p>
 
-      <h2>11. Legea aplicabilă</h2>
+      <h2>13. Legea aplicabilă</h2>
       <p>
         Acești Termeni sunt guvernați de legislația română și a Uniunii
         Europene. Orice litigiu va fi soluționat de instanțele competente
@@ -133,9 +185,9 @@ export default function TermsPage() {
         prevede altfel.
       </p>
 
-      <h2>12. Contact</h2>
+      <h2>14. Contact</h2>
       <p>
-        Întrebări despre acești Termeni: contact@nutriaid.ro
+        Întrebări despre acești Termeni: contact@nutriaid.eu
       </p>
     </LegalLayout>
   );

@@ -17,11 +17,18 @@ import {
 } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "De ce AI?",
+  title: "De ce AI? — NutriAID Intolerances",
   description:
-    "Explicam tehnologia pe intelesul oamenilor bolnavi, fara jargon, fara frica.",
+    "Explicăm de ce AI-ul identifică intoleranțe alimentare pe care niciun om nu le poate detecta manual: reacții întârziate, combinații, tipare complexe.",
   alternates: {
     canonical: "/why-ai",
+  },
+  openGraph: {
+    title: "De ce AI? — NutriAID Intolerances",
+    description:
+      "De ce intoleranțele alimentare sunt prea complexe pentru a fi înțelese manual și cum AI-ul rezolvă ce medicina tradițională nu poate.",
+    url: "/why-ai",
+    locale: "ro_RO",
   },
 };
 
@@ -142,16 +149,16 @@ export default function WhyAiPage() {
         <p className="mt-5 text-lg text-slate-600 dark:text-slate-300">
           Intoleranțele alimentare sunt greu de identificat pentru că:
         </p>
-        <div className="mt-8 grid gap-3 sm:grid-cols-2">
+        <ul className="mt-8 grid gap-3 sm:grid-cols-2 list-none p-0">
           {truthReasons.map((item) => (
-            <div
+            <li
               key={item}
               className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-700 shadow-sm dark:border-white/10 dark:bg-slate-900/70 dark:text-slate-200 dark:shadow-none"
             >
               {item}
-            </div>
+            </li>
           ))}
-        </div>
+        </ul>
         <div className="mt-8 flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-6 dark:border-emerald-900/40 dark:bg-emerald-950/20">
           <HeartHandshake className="mt-0.5 h-6 w-6 flex-none text-emerald-600 dark:text-emerald-300" />
           <p className="text-lg font-semibold text-slate-900 dark:text-white">
@@ -189,17 +196,17 @@ export default function WhyAiPage() {
         <h2 className="text-3xl font-bold text-slate-900 dark:text-white sm:text-4xl">
           Ce face AI-ul NutriAID în fiecare zi?
         </h2>
-        <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 list-none p-0">
           {dailyTasks.map((task) => (
-            <div
+            <li
               key={task}
               className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-700 shadow-sm dark:border-white/10 dark:bg-slate-900/70 dark:text-slate-200 dark:shadow-none"
             >
               <CheckCircle2 className="h-5 w-5 flex-none text-emerald-500 dark:text-emerald-300" />
               <span>{task}</span>
-            </div>
+            </li>
           ))}
-        </div>
+        </ul>
         <div className="mt-8 grid gap-3 sm:grid-cols-3">
           {["Totul automat.", "Totul personalizat.", "Totul pentru tine."].map((line) => (
             <p
@@ -219,17 +226,17 @@ export default function WhyAiPage() {
             De ce nu poate face asta un om?
           </h2>
           <p className="mt-5 text-lg text-slate-600 dark:text-slate-300">Pentru că un om:</p>
-          <div className="mt-8 grid gap-3 sm:grid-cols-2">
+          <ul className="mt-8 grid gap-3 sm:grid-cols-2 list-none p-0">
             {humanLimits.map((item) => (
-              <div
+              <li
                 key={item}
                 className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-700 dark:border-white/10 dark:bg-slate-950 dark:text-slate-200"
               >
                 <XCircle className="h-5 w-5 flex-none text-rose-400 dark:text-rose-400/80" />
                 <span>{item}</span>
-              </div>
+              </li>
             ))}
-          </div>
+          </ul>
           <div className="mt-8 flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-6 dark:border-emerald-900/40 dark:bg-emerald-950/20">
             <Sparkles className="mt-0.5 h-6 w-6 flex-none text-emerald-600 dark:text-emerald-300" />
             <p className="text-lg font-semibold text-slate-900 dark:text-white">
@@ -249,17 +256,17 @@ export default function WhyAiPage() {
         </div>
         <p className="mt-5 text-xl font-semibold text-emerald-700 dark:text-emerald-300">Da.</p>
         <p className="mt-2 text-lg text-slate-600 dark:text-slate-300">NutriAID Intolerances:</p>
-        <div className="mt-8 grid gap-3 sm:grid-cols-2">
+        <ul className="mt-8 grid gap-3 sm:grid-cols-2 list-none p-0">
           {safetyPoints.map((item) => (
-            <div
+            <li
               key={item}
               className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-700 shadow-sm dark:border-white/10 dark:bg-slate-900/70 dark:text-slate-200 dark:shadow-none"
             >
               <XCircle className="h-5 w-5 flex-none text-slate-400 dark:text-slate-500" />
               <span>{item}</span>
-            </div>
+            </li>
           ))}
-        </div>
+        </ul>
         <div className="mt-8 rounded-2xl border border-emerald-200 bg-emerald-50 p-6 dark:border-emerald-900/40 dark:bg-emerald-950/20">
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {["Îți oferă claritate.", "Îți oferă logică.", "Îți oferă explicații.", "Îți oferă control."].map(
@@ -312,16 +319,16 @@ export default function WhyAiPage() {
           </h2>
         </div>
         <p className="mt-5 text-lg text-slate-600 dark:text-slate-300">Pentru că medicina:</p>
-        <div className="mt-8 grid gap-3 sm:grid-cols-2">
+        <ul className="mt-8 grid gap-3 sm:grid-cols-2 list-none p-0">
           {medicineLimits.map((item) => (
-            <div
+            <li
               key={item}
               className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-700 shadow-sm dark:border-white/10 dark:bg-slate-900/70 dark:text-slate-200 dark:shadow-none"
             >
               {item}
-            </div>
+            </li>
           ))}
-        </div>
+        </ul>
         <div className="mt-8 rounded-2xl border border-emerald-200 bg-emerald-50 p-6 dark:border-emerald-900/40 dark:bg-emerald-950/20">
           <p className="text-lg font-semibold text-slate-900 dark:text-white">
             AI-ul completează ceea ce medicina nu poate face.

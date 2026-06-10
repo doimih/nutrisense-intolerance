@@ -296,6 +296,23 @@ export async function getUserById(id: string): Promise<AdminUser | null> {
   };
 }
 
+export async function getUserByEmail(email: string): Promise<AdminUser | null> {
+  const normalized = normalizeEmail(email);
+  const row = await db.query.users.findFirst({ where: eq(users.email, normalized) });
+  if (!row) return null;
+  return {
+    id: row.id,
+    name: row.name,
+    email: row.email,
+    role: row.role,
+    isVerified: row.isVerified,
+    verifiedAt: row.verifiedAt ?? null,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+    plan: (row.plan as AuthPlanCode | null | undefined) ?? null,
+  };
+}
+
 export async function activateUserById(id: string): Promise<boolean> {
   const nowIso = new Date().toISOString();
   const result = await db.update(users)
