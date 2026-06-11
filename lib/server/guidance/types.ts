@@ -3,7 +3,20 @@ import type { DietaryPreference, Intolerance } from "@/types/profile";
 
 export type SubscriptionTier = "new" | "active" | "expired";
 
-export type PlanTier = "none" | "basic" | "pro" | "pro_plus";
+export type PlanTier = "none" | "basic" | "pro" | "pro_plus" | "enterprise";
+
+export type PhysicalProfile = {
+  age?: number | null;
+  heightCm?: number | null;
+  weightKg?: number | null;
+  activityLevel?: string | null;
+};
+
+export type PreviousGuidanceSummary = {
+  generatedAt: string;
+  recommendedFoods: string[];
+  avoidFoods: string[];
+};
 
 export type GuidanceGenerateInput = {
   intolerances: Intolerance[];
@@ -14,6 +27,8 @@ export type GuidanceGenerateInput = {
   lang: "ro" | "en";
   subscriptionTier: SubscriptionTier;
   planTier: PlanTier;
+  physicalProfile?: PhysicalProfile;
+  previousGuidance?: PreviousGuidanceSummary[];
 };
 
 export type GuidanceHistoryRecord = {

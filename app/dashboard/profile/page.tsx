@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { User, Save, Info } from "lucide-react";
+import { User, Save, Info, Activity } from "lucide-react";
 import Card, { CardHeader, CardTitle, CardDescription } from "@/components/Card";
 import FormField, { Input, Select } from "@/components/FormField";
 import Button from "@/components/Button";
@@ -12,10 +12,11 @@ import { useLanguage } from "@/components/LanguageProvider";
 import { getProfile, updateProfile } from "@/lib/api/profile";
 import { getSessionUser } from "@/lib/api/auth";
 import { getDietaryLabel, getIntoleranceLabel } from "@/lib/i18n/labels";
-import type { UserProfile, Intolerance, DietaryPreference } from "@/types/profile";
+import type { ActivityLevel, UserProfile, Intolerance, DietaryPreference } from "@/types/profile";
 import {
   INTOLERANCE_LABELS,
   DIETARY_PREFERENCE_LABELS,
+  ACTIVITY_LEVEL_LABELS,
 } from "@/types/profile";
 import BillingSection from "./_components/BillingSection";
 
@@ -34,6 +35,10 @@ export default function ProfilePage() {
     name: "",
     dietaryPreference: "normal" as DietaryPreference,
     intolerances: [] as Intolerance[],
+    age: "" as string,
+    heightCm: "" as string,
+    weightKg: "" as string,
+    activityLevel: "" as ActivityLevel | "",
   });
 
   useEffect(() => {
@@ -43,6 +48,10 @@ export default function ProfilePage() {
         name: p.name,
         dietaryPreference: p.dietaryPreference,
         intolerances: p.intolerances,
+        age: p.age ? String(p.age) : "",
+        heightCm: p.heightCm ? String(p.heightCm) : "",
+        weightKg: p.weightKg ? String(p.weightKg) : "",
+        activityLevel: (p.activityLevel as ActivityLevel | null) ?? "",
       });
       if (user?.trialEndsAt) setTrialEndsAt(user.trialEndsAt);
       setLoading(false);
@@ -68,7 +77,15 @@ export default function ProfilePage() {
     }
     setSaving(true);
     try {
-      const updated = await updateProfile(form);
+      const updated = await updateProfile({
+        name: form.name,
+        dietaryPreference: form.dietaryPreference,
+        intolerances: form.intolerances,
+        age: form.age ? parseInt(form.age, 10) : null,
+        heightCm: form.heightCm ? parseInt(form.heightCm, 10) : null,
+        weightKg: form.weightKg ? parseInt(form.weightKg, 10) : null,
+        activityLevel: (form.activityLevel as ActivityLevel) || null,
+      });
       setProfile(updated);
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
@@ -85,6 +102,11 @@ export default function ProfilePage() {
   const dietOptions = Object.entries(DIETARY_PREFERENCE_LABELS).map(
     ([value]) => ({ value, label: getDietaryLabel(value as DietaryPreference, lang) })
   );
+
+  const activityOptions = [
+    { value: "", label: isRo ? "— Neselectat —" : "— Not selected —" },
+    ...Object.entries(ACTIVITY_LEVEL_LABELS).map(([value, label]) => ({ value, label })),
+  ];
 
   return (
     <div className="space-y-6 max-w-2xl">
@@ -141,6 +163,62 @@ export default function ProfilePage() {
                 value={profile?.email ?? ""}
                 disabled
                 className="opacity-60 cursor-not-allowed"
+              />
+            </FormField>
+          </div>
+        </Card>
+
+        {/* Physical profile */}
+        <Card bordered>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Activity className="w-4 h-4 text-slate-400" />
+              <CardTitle>{isRo ? "Profil fizic" : "Physical profile"}</CardTitle>
+            </div>
+            <CardDescription>
+              {isRo
+                ? "Date fizice pentru recomandari nutritionale mai precise (optionale)"
+                : "Physical data for more accurate nutritional recommendations (optional)"}
+            </CardDescription>
+          </CardHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-3 gap-4">
+              <FormField label={isRo ? "Vârstă (ani)" : "Age (years)"}>
+                <Input
+                  type="number"
+                  min="1"
+                  max="120"
+                  value={form.age}
+                  onChange={(e) => setForm({ ...form, age: e.target.value })}
+                  placeholder="—"
+                />
+              </FormField>
+              <FormField label={isRo ? "Înălțime (cm)" : "Height (cm)"}>
+                <Input
+                  type="number"
+                  min="50"
+                  max="280"
+                  value={form.heightCm}
+                  onChange={(e) => setForm({ ...form, heightCm: e.target.value })}
+                  placeholder="—"
+                />
+              </FormField>
+              <FormField label={isRo ? "Greutate (kg)" : "Weight (kg)"}>
+                <Input
+                  type="number"
+                  min="20"
+                  max="500"
+                  value={form.weightKg}
+                  onChange={(e) => setForm({ ...form, weightKg: e.target.value })}
+                  placeholder="—"
+                />
+              </FormField>
+            </div>
+            <FormField label={isRo ? "Nivel activitate fizică" : "Physical activity level"}>
+              <Select
+                value={form.activityLevel}
+                options={activityOptions}
+                onChange={(e) => setForm({ ...form, activityLevel: e.target.value as ActivityLevel | "" })}
               />
             </FormField>
           </div>

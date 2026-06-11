@@ -26,5 +26,5 @@ export async function GET(request: NextRequest) {
 
   const plan = await getUserPlan(session.user.email);
   const trialEndsAt = await getUserTrialEndsAt(session.user.email);
-  return NextResponse.json({ user: { ...session.user, plan, trialEndsAt } });
+  return NextResponse.json({ user: { ...session.user, plan, trialEndsAt, sessionExpiresAt: session.exp } });
 }

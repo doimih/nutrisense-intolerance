@@ -22,6 +22,7 @@ import { getSessionUser, logout } from "@/lib/api/auth";
 import { useLanguage } from "@/components/LanguageProvider";
 import { getUiCopy } from "@/lib/i18n/ui";
 import TrialExpiredModal from "@/components/TrialExpiredModal";
+import SessionExpiryModal from "@/components/SessionExpiryModal";
 
 const FALLBACK_ADMIN_CONSOLE_URL = "https://backend.nutriaid.eu";
 
@@ -74,6 +75,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
   const [currentUser, setCurrentUser] = useState<{ id: string; name: string; email: string; plan?: string | null; trialEndsAt?: string | null } | null>(null);
   const [adminConsoleUrl, setAdminConsoleUrl] = useState(FALLBACK_ADMIN_CONSOLE_URL);
   const [showTrialModal, setShowTrialModal] = useState(false);
+  const [sessionExpiresAt, setSessionExpiresAt] = useState<number | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -82,6 +84,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
         if (active && user) {
           setIsSuperadmin(user.role === "superadmin");
           setCurrentUser({ id: user.id, name: user.name, email: user.email, plan: user.plan, trialEndsAt: user.trialEndsAt });
+          if (user.sessionExpiresAt) setSessionExpiresAt(user.sessionExpiresAt);
           const trialExpired = user.trialEndsAt && new Date(user.trialEndsAt).getTime() <= Date.now();
           const noPlan = !user.plan;
           const notAdmin = user.role !== "superadmin";
@@ -283,6 +286,13 @@ export default function DashboardShell({ children }: { children: React.ReactNode
             <TrialExpiredModal
               userId={currentUser.id}
               lang={lang as "ro" | "en"}
+            />
+          )}
+          {sessionExpiresAt && !showTrialModal && (
+            <SessionExpiryModal
+              sessionExpiresAt={sessionExpiresAt}
+              lang={lang as "ro" | "en"}
+              onRefreshed={setSessionExpiresAt}
             />
           )}
         </div>

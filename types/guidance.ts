@@ -9,6 +9,7 @@ export interface MonitoringContextItem {
   symptoms: string[];
   symptomsIntensity: number;
   reactionLatencyMinutes: number | null;
+  wellbeing?: number;
   notes: string;
 }
 

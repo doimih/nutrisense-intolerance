@@ -182,7 +182,7 @@ export default function PWAInstallPrompt() {
                   </div>
                   <div className="flex-1">
                     <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">
-                      Alege &quot;Add to Home Screen&quot;
+                      Alege &quot;Adaugă pe ecranul principal&quot;
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                       Derulează în jos în meniu și apasă{' '}

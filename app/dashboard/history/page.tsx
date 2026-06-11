@@ -13,10 +13,10 @@ import { getDietaryLabel, getIntoleranceLabel, getSymptomLabel } from "@/lib/i18
 import type { GuidanceHistoryEntry } from "@/types/guidance";
 import type { MonitoringEntry, Symptom } from "@/types/monitoring";
 
-type PlanTier = "none" | "basic" | "pro" | "pro_plus";
+type PlanTier = "none" | "basic" | "pro" | "pro_plus" | "enterprise";
 
 function planAllows(userPlan: PlanTier, required: PlanTier): boolean {
-  const order: PlanTier[] = ["none", "basic", "pro", "pro_plus"];
+  const order: PlanTier[] = ["none", "basic", "pro", "pro_plus", "enterprise"];
   return order.indexOf(userPlan) >= order.indexOf(required);
 }
 

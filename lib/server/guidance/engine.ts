@@ -143,6 +143,7 @@ type PlanLimits = {
 
 function getPlanLimits(planTier: PlanTier): PlanLimits {
   switch (planTier) {
+    case "enterprise":
     case "pro_plus":
       return { maxRecommendedFoods: 15, maxAvoidFoods: 12, maxMealExamples: 4, maxTips: 5, comboAnalysis: true, advancedPredictions: true, delayedReactionDetection: true };
     case "pro":
@@ -324,6 +325,17 @@ export function buildGuidancePrompt(input: GuidanceGenerateInput): string {
   lines.push(`DETAIL_LEVEL: ${input.detailLevel}`);
   lines.push(`DIETARY_PREFERENCE: ${input.dietaryPreference}`);
   lines.push(`INTOLERANCES: ${input.intolerances.join(",") || "none"}`);
+
+  if (input.physicalProfile) {
+    const p = input.physicalProfile;
+    const parts: string[] = [];
+    if (p.age) parts.push(`age:${p.age}`);
+    if (p.heightCm) parts.push(`height:${p.heightCm}cm`);
+    if (p.weightKg) parts.push(`weight:${p.weightKg}kg`);
+    if (p.activityLevel) parts.push(`activity:${p.activityLevel}`);
+    if (parts.length > 0) lines.push(`PHYSICAL_PROFILE: ${parts.join(", ")}`);
+  }
+
   lines.push("MONITORING_ENTRIES:");
   for (const entry of input.monitoringEntries.slice(0, 40)) {
     lines.push(
@@ -334,9 +346,22 @@ export function buildGuidancePrompt(input: GuidanceGenerateInput): string {
         symptoms: entry.symptoms,
         intensity: entry.symptomsIntensity,
         latency: entry.reactionLatencyMinutes,
+        wellbeing: entry.wellbeing,
       })
     );
   }
+
+  if (input.previousGuidance && input.previousGuidance.length > 0) {
+    lines.push("PREVIOUS_RECOMMENDATIONS:");
+    for (const prev of input.previousGuidance) {
+      lines.push(JSON.stringify({
+        date: prev.generatedAt,
+        recommended: prev.recommendedFoods.slice(0, 5),
+        avoid: prev.avoidFoods.slice(0, 5),
+      }));
+    }
+  }
+
   lines.push("OUTPUT_SCHEMA: recommendedFoods[], avoidFoods[], mealExamples[], generalTips[], disclaimer");
   return lines.join("\n");
 }

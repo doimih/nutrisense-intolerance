@@ -27,8 +27,12 @@ const nextConfig = {
   experimental: {
     // Enable instrumentation.ts (stable in Next.js 14.1+, requires explicit opt-in until v15)
     instrumentationHook: true,
-    // Keep postgres.js (Node-only) out of the webpack browser bundle
-    serverComponentsExternalPackages: ["postgres"],
+    // Keep Node-only packages out of the webpack browser bundle
+    serverComponentsExternalPackages: ["postgres", "pdfkit"],
+    // Copy pdfkit AFM font data into the standalone build (loaded at runtime via __dirname)
+    outputFileTracingIncludes: {
+      "**": ["./node_modules/pdfkit/js/data/**/*"],
+    },
   },
   webpack(config, { dev, isServer }) {
     if (dev) {

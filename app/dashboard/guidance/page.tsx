@@ -16,20 +16,22 @@ import type { GuidanceResult, DetailLevel } from "@/types/guidance";
 import type { Intolerance, DietaryPreference } from "@/types/profile";
 import { INTOLERANCE_LABELS, DIETARY_PREFERENCE_LABELS } from "@/types/profile";
 
-type PlanTier = "none" | "basic" | "pro" | "pro_plus";
+type PlanTier = "none" | "basic" | "pro" | "pro_plus" | "enterprise";
 
 const ALL_INTOLERANCES = Object.keys(INTOLERANCE_LABELS) as Intolerance[];
 
 const detailLevels: DetailLevel[] = ["basic", "detailed", "comprehensive"];
 
 function getPlanLabel(planTier: PlanTier, isRo: boolean): string {
+  if (planTier === "enterprise") return "Enterprise";
   if (planTier === "pro_plus") return "Pro+";
   if (planTier === "pro") return "Pro";
-  if (planTier === "basic") return isRo ? "Basic" : "Basic";
+  if (planTier === "basic") return "Basic";
   return isRo ? "Fara plan activ" : "No active plan";
 }
 
 function getPlanColor(planTier: PlanTier): string {
+  if (planTier === "enterprise") return "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300";
   if (planTier === "pro_plus") return "bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300";
   if (planTier === "pro") return "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300";
   if (planTier === "basic") return "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300";
@@ -55,7 +57,7 @@ function getDetailRequiredPlan(level: DetailLevel): PlanTier {
 }
 
 function planAllows(userPlan: PlanTier, required: PlanTier): boolean {
-  const order: PlanTier[] = ["none", "basic", "pro", "pro_plus"];
+  const order: PlanTier[] = ["none", "basic", "pro", "pro_plus", "enterprise"];
   return order.indexOf(userPlan) >= order.indexOf(required);
 }
 
@@ -82,7 +84,7 @@ export default function GuidancePage() {
       setPlanTier(tier);
       // Default detail level to max allowed by plan
       const defaultDetail: DetailLevel =
-        tier === "pro_plus" ? "comprehensive" :
+        (tier === "pro_plus" || tier === "enterprise") ? "comprehensive" :
         tier === "pro" ? "detailed" : "basic";
       setForm((f) => ({
         ...f,

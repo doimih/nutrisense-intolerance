@@ -6,12 +6,29 @@ import { listGuidanceByUser } from "@/lib/server/guidance/store";
 
 export const runtime = "nodejs";
 
+// Strip characters outside printable Latin range (pdfkit built-in fonts)
 function safeText(value: string): string {
-  return value.replace(/[^\x20-\x7EÀ-ž]/g, (c) => {
-    // keep Romanian diacritics as-is; strip anything else outside latin range
-    return c;
-  });
+  return value
+    .replace(/’/g, "'")
+    .replace(/“|”/g, '"')
+    .replace(/—/g, "-")
+    .replace(/–/g, "-")
+    .replace(/[^\x20-\x7EÀ-ž]/g, "");
 }
+
+const GREEN      = "#16a34a";
+const GREEN_LIGHT= "#dcfce7";
+const RED_DARK   = "#b91c1c";
+const RED_LIGHT  = "#fee2e2";
+const TEAL       = "#0d9488";
+const TEAL_LIGHT = "#ccfbf1";
+const AMBER      = "#d97706";
+const AMBER_LIGHT= "#fef3c7";
+const SLATE      = "#334155";
+const SLATE_LIGHT= "#f8fafc";
+const BORDER     = "#e2e8f0";
+const WHITE      = "#ffffff";
+const GRAY       = "#64748b";
 
 export async function GET(request: NextRequest) {
   const token = request.cookies.get(AUTH_COOKIE_NAME)?.value;
@@ -21,237 +38,323 @@ export async function GET(request: NextRequest) {
   }
 
   const email = session.user.email.trim().toLowerCase();
+  const userName = session.user.name?.trim() || "";
   const allHistory = await listGuidanceByUser(email);
 
   if (allHistory.length === 0) {
-    return NextResponse.json({ error: "No guidance history found. Log meals and generate guidance first." }, { status: 404 });
+    return NextResponse.json(
+      { error: "No guidance history found. Generate guidance first." },
+      { status: 404 }
+    );
   }
 
-  // Most recent guidance first
   const sorted = [...allHistory].sort(
     (a, b) => new Date(b.generatedAt).getTime() - new Date(a.generatedAt).getTime()
   );
-  const latest = sorted[0].result;
+  const latest  = sorted[0].result;
   const generatedAt = sorted[0].generatedAt;
 
-  // Build symptom trend: count entries with symptoms per guidance record
-  const trendData = sorted.slice(0, 10).reverse().map((rec, i) => ({
-    label: `R${i + 1}`,
-    avoidCount: rec.result.avoidFoods?.length ?? 0,
-    tipCount: rec.result.generalTips?.length ?? 0,
-    source: rec.result.source ?? "ai",
-  }));
+  const PAGE_W = 595.28; // A4 width in points
+  const MARGIN  = 40;
+  const CONTENT = PAGE_W - MARGIN * 2;
 
-  // Generate PDF in memory
   const chunks: Buffer[] = [];
   await new Promise<void>((resolve, reject) => {
-    const doc = new PDFDocument({ margin: 50, size: "A4" });
-
+    const doc = new PDFDocument({ margin: MARGIN, size: "A4", autoFirstPage: true });
     doc.on("data", (chunk: Buffer) => chunks.push(chunk));
     doc.on("end", resolve);
     doc.on("error", reject);
 
-    const GREEN = "#16a34a";
-    const SLATE = "#334155";
-    const LIGHT = "#f8fafc";
-    const BORDER = "#e2e8f0";
+    // ── HELPERS ────────────────────────────────────────────────────────────────
 
-    // ── Header ──────────────────────────────────────────────────────────────
-    doc.rect(0, 0, doc.page.width, 70).fill(GREEN);
+    // Full-width section header bar — returns Y below the bar
+    function sectionBar(title: string, color: string, startY: number): number {
+      const BAR_H = 26;
+      doc.rect(MARGIN, startY, CONTENT, BAR_H).fill(color);
+      doc
+        .font("Helvetica-Bold")
+        .fontSize(11)
+        .fillColor(WHITE)
+        .text(safeText(title), MARGIN + 10, startY + 7, { width: CONTENT - 20, lineBreak: false });
+      return startY + BAR_H + 8;
+    }
+
+    // Column-scoped header bar (for 2-column layout)
+    function colBar(title: string, color: string, x: number, w: number, startY: number): number {
+      const BAR_H = 24;
+      doc.rect(x, startY, w, BAR_H).fill(color);
+      doc
+        .font("Helvetica-Bold")
+        .fontSize(10)
+        .fillColor(WHITE)
+        .text(safeText(title), x + 8, startY + 6, { width: w - 16, lineBreak: false });
+      return startY + BAR_H + 8;
+    }
+
+    // Draw a small rounded pill tag; returns the width used
+    function tag(text: string, x: number, y: number, bg: string, fg: string): number {
+      const label = safeText(text);
+      const tw = Math.min(doc.font("Helvetica").fontSize(9).widthOfString(label) + 14, 180);
+      doc.rect(x, y, tw, 16).fill(bg);
+      doc.font("Helvetica").fontSize(9).fillColor(fg).text(label, x + 7, y + 3, {
+        width: tw - 14,
+        lineBreak: false,
+      });
+      return tw + 5;
+    }
+
+    // Render a list of food tags in a column of given width, starting at (x, y)
+    // Returns the Y coordinate after all tags
+    function foodTags(
+      foods: string[],
+      x: number,
+      y: number,
+      colWidth: number,
+      bg: string,
+      fg: string
+    ): number {
+      let cx = x;
+      let cy = y;
+      for (const food of foods) {
+        const label = safeText(food);
+        const tw = Math.min(doc.font("Helvetica").fontSize(9).widthOfString(label) + 14, colWidth);
+        if (cx + tw > x + colWidth) {
+          cx = x;
+          cy += 22;
+        }
+        tag(food, cx, cy, bg, fg);
+        cx += tw + 5;
+      }
+      return cy + 22;
+    }
+
+    // ── HEADER ─────────────────────────────────────────────────────────────────
+    doc.rect(0, 0, PAGE_W, 64).fill(GREEN);
     doc
       .font("Helvetica-Bold")
-      .fontSize(20)
-      .fillColor("white")
-      .text("NutriAID Intolerances", 50, 22);
-    doc
-      .font("Helvetica")
-      .fontSize(10)
-      .fillColor("white")
-      .text("Raport personalizat de sensibilitati alimentare", 50, 46);
-
-    doc.moveDown(3);
-
-    // ── Meta ─────────────────────────────────────────────────────────────────
-    const metaY = 90;
-    doc.rect(50, metaY, doc.page.width - 100, 44).fill(LIGHT).stroke(BORDER);
+      .fontSize(18)
+      .fillColor(WHITE)
+      .text("NutriAID", MARGIN, 14);
     doc
       .font("Helvetica")
       .fontSize(9)
-      .fillColor(SLATE)
-      .text(`Utilizator: ${email}`, 60, metaY + 8)
+      .fillColor("#bbf7d0")
+      .text("Raport personalizat de sensibilitati alimentare", MARGIN, 37);
+    // Date right-aligned
+    doc
+      .font("Helvetica")
+      .fontSize(8)
+      .fillColor(WHITE)
       .text(
-        `Generat la: ${new Date(generatedAt).toLocaleDateString("ro-RO", {
+        new Date(generatedAt).toLocaleDateString("ro-RO", {
           day: "2-digit",
           month: "long",
           year: "numeric",
           hour: "2-digit",
           minute: "2-digit",
-        })}`,
-        60,
-        metaY + 22
+        }),
+        MARGIN,
+        37,
+        { width: CONTENT, align: "right" }
       );
+
+    // ── META BAR ───────────────────────────────────────────────────────────────
+    const DETAIL_LABEL: Record<string, string> = {
+      basic: "De baza",
+      detailed: "Detaliat",
+      comprehensive: "Complet",
+    };
+    const detailLabel = DETAIL_LABEL[latest.detailLevel ?? ""] ?? "";
+
+    const metaY = 72;
+    doc.rect(MARGIN, metaY, CONTENT, 36).fill(SLATE_LIGHT).stroke(BORDER);
+    // Left: name + email
+    doc
+      .font("Helvetica-Bold")
+      .fontSize(9.5)
+      .fillColor(SLATE)
+      .text(safeText(userName), MARGIN + 10, metaY + 6, { lineBreak: false });
+    doc
+      .font("Helvetica")
+      .fontSize(8)
+      .fillColor(GRAY)
+      .text(email, MARGIN + 10, metaY + 20, { lineBreak: false });
+    // Right: source + detail level
+    const srcLabel =
+      latest.source === "fallback"
+        ? "Analiza deterministica (AI indisponibil)"
+        : "AI — GPT-4o";
+    const srcColor = latest.source === "fallback" ? AMBER : GREEN;
     doc
       .font("Helvetica-Oblique")
-      .fontSize(9)
-      .fillColor(latest.source === "fallback" ? "#b45309" : GREEN)
-      .text(
-        `Sursa: ${latest.source === "fallback" ? "Analiza deterministica (AI indisponibil)" : "AI (model GPT-4o)"}`,
-        doc.page.width / 2,
-        metaY + 22,
-        { align: "right" }
-      );
-
-    doc.y = metaY + 60;
-
-    // ── Section helper ───────────────────────────────────────────────────────
-    function sectionHeader(title: string) {
+      .fontSize(8)
+      .fillColor(srcColor)
+      .text(`Sursa: ${srcLabel}`, MARGIN + 10, metaY + 6, { width: CONTENT - 20, align: "right" });
+    if (detailLabel) {
       doc
-        .rect(50, doc.y, doc.page.width - 100, 22)
-        .fill(GREEN);
-      doc
-        .font("Helvetica-Bold")
-        .fontSize(11)
-        .fillColor("white")
-        .text(title, 58, doc.y - 18);
-      doc.moveDown(0.3);
+        .font("Helvetica")
+        .fontSize(8)
+        .fillColor(GRAY)
+        .text(`Nivel detaliu: ${detailLabel}`, MARGIN + 10, metaY + 20, { width: CONTENT - 20, align: "right" });
     }
 
-    function pill(text: string, x: number, y: number, bg: string, fg: string) {
-      const w = Math.min(doc.widthOfString(text) + 16, 200);
-      doc.rect(x, y, w, 18).fill(bg);
-      doc.font("Helvetica").fontSize(9).fillColor(fg).text(text, x + 8, y + 4, { width: w - 16, lineBreak: false });
-      return w + 6;
-    }
+    let curY = metaY + 52;
 
-    // ── Alimente recomandate ─────────────────────────────────────────────────
-    if (latest.recommendedFoods?.length > 0) {
-      sectionHeader("Alimente recomandate (sigure pentru tine)");
-      let px = 50;
-      let py = doc.y + 4;
-      for (const food of latest.recommendedFoods) {
-        const w = pill(safeText(food), px, py, "#dcfce7", GREEN);
-        px += w;
-        if (px > doc.page.width - 100) {
-          px = 50;
-          py += 24;
-        }
+    // ── 2-COLUMN FOODS ─────────────────────────────────────────────────────────
+    const COL_GAP  = 12;
+    const COL_W    = (CONTENT - COL_GAP) / 2;
+    const leftX    = MARGIN;
+    const rightX   = MARGIN + COL_W + COL_GAP;
+
+    // Each column gets its own header bar at the same Y
+    const colTagsStartY = colBar("Alimente recomandate", GREEN,    leftX,  COL_W, curY);
+                          colBar("Alimente de evitat",   RED_DARK, rightX, COL_W, curY);
+    curY = colTagsStartY; // both bars are same height
+
+    const recFoods  = latest.recommendedFoods ?? [];
+    const avoidFoods = latest.avoidFoods ?? [];
+
+    const recEndY   = foodTags(recFoods,   leftX,  curY, COL_W,  GREEN_LIGHT, GREEN);
+    const avoidEndY = foodTags(avoidFoods, rightX, curY, COL_W,  RED_LIGHT,   RED_DARK);
+
+    curY = Math.max(recEndY, avoidEndY) + 16;
+
+    // ── MEAL EXAMPLES ──────────────────────────────────────────────────────────
+    const mealExamples = latest.mealExamples ?? [];
+    if (mealExamples.length > 0) {
+      // Check if we need a new page
+      if (curY > doc.page.height - 180) {
+        doc.addPage();
+        curY = MARGIN;
       }
-      doc.y = py + 28;
-      doc.moveDown(0.5);
-    }
 
-    // ── Alimente de evitat ───────────────────────────────────────────────────
-    if (latest.avoidFoods?.length > 0) {
-      sectionHeader("Alimente de evitat sau de testat cu atentie");
-      let px = 50;
-      let py = doc.y + 4;
-      for (const food of latest.avoidFoods) {
-        const w = pill(safeText(food), px, py, "#fee2e2", "#b91c1c");
-        px += w;
-        if (px > doc.page.width - 100) {
-          px = 50;
-          py += 24;
+      curY = sectionBar("Exemple de mese", TEAL, curY);
+
+      for (const meal of mealExamples) {
+        // Estimate height needed: title(14) + tags row(22) + optional note(14) + padding(16)
+        const estimatedH = 14 + 22 * Math.ceil(meal.ingredients.length / 4) + (meal.notes ? 14 : 0) + 24;
+        if (curY + estimatedH > doc.page.height - MARGIN - 60) {
+          doc.addPage();
+          curY = MARGIN;
         }
-      }
-      doc.y = py + 28;
-      doc.moveDown(0.5);
-    }
 
-    // ── Exemple de mese ──────────────────────────────────────────────────────
-    if (latest.mealExamples?.length > 0) {
-      sectionHeader("Exemple de mese personalizate");
-      for (const meal of latest.mealExamples) {
+        // Card background
+        doc.rect(MARGIN, curY, CONTENT, estimatedH).fill(SLATE_LIGHT).stroke(BORDER);
+
+        // Meal name
         doc
           .font("Helvetica-Bold")
           .fontSize(10)
           .fillColor(SLATE)
-          .text(safeText(meal.name), 58, doc.y + 6);
-        doc
-          .font("Helvetica")
-          .fontSize(9)
-          .fillColor("#64748b")
-          .text(
-            `Ingrediente: ${meal.ingredients.map(safeText).join(", ")}`,
-            66,
-            doc.y + 2
-          );
+          .text(safeText(meal.name), MARGIN + 12, curY + 9, {
+            width: CONTENT - 24,
+            lineBreak: false,
+          });
+
+        // Ingredients as teal tags
+        let tx = MARGIN + 12;
+        let ty = curY + 25;
+        for (const ing of meal.ingredients) {
+          const label = safeText(ing);
+          const tw = Math.min(doc.font("Helvetica").fontSize(8.5).widthOfString(label) + 12, COL_W);
+          if (tx + tw > MARGIN + CONTENT - 12) {
+            tx = MARGIN + 12;
+            ty += 20;
+          }
+          doc.rect(tx, ty, tw, 15).fill(TEAL_LIGHT);
+          doc.font("Helvetica").fontSize(8.5).fillColor(TEAL).text(label, tx + 6, ty + 3, {
+            width: tw - 12,
+            lineBreak: false,
+          });
+          tx += tw + 5;
+        }
+
+        // Notes
         if (meal.notes) {
+          const noteY = ty + 20;
           doc
             .font("Helvetica-Oblique")
             .fontSize(8)
-            .fillColor("#94a3b8")
-            .text(safeText(meal.notes), 66, doc.y + 2);
+            .fillColor(GRAY)
+            .text(safeText(meal.notes), MARGIN + 12, noteY, { width: CONTENT - 24 });
         }
-        doc.moveDown(0.4);
+
+        curY += estimatedH + 8;
       }
-      doc.moveDown(0.5);
+
+      curY += 8;
     }
 
-    // ── Sfaturi generale ─────────────────────────────────────────────────────
-    if (latest.generalTips?.length > 0) {
-      sectionHeader("Sfaturi si observatii AI");
-      for (const tip of latest.generalTips) {
+    // ── GENERAL TIPS ──────────────────────────────────────────────────────────
+    const tips = latest.generalTips ?? [];
+    if (tips.length > 0) {
+      if (curY > doc.page.height - 120) {
+        doc.addPage();
+        curY = MARGIN;
+      }
+
+      curY = sectionBar("Sfaturi si observatii", "#0f766e", curY);
+
+      for (const tip of tips) {
+        const text = `• ${safeText(tip)}`;
+        const lineH = doc.font("Helvetica").fontSize(9).heightOfString(text, { width: CONTENT - 24 });
+        if (curY + lineH + 8 > doc.page.height - MARGIN - 60) {
+          doc.addPage();
+          curY = MARGIN;
+        }
         doc
           .font("Helvetica")
           .fontSize(9)
           .fillColor(SLATE)
-          .text(`• ${safeText(tip)}`, 58, doc.y + 4, { width: doc.page.width - 116 });
-        doc.moveDown(0.3);
+          .text(text, MARGIN + 12, curY, { width: CONTENT - 24 });
+        curY += lineH + 6;
       }
-      doc.moveDown(0.5);
+      curY += 8;
     }
 
-    // ── Avertismente ─────────────────────────────────────────────────────────
-    if (latest.warnings && latest.warnings.length > 0) {
-      sectionHeader("Avertismente");
-      for (const w of latest.warnings) {
+    // ── WARNINGS ──────────────────────────────────────────────────────────────
+    const warnings = latest.warnings ?? [];
+    if (warnings.length > 0) {
+      if (curY > doc.page.height - 100) {
+        doc.addPage();
+        curY = MARGIN;
+      }
+      curY = sectionBar("Avertismente", AMBER, curY);
+      for (const w of warnings) {
         doc
           .font("Helvetica-Oblique")
           .fontSize(9)
-          .fillColor("#b45309")
-          .text(`⚠ ${safeText(w)}`, 58, doc.y + 4, { width: doc.page.width - 116 });
-        doc.moveDown(0.3);
+          .fillColor(AMBER)
+          .text(`⚠ ${safeText(w)}`, MARGIN + 12, curY, { width: CONTENT - 24 });
+        curY += 16;
       }
-      doc.moveDown(0.5);
+      curY += 8;
     }
 
-    // ── Evolutie rapoarte ────────────────────────────────────────────────────
-    if (trendData.length > 1) {
-      sectionHeader(`Evolutie: ultimele ${trendData.length} rapoarte`);
-      doc
-        .font("Helvetica")
-        .fontSize(9)
-        .fillColor(SLATE)
-        .text(
-          `Nr. rapoarte salvate: ${sorted.length}  |  Primul raport: ${new Date(sorted[sorted.length - 1].generatedAt).toLocaleDateString("ro-RO")}  |  Ultimul: ${new Date(sorted[0].generatedAt).toLocaleDateString("ro-RO")}`,
-          58,
-          doc.y + 6,
-          { width: doc.page.width - 116 }
-        );
-      doc.moveDown(1);
+    // ── DISCLAIMER ────────────────────────────────────────────────────────────
+    const disclaimer = safeText(
+      latest.disclaimer ||
+        "Acest raport descrie corelatii observate in jurnalul alimentar si nu reprezinta sfat medical. Nu inlocuieste consultatia unui medic sau nutritionist."
+    );
+    const discH = doc.font("Helvetica").fontSize(8).heightOfString(disclaimer, { width: CONTENT - 24 }) + 28;
+
+    // Force disclaimer onto same page if it fits, else new page
+    if (curY + discH > doc.page.height - MARGIN) {
+      doc.addPage();
+      curY = MARGIN;
     }
 
-    // ── Disclaimer ───────────────────────────────────────────────────────────
-    const disclaimerY = doc.page.height - 80;
-    doc.rect(50, disclaimerY, doc.page.width - 100, 44).fill("#fef9c3");
+    doc.rect(MARGIN, curY, CONTENT, discH).fill(AMBER_LIGHT).stroke("#fcd34d");
     doc
       .font("Helvetica-Bold")
       .fontSize(8)
-      .fillColor("#854d0e")
-      .text("DISCLAIMER MEDICAL", 58, disclaimerY + 6);
+      .fillColor("#92400e")
+      .text("DISCLAIMER MEDICAL", MARGIN + 12, curY + 8);
     doc
       .font("Helvetica")
       .fontSize(8)
-      .fillColor("#92400e")
-      .text(
-        safeText(
-          latest.disclaimer ||
-            "Acest raport descrie corelatii observate in jurnalul alimentar si nu reprezinta sfat medical. Nu inlocuieste consultatia unui medic sau nutritionist."
-        ),
-        58,
-        disclaimerY + 18,
-        { width: doc.page.width - 116 }
-      );
+      .fillColor("#78350f")
+      .text(disclaimer, MARGIN + 12, curY + 20, { width: CONTENT - 24 });
 
     doc.end();
   });

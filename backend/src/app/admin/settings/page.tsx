@@ -12,6 +12,7 @@ import TwoFASettings from './components/TwoFASettings';
 import PWASettings from './components/PWASettings';
 import PricingSettings from './components/PricingSettings';
 import RecaptchaSettings from './components/RecaptchaSettings';
+import SecuritySettings from './components/SecuritySettings';
 
 type SettingsSection =
   | 'email'
@@ -23,7 +24,8 @@ type SettingsSection =
   | 'users'
   | '2fa'
   | 'pwa'
-  | 'recaptcha';
+  | 'recaptcha'
+  | 'security';
 
 interface SectionItem {
   id: SettingsSection;
@@ -154,6 +156,15 @@ function BotIcon({ className }: { className?: string }) {
   );
 }
 
+function ShieldCheckIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+        d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+    </svg>
+  );
+}
+
 const sections: SectionItem[] = [
   {
     id: 'email',
@@ -215,6 +226,12 @@ const sections: SectionItem[] = [
     description: 'Anti-spam formular contact',
     icon: <BotIcon className="w-5 h-5" />,
   },
+  {
+    id: 'security',
+    label: 'Securitate',
+    description: 'Sync parola frontend',
+    icon: <ShieldCheckIcon className="w-5 h-5" />,
+  },
 ];
 
 const sectionComponents: Record<SettingsSection, React.ReactNode> = {
@@ -228,6 +245,7 @@ const sectionComponents: Record<SettingsSection, React.ReactNode> = {
   '2fa': <TwoFASettings />,
   pwa: <PWASettings />,
   recaptcha: <RecaptchaSettings />,
+  security: <SecuritySettings />,
 };
 
 export default function AdminSettingsPage() {
