@@ -20,6 +20,8 @@ export type Intolerance =
   | "peste"
   | "crustacee";
 
+export type ActivityLevel = "sedentary" | "light" | "moderate" | "active" | "very_active";
+
 export interface UserProfile {
   userId: string;
   name: string;
@@ -27,13 +29,30 @@ export interface UserProfile {
   dietaryPreference: DietaryPreference;
   intolerances: Intolerance[];
   updatedAt: string;
+  age?: number | null;
+  heightCm?: number | null;
+  weightKg?: number | null;
+  activityLevel?: ActivityLevel | null;
 }
 
 export interface UpdateProfileRequest {
   name?: string;
   dietaryPreference?: DietaryPreference;
   intolerances?: Intolerance[];
+  age?: number | null;
+  heightCm?: number | null;
+  weightKg?: number | null;
+  activityLevel?: ActivityLevel | null;
 }
+
+export const ACTIVITY_LEVEL_LABELS: Record<ActivityLevel, string> = {
+  sedentary: "Sedentar (fără activitate fizică)",
+  light: "Ușor activ (sport 1-2 zile/săpt.)",
+  moderate: "Moderat activ (sport 3-4 zile/săpt.)",
+  active: "Activ (sport 5+ zile/săpt.)",
+  very_active: "Foarte activ (sport zilnic intens)",
+};
+
 
 export const INTOLERANCE_LABELS: Record<Intolerance, string> = {
   lactoza: "Lactoză",

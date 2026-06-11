@@ -39,7 +39,7 @@ import type {
 } from "@/types/monitoring";
 import { SYMPTOM_LABELS } from "@/types/monitoring";
 
-type PlanTier = "none" | "basic" | "pro" | "pro_plus";
+type PlanTier = "none" | "basic" | "pro" | "pro_plus" | "enterprise";
 
 const ALL_SYMPTOMS = Object.keys(SYMPTOM_LABELS) as Symptom[];
 
@@ -60,7 +60,7 @@ const wellbeingColors: Record<WellbeingLevel, string> = {
 };
 
 function planAllows(userPlan: PlanTier, required: PlanTier): boolean {
-  const order: PlanTier[] = ["none", "basic", "pro", "pro_plus"];
+  const order: PlanTier[] = ["none", "basic", "pro", "pro_plus", "enterprise"];
   return order.indexOf(userPlan) >= order.indexOf(required);
 }
 

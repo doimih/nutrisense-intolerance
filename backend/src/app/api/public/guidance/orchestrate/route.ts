@@ -22,6 +22,7 @@ type OrchestratorRequest = {
   lang?: unknown;
   subscriptionTier?: unknown;
   context?: unknown;
+  previousGuidance?: unknown;
 };
 
 type MonitoringEntry = {
@@ -31,6 +32,20 @@ type MonitoringEntry = {
   symptoms?: string[];
   intensity?: number;
   latency?: number | null;
+  wellbeing?: number;
+};
+
+type PreviousGuidanceSummary = {
+  generatedAt: string;
+  recommendedFoods: string[];
+  avoidFoods: string[];
+};
+
+type PhysicalProfile = {
+  age?: number | null;
+  heightCm?: number | null;
+  weightKg?: number | null;
+  activityLevel?: string | null;
 };
 
 type GuidanceResult = {
@@ -80,7 +95,33 @@ function normalizeEntries(value: unknown): MonitoringEntry[] {
       symptoms: asStringArray(e.symptoms),
       intensity: typeof e.intensity === 'number' ? e.intensity : typeof e.symptomsIntensity === 'number' ? e.symptomsIntensity as number : undefined,
       latency: typeof e.latency === 'number' ? e.latency : null,
+      wellbeing: typeof e.wellbeing === 'number' ? e.wellbeing as number : undefined,
     }));
+}
+
+function normalizePreviousGuidance(value: unknown): PreviousGuidanceSummary[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter((e): e is Record<string, unknown> => !!e && typeof e === 'object' && !Array.isArray(e))
+    .slice(0, 3)
+    .map((e) => ({
+      generatedAt: typeof e.generatedAt === 'string' ? e.generatedAt : '',
+      recommendedFoods: asStringArray(e.recommendedFoods),
+      avoidFoods: asStringArray(e.avoidFoods),
+    }))
+    .filter((e) => e.generatedAt);
+}
+
+function normalizePhysicalProfile(value: unknown): PhysicalProfile | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const obj = value as Record<string, unknown>;
+  const p = asObject(obj.physicalProfile ?? obj);
+  return {
+    age: typeof p.age === 'number' ? p.age as number : null,
+    heightCm: typeof p.heightCm === 'number' ? p.heightCm as number : null,
+    weightKg: typeof p.weightKg === 'number' ? p.weightKg as number : null,
+    activityLevel: typeof p.activityLevel === 'string' ? p.activityLevel : null,
+  };
 }
 
 // ─── Prompt ───────────────────────────────────────────────────────────────────
@@ -116,7 +157,7 @@ function buildJsonFormatBlock(lang: 'ro' | 'en'): string {
 }`;
 }
 
-function buildSystemPrompt(lang: 'ro' | 'en'): string {
+function buildNutritionCore(lang: 'ro' | 'en'): string {
   if (lang === 'ro') {
     return `Esti un asistent de nutritie non-medical specializat in sensibilitati alimentare.
 
@@ -129,9 +170,7 @@ ANALIZA CERUTA:
 1. REACTII INTARZIATE: Daca o intrare din jurnal are campul "latency" intre 30 si 2880 minute SI are simptome, alimentele din acea masa sunt SUSPECTE. Noteaza aceste alimente in avoidFoods si mentioneaza latenta in generalTips.
 2. COMBINATII PROBLEMATICE: Identifica perechi de alimente care apar impreuna in mai multe intrari cu simptome. Mentioneaza combinatiile detectate in generalTips.
 3. ALIMENTE SIGURE: Alimentele care apar frecvent in intrari FARA simptome sunt probabil sigure. Pune-le in recommendedFoods.
-4. INTENSITATE: Pondereaza importanta unui aliment cu intensitatea simptomelor (campul "intensity", scala 1-10). Intensitate >= 7 = risc ridicat.
-
-${buildJsonFormatBlock('ro')}`;
+4. INTENSITATE: Pondereaza importanta unui aliment cu intensitatea simptomelor (campul "intensity", scala 1-10). Intensitate >= 7 = risc ridicat.`;
   }
 
   return `You are a non-medical nutrition assistant specializing in food sensitivities.
@@ -145,9 +184,11 @@ REQUIRED ANALYSIS:
 1. DELAYED REACTIONS: If a journal entry has a "latency" field between 30 and 2880 minutes AND has symptoms, the foods in that meal are SUSPECTED. Note these foods in avoidFoods and mention the latency in generalTips.
 2. PROBLEMATIC COMBINATIONS: Identify food pairs that appear together in multiple entries with symptoms. Mention detected combinations in generalTips.
 3. SAFE FOODS: Foods that appear frequently in entries WITHOUT symptoms are likely safe. Put them in recommendedFoods.
-4. INTENSITY: Weight the importance of a food by symptom intensity (field "intensity", scale 1-10). Intensity >= 7 = high risk.
+4. INTENSITY: Weight the importance of a food by symptom intensity (field "intensity", scale 1-10). Intensity >= 7 = high risk.`;
+}
 
-${buildJsonFormatBlock('en')}`;
+function buildSystemPrompt(lang: 'ro' | 'en'): string {
+  return `${buildNutritionCore(lang)}\n\n${buildJsonFormatBlock(lang)}`;
 }
 
 function buildUserPrompt(params: {
@@ -158,8 +199,10 @@ function buildUserPrompt(params: {
   detailLevel: unknown;
   subscriptionTier: unknown;
   entries: MonitoringEntry[];
+  physicalProfile?: PhysicalProfile | null;
+  previousGuidance?: PreviousGuidanceSummary[];
 }): string {
-  const { lang, userMessage, intolerances, dietaryPreference, detailLevel, subscriptionTier, entries } = params;
+  const { lang, userMessage, intolerances, dietaryPreference, detailLevel, subscriptionTier, entries, physicalProfile, previousGuidance } = params;
 
   const lines: string[] = [];
   lines.push(`REQUEST: ${userMessage}`);
@@ -168,6 +211,15 @@ function buildUserPrompt(params: {
   lines.push(`DETAIL_LEVEL: ${detailLevel ?? 'basic'}`);
   lines.push(`SUBSCRIPTION_TIER: ${subscriptionTier ?? 'new'}`);
   lines.push(`INTOLERANCES: ${intolerances.length > 0 ? intolerances.join(', ') : 'none'}`);
+
+  if (physicalProfile) {
+    const parts: string[] = [];
+    if (physicalProfile.age) parts.push(`varsta:${physicalProfile.age}`);
+    if (physicalProfile.heightCm) parts.push(`inaltime:${physicalProfile.heightCm}cm`);
+    if (physicalProfile.weightKg) parts.push(`greutate:${physicalProfile.weightKg}kg`);
+    if (physicalProfile.activityLevel) parts.push(`activitate:${physicalProfile.activityLevel}`);
+    if (parts.length > 0) lines.push(`PROFIL_FIZIC: ${parts.join(', ')}`);
+  }
 
   if (entries.length > 0) {
     lines.push('MONITORING_JOURNAL:');
@@ -179,10 +231,22 @@ function buildUserPrompt(params: {
         symptoms: entry.symptoms,
         intensity: entry.intensity,
         latency: entry.latency,
+        wellbeing: entry.wellbeing,
       }));
     }
   } else {
     lines.push('MONITORING_JOURNAL: empty');
+  }
+
+  if (previousGuidance && previousGuidance.length > 0) {
+    lines.push('RECOMANDARI_ANTERIOARE (nu repeta exact, evolueaza recomandarile):');
+    for (const prev of previousGuidance) {
+      lines.push(JSON.stringify({
+        data: prev.generatedAt,
+        recomandate: prev.recommendedFoods.slice(0, 5),
+        evitate: prev.avoidFoods.slice(0, 5),
+      }));
+    }
   }
 
   // Translate detailLevel into concrete numeric requirements so the AI knows
@@ -302,6 +366,15 @@ function parseGuidanceJson(raw: string): GuidanceResult {
 // ─── Route handler ────────────────────────────────────────────────────────────
 
 export async function POST(request: NextRequest) {
+  // Validate internal secret if configured — prevents direct external calls
+  const internalSecret = process.env.INTERNAL_SYNC_SECRET;
+  if (internalSecret) {
+    const incoming = request.headers.get('x-internal-secret');
+    if (incoming !== internalSecret) {
+      return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
+    }
+  }
+
   let body: OrchestratorRequest;
   try {
     body = (await request.json()) as OrchestratorRequest;
@@ -343,17 +416,20 @@ export async function POST(request: NextRequest) {
       ? contextObj.monitoringEntries
       : [];
   const entries = normalizeEntries(rawEntries);
+  const previousGuidance = normalizePreviousGuidance(body.previousGuidance);
+  const userProfileObj = asObject(body.userProfile);
+  const physicalProfile = normalizePhysicalProfile(userProfileObj);
 
   const userId = typeof body.userId === 'string' ? body.userId : 'anonymous';
   const userEmail = typeof body.userEmail === 'string' ? body.userEmail : 'unknown';
 
   const dbSystemPrompt = aiBrain?.systemPrompt?.trim();
-  // Admin custom prompt is prepended as ADDITIONAL INSTRUCTIONS — the mandatory
-  // JSON format block is always appended so parseGuidanceJson never fails.
+  // Admin custom prompt is SUPPLEMENTARY — nutrition core + JSON format are always
+  // included so the AI knows how to analyze and what schema to return.
   const systemPrompt = dbSystemPrompt && dbSystemPrompt.length > 20
-    ? `INSTRUCTIUNI SUPLIMENTARE ADMINISTRATOR:\n${dbSystemPrompt}\n\n${buildJsonFormatBlock(lang)}`
+    ? `${buildNutritionCore(lang)}\n\nINSTRUCTIUNI SUPLIMENTARE ADMINISTRATOR:\n${dbSystemPrompt}\n\n${buildJsonFormatBlock(lang)}`
     : buildSystemPrompt(lang);
-  const userPrompt = buildUserPrompt({ lang, userMessage, intolerances, dietaryPreference, detailLevel, subscriptionTier, entries });
+  const userPrompt = buildUserPrompt({ lang, userMessage, intolerances, dietaryPreference, detailLevel, subscriptionTier, entries, physicalProfile, previousGuidance });
 
   const messages: OpenAIMessage[] = [
     { role: 'system', content: systemPrompt },

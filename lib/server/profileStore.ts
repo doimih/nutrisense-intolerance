@@ -2,7 +2,7 @@ import "server-only";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { userProfiles } from "@/lib/db/schema";
-import type { DietaryPreference, Intolerance, UpdateProfileRequest, UserProfile } from "@/types/profile";
+import type { ActivityLevel, DietaryPreference, Intolerance, UpdateProfileRequest, UserProfile } from "@/types/profile";
 
 type SessionUser = {
   id: string;
@@ -22,6 +22,10 @@ function rowToProfile(row: typeof userProfiles.$inferSelect): UserProfile {
     dietaryPreference: row.dietaryPreference as DietaryPreference,
     intolerances: (row.intolerances as string[]) as Intolerance[],
     updatedAt: row.updatedAt,
+    age: row.age ?? null,
+    heightCm: row.heightCm ?? null,
+    weightKg: row.weightKg ?? null,
+    activityLevel: (row.activityLevel as ActivityLevel) ?? null,
   };
 }
 
@@ -41,6 +45,10 @@ export async function getProfileForUser(user: SessionUser): Promise<UserProfile>
       dietaryPreference: "normal",
       intolerances: [] as string[],
       updatedAt: now,
+      age: null,
+      heightCm: null,
+      weightKg: null,
+      activityLevel: null,
     };
     await db.insert(userProfiles).values(newProfile);
     return rowToProfile({ ...newProfile, id: 0 });
@@ -90,6 +98,10 @@ export async function updateProfileForUser(user: SessionUser, input: UpdateProfi
     dietaryPreference: nextDietary,
     intolerances: nextIntolerances as string[],
     updatedAt: now,
+    age: "age" in input ? (input.age ?? null) : (existing?.age ?? null),
+    heightCm: "heightCm" in input ? (input.heightCm ?? null) : (existing?.heightCm ?? null),
+    weightKg: "weightKg" in input ? (input.weightKg ?? null) : (existing?.weightKg ?? null),
+    activityLevel: "activityLevel" in input ? (input.activityLevel as string | null ?? null) : (existing?.activityLevel ?? null),
   };
 
   if (existing) {

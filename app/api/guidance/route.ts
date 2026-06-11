@@ -14,7 +14,7 @@ import {
 } from "@/lib/server/guidance/engine";
 import { getEffectivePlanTier, tierAllows, cappedDetailLevel } from "@/lib/billing/features";
 import { mineSimilarPatterns, deriveUserProblemFromMonitoring } from "@/lib/server/userProblemsStore";
-import type { GuidanceGenerateInput, PlanTier, SubscriptionTier } from "@/lib/server/guidance/types";
+import type { GuidanceGenerateInput, PhysicalProfile, PlanTier, PreviousGuidanceSummary, SubscriptionTier } from "@/lib/server/guidance/types";
 import type { DetailLevel, GuidanceResult, MealExample, MonitoringContextItem } from "@/types/guidance";
 import type { DietaryPreference, Intolerance } from "@/types/profile";
 
@@ -86,6 +86,7 @@ function isMonitoringContextItem(value: unknown): value is MonitoringContextItem
     candidate.symptoms.every((item) => typeof item === "string") &&
     typeof candidate.symptomsIntensity === "number" &&
     (typeof candidate.reactionLatencyMinutes === "number" || candidate.reactionLatencyMinutes === null) &&
+    (typeof candidate.wellbeing === "number" || typeof candidate.wellbeing === "undefined") &&
     typeof candidate.notes === "string"
   );
 }
@@ -106,6 +107,7 @@ async function toMonitoringContextFromStore(email: string): Promise<MonitoringCo
     symptomsIntensity: entry.symptomsIntensity,
     reactionLatencyMinutes:
       typeof entry.reactionLatencyMinutes === "number" ? entry.reactionLatencyMinutes : null,
+    wellbeing: typeof entry.wellbeing === "number" ? entry.wellbeing : undefined,
     notes: entry.notes,
   }));
 }
@@ -302,13 +304,17 @@ async function runRealOrchestrator(
     ? "Genereaza recomandari alimentare personalizate, alimente de evitat si exemple de mese pe baza profilului si jurnalului utilizatorului."
     : "Generate personalized food guidance, avoid-food signals, and meal examples using the user profile and monitoring journal.";
 
+  const internalSecret = process.env.INTERNAL_SYNC_SECRET;
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    "x-nutriaid-source": "frontend-guidance",
+  };
+  if (internalSecret) headers["x-internal-secret"] = internalSecret;
+
   const response = await fetch(`${backendUrl}/api/public/guidance/orchestrate`, {
     method: "POST",
     cache: "no-store",
-    headers: {
-      "Content-Type": "application/json",
-      "x-nutriaid-source": "frontend-guidance",
-    },
+    headers,
     body: JSON.stringify({
       sessionId: `usr_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
       userId,
@@ -327,7 +333,10 @@ async function runRealOrchestrator(
         dietType: input.dietaryPreference,
         intolerances: input.intolerances,
         subscriptionTier: input.subscriptionTier,
+        planTier: input.planTier,
+        physicalProfile: input.physicalProfile,
       },
+      previousGuidance: input.previousGuidance ?? [],
       databasePatterns: dbPatterns ?? {
         similarCases: [],
         commonTriggers: [],
@@ -340,7 +349,14 @@ async function runRealOrchestrator(
   });
 
   const payload = (await response.json().catch(() => ({}))) as OrchestratorProxyResponse;
-  if (!response.ok) return null;
+
+  if (!response.ok) {
+    // Propagate API key missing error so the user sees a meaningful message
+    if (response.status === 503 && typeof payload.error === "string" && payload.error.toLowerCase().includes("api key")) {
+      throw new Error(payload.error);
+    }
+    return null;
+  }
 
   return extractGuidanceFromOrchestrator(payload, input);
 }
@@ -391,7 +407,28 @@ export async function POST(request: NextRequest) {
       : await toMonitoringContextFromStore(email);
 
   const planTier: PlanTier = effectiveTier;
-  const subscriptionTier: SubscriptionTier = planTier !== "none" ? "active" : resolveSubscriptionTier(snapshot?.status ?? "none");
+  const subscriptionTier: SubscriptionTier =
+    snapshot && (snapshot.status === "active" || snapshot.status === "trialing")
+      ? "active"
+      : snapshot && (snapshot.status === "canceled" || snapshot.status === "incomplete_expired")
+      ? "expired"
+      : planTier !== "none"
+      ? "active"
+      : "new";
+
+  const physicalProfile: PhysicalProfile = {
+    age: profile.age ?? null,
+    heightCm: profile.heightCm ?? null,
+    weightKg: profile.weightKg ?? null,
+    activityLevel: profile.activityLevel ?? null,
+  };
+
+  const recentHistory = await listGuidanceByUser(email);
+  const previousGuidance: PreviousGuidanceSummary[] = recentHistory.slice(0, 3).map((r) => ({
+    generatedAt: r.generatedAt,
+    recommendedFoods: r.result.recommendedFoods ?? [],
+    avoidFoods: r.result.avoidFoods ?? [],
+  }));
 
   const input: GuidanceGenerateInput = {
     intolerances: isIntoleranceArray(body.intolerances) ? body.intolerances : profile.intolerances,
@@ -404,6 +441,8 @@ export async function POST(request: NextRequest) {
     lang,
     subscriptionTier,
     planTier,
+    physicalProfile,
+    previousGuidance,
   };
 
   const prompt = buildGuidancePrompt(input);
@@ -447,7 +486,11 @@ export async function POST(request: NextRequest) {
 
   try {
     result = await runRealOrchestrator(input, session.user.id, dbPatterns);
-  } catch {
+  } catch (orchErr) {
+    const msg = orchErr instanceof Error ? orchErr.message : "";
+    if (msg.toLowerCase().includes("api key")) {
+      return NextResponse.json({ error: msg, code: "ai_not_configured" }, { status: 503 });
+    }
     result = null;
   }
 

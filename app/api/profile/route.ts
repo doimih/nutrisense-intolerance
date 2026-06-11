@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { AUTH_COOKIE_NAME } from "@/lib/auth/session";
 import { readSessionToken } from "@/lib/auth/sessionToken";
 import { getProfileForUser, updateProfileForUser } from "@/lib/server/profileStore";
-import type { DietaryPreference, Intolerance, UpdateProfileRequest } from "@/types/profile";
+import type { ActivityLevel, DietaryPreference, Intolerance, UpdateProfileRequest } from "@/types/profile";
 
 export const runtime = "nodejs";
 
@@ -29,6 +29,8 @@ const VALID_INTOLERANCES: Intolerance[] = [
   "peste",
   "crustacee",
 ];
+
+const VALID_ACTIVITY_LEVELS: ActivityLevel[] = ["sedentary", "light", "moderate", "active", "very_active"];
 
 function getSession(request: NextRequest) {
   const token = request.cookies.get(AUTH_COOKIE_NAME)?.value;
@@ -77,9 +79,38 @@ export async function PATCH(request: NextRequest) {
     if (!Array.isArray(body.intolerances)) {
       return badRequest("Invalid intolerances field.");
     }
-
     if (!body.intolerances.every((item) => VALID_INTOLERANCES.includes(item))) {
       return badRequest("Invalid intolerance value provided.");
+    }
+  }
+
+  if (typeof body.age !== "undefined" && body.age !== null) {
+    const age = Number(body.age);
+    if (!Number.isInteger(age) || age < 1 || age > 120) {
+      return badRequest("Invalid age field.");
+    }
+    body.age = age;
+  }
+
+  if (typeof body.heightCm !== "undefined" && body.heightCm !== null) {
+    const h = Number(body.heightCm);
+    if (!Number.isInteger(h) || h < 50 || h > 280) {
+      return badRequest("Invalid heightCm field.");
+    }
+    body.heightCm = h;
+  }
+
+  if (typeof body.weightKg !== "undefined" && body.weightKg !== null) {
+    const w = Number(body.weightKg);
+    if (!Number.isInteger(w) || w < 20 || w > 500) {
+      return badRequest("Invalid weightKg field.");
+    }
+    body.weightKg = w;
+  }
+
+  if (typeof body.activityLevel !== "undefined" && body.activityLevel !== null) {
+    if (!VALID_ACTIVITY_LEVELS.includes(body.activityLevel)) {
+      return badRequest("Invalid activityLevel field.");
     }
   }
 

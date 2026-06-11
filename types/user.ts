@@ -11,6 +11,7 @@ export interface User {
   trialEndsAt?: string | null;
   createdAt: string;
   updatedAt: string;
+  sessionExpiresAt?: number; // Unix timestamp seconds
 }
 
 export interface AuthTokens {

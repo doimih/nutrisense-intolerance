@@ -42,6 +42,10 @@ export const userProfiles = pgTable("user_profiles", {
   dietaryPreference: text("dietary_preference").notNull(),
   intolerances: text("intolerances").array().notNull(),
   updatedAt: text("updated_at").notNull(),
+  age: integer("age"),
+  heightCm: integer("height_cm"),
+  weightKg: integer("weight_kg"),
+  activityLevel: text("activity_level"),
 });
 
 export const monitoringEntries = pgTable("monitoring_entries", {
