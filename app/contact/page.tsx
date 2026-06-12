@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { Mail, Clock3, MessageSquare, ArrowRight, CheckCircle2, AlertCircle } from 'lucide-react';
+import { useLanguage } from '@/components/LanguageProvider';
 
 declare global {
   interface Window {
@@ -78,16 +79,6 @@ const copy = {
 
 type Lang = keyof typeof copy;
 
-function useLang(): Lang {
-  const [lang, setLang] = useState<Lang>('ro');
-  useEffect(() => {
-    const stored = localStorage.getItem('lang') as Lang | null;
-    if (stored === 'en' || stored === 'ro') setLang(stored);
-    else if (navigator.language.startsWith('en')) setLang('en');
-  }, []);
-  return lang;
-}
-
 type RecaptchaConfig = { enabled: boolean; siteKey: string };
 
 function useRecaptcha(): RecaptchaConfig {
@@ -135,7 +126,7 @@ async function getRecaptchaToken(siteKey: string): Promise<string> {
 }
 
 export default function ContactPage() {
-  const lang = useLang();
+  const { lang } = useLanguage();
   const t = copy[lang];
   const recaptcha = useRecaptcha();
 

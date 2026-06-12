@@ -13,6 +13,8 @@ import PWASettings from './components/PWASettings';
 import PricingSettings from './components/PricingSettings';
 import RecaptchaSettings from './components/RecaptchaSettings';
 import SecuritySettings from './components/SecuritySettings';
+import ArchiveSettings from './components/ArchiveSettings';
+import VisitorSettings from './components/VisitorSettings';
 
 type SettingsSection =
   | 'email'
@@ -25,7 +27,9 @@ type SettingsSection =
   | '2fa'
   | 'pwa'
   | 'recaptcha'
-  | 'security';
+  | 'security'
+  | 'archive'
+  | 'visitor';
 
 interface SectionItem {
   id: SettingsSection;
@@ -165,6 +169,24 @@ function ShieldCheckIcon({ className }: { className?: string }) {
   );
 }
 
+function ArchiveIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+    </svg>
+  );
+}
+
+function VisitorIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+    </svg>
+  );
+}
+
 const sections: SectionItem[] = [
   {
     id: 'email',
@@ -232,6 +254,18 @@ const sections: SectionItem[] = [
     description: 'Sync parola frontend',
     icon: <ShieldCheckIcon className="w-5 h-5" />,
   },
+  {
+    id: 'archive',
+    label: 'Arhiva',
+    description: 'Descarcare arhiva platforma',
+    icon: <ArchiveIcon className="w-5 h-5" />,
+  },
+  {
+    id: 'visitor',
+    label: 'Vizitator',
+    description: 'Acces demo temporar',
+    icon: <VisitorIcon className="w-5 h-5" />,
+  },
 ];
 
 const sectionComponents: Record<SettingsSection, React.ReactNode> = {
@@ -246,6 +280,8 @@ const sectionComponents: Record<SettingsSection, React.ReactNode> = {
   pwa: <PWASettings />,
   recaptcha: <RecaptchaSettings />,
   security: <SecuritySettings />,
+  archive: <ArchiveSettings />,
+  visitor: <VisitorSettings />,
 };
 
 export default function AdminSettingsPage() {

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { checkRateLimit, getClientIp } from "@/lib/server/rateLimit";
 import { createPasswordResetToken } from "@/lib/server/authStore";
 import { sendPasswordResetEmail } from "@/lib/server/email";
+import { isAppLanguage } from "@/lib/i18n/config";
 
 export const runtime = "nodejs";
 
@@ -35,10 +36,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Email is required." }, { status: 400 });
   }
 
+  const rawLang = request.cookies.get("ns_lang")?.value;
+  const lang = isAppLanguage(rawLang) ? rawLang : "ro";
+
   // Always return success to prevent email enumeration
   const result = await createPasswordResetToken(email);
   if (result) {
-    await sendPasswordResetEmail({ email, name: result.name, token: result.token });
+    await sendPasswordResetEmail({ email, name: result.name, token: result.token, lang });
   }
 
   await new Promise((resolve) => setTimeout(resolve, 400));

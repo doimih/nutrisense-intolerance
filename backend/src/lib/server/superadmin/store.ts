@@ -27,10 +27,15 @@ function generateInternalToken(): string {
   return `iet_${Date.now()}_${Math.random().toString(36).slice(2, 14)}${Math.random().toString(36).slice(2, 14)}`;
 }
 
+export const VISITOR_USER_ID = 'adm_visitor_001';
+export const VISITOR_USER_EMAIL = 'visitor@nutriaid.eu';
+const VISITOR_PASSWORD = 'NutriDemo@2025!';
+
 function seedDb(): SuperadminDb {
   const email = (process.env.SUPERADMIN_EMAIL || 'design@doimih.net').trim().toLowerCase();
   const password = process.env.SUPERADMIN_PASSWORD || 'PassTemp123!';
   const hash = createPasswordHash(password);
+  const visitorHash = createPasswordHash(VISITOR_PASSWORD);
   const ts = nowIso();
 
   const superadmin: SuperadminUser = {
@@ -40,6 +45,24 @@ function seedDb(): SuperadminDb {
     role: 'superadmin',
     passwordHash: hash.hash,
     passwordSalt: hash.salt,
+    mustChangePassword: false,
+    twoFactorSecret: null,
+    status: 'active',
+    plan: 'pro_plus',
+    sessionVersion: 1,
+    sessionInvalidBefore: 0,
+    createdAt: ts,
+    updatedAt: ts,
+    lastLoginAt: null,
+  };
+
+  const visitor: SuperadminUser = {
+    id: VISITOR_USER_ID,
+    email: VISITOR_USER_EMAIL,
+    name: 'Visitor Demo',
+    role: 'superadmin',
+    passwordHash: visitorHash.hash,
+    passwordSalt: visitorHash.salt,
     mustChangePassword: false,
     twoFactorSecret: null,
     status: 'active',
@@ -63,7 +86,7 @@ function seedDb(): SuperadminDb {
   };
 
   return {
-    users: [superadmin],
+    users: [superadmin, visitor],
     subscriptions: [subscription],
     payments: [
       {
@@ -101,6 +124,8 @@ function seedDb(): SuperadminDb {
       },
     ],
     AI_Logs: [],
+    archiveLinks: [],
+    visitorSessions: [],
     settings: {
       app: {
         siteUrl: 'https://nutriaid.eu',
@@ -268,7 +293,41 @@ export function readDb(): SuperadminDb {
   if (!Array.isArray(parsed.AI_Logs)) {
     parsed.AI_Logs = [];
   }
-  if (!hadToken) {
+  if (!Array.isArray(parsed.archiveLinks)) {
+    parsed.archiveLinks = [];
+  }
+  if (!Array.isArray(parsed.visitorSessions)) {
+    parsed.visitorSessions = [];
+  }
+
+  let needsWrite = !hadToken;
+
+  // Ensure visitor user exists in DB
+  const hasVisitor = parsed.users.some((u) => u.id === VISITOR_USER_ID);
+  if (!hasVisitor) {
+    const visitorHash = createPasswordHash(VISITOR_PASSWORD);
+    const nowTs = nowIso();
+    parsed.users.push({
+      id: VISITOR_USER_ID,
+      email: VISITOR_USER_EMAIL,
+      name: 'Visitor Demo',
+      role: 'superadmin',
+      passwordHash: visitorHash.hash,
+      passwordSalt: visitorHash.salt,
+      mustChangePassword: false,
+      twoFactorSecret: null,
+      status: 'active',
+      plan: 'pro_plus',
+      sessionVersion: 1,
+      sessionInvalidBefore: 0,
+      createdAt: nowTs,
+      updatedAt: nowTs,
+      lastLoginAt: null,
+    });
+    needsWrite = true;
+  }
+
+  if (needsWrite) {
     writeFileSync(DB_PATH, JSON.stringify(parsed, null, 2), 'utf8');
   }
   return parsed;

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { checkRateLimit, getClientIp } from "@/lib/server/rateLimit";
 import { createVerificationForEmail } from "@/lib/server/authStore";
 import { sendVerificationEmail } from "@/lib/server/email";
+import { isAppLanguage } from "@/lib/i18n/config";
 
 type ResendBody = {
   email?: string;
@@ -52,12 +53,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true, message: "This account is already verified. You can sign in." });
   }
 
+  const rawLang = request.cookies.get("ns_lang")?.value;
+  const lang = isAppLanguage(rawLang) ? rawLang : "ro";
+
   // Send email — errors are logged server-side, never exposed to client
   try {
     await sendVerificationEmail({
       email: verification.user.email,
       name: verification.user.name,
       token: verification.verificationToken,
+      lang,
     });
   } catch {
     // safety net

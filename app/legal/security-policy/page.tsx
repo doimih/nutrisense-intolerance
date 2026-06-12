@@ -1,103 +1,90 @@
 import React from "react";
 import type { Metadata } from "next";
 import LegalLayout from "@/app/legal/_components/LegalLayout";
+import { getServerLanguage } from "@/lib/i18n/server";
 
-export const metadata: Metadata = { title: "Politica de Securitate" };
+export function generateMetadata(): Metadata {
+  const isRo = getServerLanguage() === "ro";
+  return { title: isRo ? "Politica de Securitate" : "Security Policy" };
+}
 
 export default function SecurityPolicyPage() {
+  const isRo = getServerLanguage() === "ro";
+
   return (
-    <LegalLayout title="Politica de Securitate" lastUpdated="1 ianuarie 2025">
-      <p>
-        Securitatea datelor tale este o prioritate pentru NutriAID
-        Intolerances. Această politică descrie măsurile de securitate
-        implementate și responsabilitățile utilizatorilor.
-      </p>
-
-      <h2>1. Măsuri tehnice de securitate</h2>
-
-      <h3>1.1. Transmiterea datelor</h3>
-      <ul>
-        <li>Toate comunicațiile sunt criptate folosind TLS 1.2 sau superior (HTTPS).</li>
-        <li>Certificatele SSL sunt reînnoite automat și monitorizate permanent.</li>
-        <li>Conexiunile HTTP sunt redirecționate automat către HTTPS.</li>
-      </ul>
-
-      <h3>1.2. Stocarea parolelor</h3>
-      <ul>
-        <li>Parolele sunt stocate exclusiv sub formă de hash, folosind algoritmi de hashing securizați (bcrypt sau Argon2).</li>
-        <li>Niciun angajat nu poate vedea parola ta în text clar.</li>
-        <li>Resetarea parolei se realizează prin link securizat cu expirare.</li>
-      </ul>
-
-      <h3>1.3. Autentificare și sesiuni</h3>
-      <ul>
-        <li>Sesiunile sunt gestionate prin JWT (JSON Web Tokens) semnate criptografic.</li>
-        <li>Tokenele de acces expiră după o perioadă limitată de inactivitate.</li>
-        <li>La deconectare, toate sesiunile active sunt invalidate.</li>
-      </ul>
-
-      <h3>1.4. Baza de date</h3>
-      <ul>
-        <li>Datele sunt stocate pe servere securizate, cu acces restricționat.</li>
-        <li>Backup-uri automate periodice cu criptare.</li>
-        <li>Separarea datelor prin izolare la nivel de aplicație.</li>
-      </ul>
-
-      <h2>2. Măsuri organizatorice</h2>
-      <ul>
-        <li>Accesul la datele utilizatorilor este restricționat la personalul autorizat pe baza principiului &quot;minim necesar&quot;.</li>
-        <li>Angajații au obligații contractuale de confidențialitate.</li>
-        <li>Verificări periodice de securitate și teste de penetrare.</li>
-        <li>Proceduri de răspuns la incidente documentate și testate.</li>
-      </ul>
-
-      <h2>3. Responsabilitățile utilizatorului</h2>
-      <p>Pentru securitatea contului tău, te rugăm:</p>
-      <ul>
-        <li>Utilizează o parolă puternică, unică pentru acest cont (minim 8 caractere, combinație de litere, cifre și caractere speciale).</li>
-        <li>Nu partaja credențialele contului cu alte persoane.</li>
-        <li>Deconectează-te după utilizare pe dispozitive partajate sau publice.</li>
-        <li>Menține software-ul (browser, sistem de operare) actualizat.</li>
-        <li>Fii atent la tentative de phishing — nu vom solicita niciodată parola prin email.</li>
-      </ul>
-
-      <h2>4. Raportarea vulnerabilităților</h2>
-      <p>
-        Dacă ai descoperit o vulnerabilitate de securitate, te rugăm să ne
-        raportezi responsabil la <strong>security@nutriaid.ro</strong> înainte de
-        a o face publică. Ne angajăm să:
-      </p>
-      <ul>
-        <li>Confirmăm primirea raportului în 48 de ore.</li>
-        <li>Investigăm și remediem problema în timp rezonabil.</li>
-        <li>Te informăm despre progresul remedierii.</li>
-        <li>Recunoaștem contribuția ta (dacă dorești).</li>
-      </ul>
-
-      <h2>5. Notificarea breșelor de securitate</h2>
-      <p>
-        În cazul unui incident de securitate care afectează datele tale
-        personale, te vom notifica conform cerințelor GDPR:
-      </p>
-      <ul>
-        <li>Autoritatea de supraveghere (ANSPDCP) va fi notificată în 72 de ore de la descoperire.</li>
-        <li>Utilizatorii afectați vor fi notificați fără întârzieri nejustificate dacă incidentul prezintă un risc ridicat pentru drepturile lor.</li>
-        <li>Notificarea va include natura incidentului, datele afectate, măsurile luate și recomandările pentru utilizatori.</li>
-      </ul>
-
-      <h2>6. Limitele securității</h2>
-      <p>
-        Deși implementăm măsuri riguroase de securitate, nicio metodă de
-        transmitere sau stocare electronică nu este 100% sigură. Nu putem
-        garanta securitate absolută, dar ne angajăm să menținem standarde
-        ridicate și să acționăm prompt în caz de incident.
-      </p>
-
-      <h2>7. Contact securitate</h2>
-      <p>
-        Pentru probleme de securitate: security@nutriaid.ro<br />
-        Pentru alte întrebări: contact@nutriaid.eu
-      </p>
+    <LegalLayout
+      titleRo="Politica de Securitate"
+      titleEn="Security Policy"
+      lastUpdatedRo="1 ianuarie 2025"
+      lastUpdatedEn="1 January 2025"
+    >
+      {isRo ? (
+        <>
+          <p>Securitatea datelor tale este o prioritate pentru NutriAID Intolerances. Această politică descrie măsurile de securitate implementate și responsabilitățile utilizatorilor.</p>
+          <h2>1. Măsuri tehnice de securitate</h2>
+          <h3>1.1. Transmiterea datelor</h3>
+          <ul>
+            <li>Toate comunicațiile sunt criptate folosind TLS 1.2 sau superior (HTTPS).</li>
+            <li>Certificatele SSL sunt reînnoite automat și monitorizate permanent.</li>
+          </ul>
+          <h3>1.2. Stocarea parolelor</h3>
+          <ul>
+            <li>Parolele sunt stocate exclusiv sub formă de hash, folosind algoritmi securizați (bcrypt sau Argon2).</li>
+            <li>Niciun angajat nu poate vedea parola ta în text clar.</li>
+          </ul>
+          <h3>1.3. Autentificare și sesiuni</h3>
+          <ul>
+            <li>Sesiunile sunt gestionate prin JWT (JSON Web Tokens) semnate criptografic.</li>
+            <li>Tokenele de acces expiră după o perioadă limitată de inactivitate.</li>
+          </ul>
+          <h2>2. Responsabilitățile utilizatorului</h2>
+          <p>Pentru securitatea contului tău, te rugăm:</p>
+          <ul>
+            <li>Utilizează o parolă puternică, unică pentru acest cont.</li>
+            <li>Nu partaja credențialele contului cu alte persoane.</li>
+            <li>Deconectează-te după utilizare pe dispozitive partajate sau publice.</li>
+          </ul>
+          <h2>3. Raportarea vulnerabilităților</h2>
+          <p>Dacă ai descoperit o vulnerabilitate de securitate, te rugăm să ne raportezi la <strong>security@nutriaid.ro</strong>. Ne angajăm să confirmăm primirea în 48 de ore și să remediem problema.</p>
+          <h2>4. Notificarea breșelor de securitate</h2>
+          <p>În cazul unui incident, autoritatea de supraveghere va fi notificată în 72 de ore, iar utilizatorii afectați fără întârzieri nejustificate.</p>
+          <h2>5. Contact</h2>
+          <p>Probleme de securitate: security@nutriaid.ro</p>
+        </>
+      ) : (
+        <>
+          <p>The security of your data is a priority for NutriAID Intolerances. This policy describes the security measures implemented and user responsibilities.</p>
+          <h2>1. Technical security measures</h2>
+          <h3>1.1. Data transmission</h3>
+          <ul>
+            <li>All communications are encrypted using TLS 1.2 or higher (HTTPS).</li>
+            <li>SSL certificates are automatically renewed and permanently monitored.</li>
+          </ul>
+          <h3>1.2. Password storage</h3>
+          <ul>
+            <li>Passwords are stored exclusively as hashes, using secure algorithms (bcrypt or Argon2).</li>
+            <li>No employee can see your password in plain text.</li>
+          </ul>
+          <h3>1.3. Authentication and sessions</h3>
+          <ul>
+            <li>Sessions are managed through cryptographically signed JWTs (JSON Web Tokens).</li>
+            <li>Access tokens expire after a limited period of inactivity.</li>
+          </ul>
+          <h2>2. User responsibilities</h2>
+          <p>To keep your account secure, please:</p>
+          <ul>
+            <li>Use a strong password, unique to this account.</li>
+            <li>Do not share your account credentials with other people.</li>
+            <li>Log out after using shared or public devices.</li>
+          </ul>
+          <h2>3. Reporting vulnerabilities</h2>
+          <p>If you have discovered a security vulnerability, please report it responsibly to <strong>security@nutriaid.ro</strong>. We commit to acknowledging receipt within 48 hours and remedying the issue.</p>
+          <h2>4. Security breach notification</h2>
+          <p>In the event of an incident, the supervisory authority will be notified within 72 hours and affected users without undue delay.</p>
+          <h2>5. Contact</h2>
+          <p>Security issues: security@nutriaid.ro</p>
+        </>
+      )}
     </LegalLayout>
   );
 }

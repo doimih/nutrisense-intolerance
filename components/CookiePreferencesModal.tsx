@@ -3,33 +3,65 @@
 import React, { useState, useEffect } from "react";
 import { useCookies } from "./CookieContext";
 import type { CookiePreferences } from "./CookieContext";
+import { useLanguage } from "./LanguageProvider";
 
-type Category = {
-  key: keyof Omit<CookiePreferences, "necessary">;
-  label: string;
-  description: string;
-};
+const copy = {
+  ro: {
+    title: "Setări cookie-uri",
+    closeLabel: "Închide",
+    necessary: "Strict necesare",
+    necessaryBadge: "Întotdeauna activ",
+    necessaryDesc: "Cookie-uri esențiale pentru autentificare, securitate și funcționarea de bază a platformei. Nu pot fi dezactivate.",
+    categories: {
+      analytics: {
+        label: "Analiză",
+        description: "Ne ajută să înțelegem cum este folosită platforma pentru a îmbunătăți performanța.",
+      },
+      marketing: {
+        label: "Marketing",
+        description: "Folosite pentru a afișa conținut relevant și pentru a măsura eficiența campaniilor.",
+      },
+      personalization: {
+        label: "Personalizare",
+        description: "Permite personalizarea experienței în funcție de preferințele tale.",
+      },
+    },
+    save: "Salvează preferințele",
+    acceptAll: "Acceptă toate",
+    rejectOptional: "Respinge opționale",
+  },
+  en: {
+    title: "Cookie settings",
+    closeLabel: "Close",
+    necessary: "Strictly necessary",
+    necessaryBadge: "Always active",
+    necessaryDesc: "Essential cookies for authentication, security and basic platform functionality. Cannot be disabled.",
+    categories: {
+      analytics: {
+        label: "Analytics",
+        description: "Helps us understand how the platform is used to improve performance.",
+      },
+      marketing: {
+        label: "Marketing",
+        description: "Used to display relevant content and measure campaign effectiveness.",
+      },
+      personalization: {
+        label: "Personalisation",
+        description: "Enables personalisation of the experience based on your preferences.",
+      },
+    },
+    save: "Save preferences",
+    acceptAll: "Accept all",
+    rejectOptional: "Reject optional",
+  },
+} as const;
 
-const CATEGORIES: Category[] = [
-  {
-    key: "analytics",
-    label: "Analiză",
-    description: "Ne ajută să înțelegem cum este folosită platforma pentru a îmbunătăți performanța.",
-  },
-  {
-    key: "marketing",
-    label: "Marketing",
-    description: "Folosite pentru a afișa conținut relevant și pentru a măsura eficiența campaniilor.",
-  },
-  {
-    key: "personalization",
-    label: "Personalizare",
-    description: "Permite personalizarea experienței în funcție de preferințele tale.",
-  },
-];
+type CategoryKey = keyof Omit<CookiePreferences, "necessary">;
 
 export default function CookiePreferencesModal() {
   const { showModal, closeModal, acceptAll, rejectOptional, savePreferences, preferences } = useCookies();
+  const { lang } = useLanguage();
+  const t = copy[lang];
   const [toggles, setToggles] = useState({ analytics: false, marketing: false, personalization: false });
 
   useEffect(() => {
@@ -44,17 +76,20 @@ export default function CookiePreferencesModal() {
 
   if (!showModal) return null;
 
-  const toggle = (key: keyof typeof toggles) => {
+  const toggle = (key: CategoryKey) => {
     setToggles((prev) => ({ ...prev, [key]: !prev[key] }));
   };
+
+  const categories: { key: CategoryKey; label: string; description: string }[] = [
+    { key: "analytics", label: t.categories.analytics.label, description: t.categories.analytics.description },
+    { key: "marketing", label: t.categories.marketing.label, description: t.categories.marketing.description },
+    { key: "personalization", label: t.categories.personalization.label, description: t.categories.personalization.description },
+  ];
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
       {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-        onClick={closeModal}
-      />
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={closeModal} />
 
       {/* Modal */}
       <div className="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
@@ -67,12 +102,12 @@ export default function CookiePreferencesModal() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
             </div>
-            <h2 className="text-base font-bold text-slate-900 dark:text-white">Setări cookie-uri</h2>
+            <h2 className="text-base font-bold text-slate-900 dark:text-white">{t.title}</h2>
           </div>
           <button
             onClick={closeModal}
             className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-            aria-label="Închide"
+            aria-label={t.closeLabel}
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -86,16 +121,13 @@ export default function CookiePreferencesModal() {
           <div className="flex items-start gap-4 p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
-                <p className="text-sm font-semibold text-slate-900 dark:text-white">Strict necesare</p>
+                <p className="text-sm font-semibold text-slate-900 dark:text-white">{t.necessary}</p>
                 <span className="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300">
-                  Întotdeauna activ
+                  {t.necessaryBadge}
                 </span>
               </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                Cookie-uri esențiale pentru autentificare, securitate și funcționarea de bază a platformei. Nu pot fi dezactivate.
-              </p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">{t.necessaryDesc}</p>
             </div>
-            {/* Always-on toggle (disabled) */}
             <div className="flex-shrink-0 pt-0.5">
               <div className="w-11 h-6 bg-green-500 rounded-full relative opacity-60 cursor-not-allowed">
                 <span className="absolute right-1 top-1 w-4 h-4 bg-white rounded-full shadow" />
@@ -103,7 +135,7 @@ export default function CookiePreferencesModal() {
             </div>
           </div>
 
-          {CATEGORIES.map((cat) => (
+          {categories.map((cat) => (
             <div
               key={cat.key}
               className="flex items-start gap-4 p-4 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 transition-colors"
@@ -138,19 +170,19 @@ export default function CookiePreferencesModal() {
             onClick={() => savePreferences(toggles)}
             className="flex-1 sm:flex-none px-5 py-2.5 text-sm font-semibold text-white bg-green-600 hover:bg-green-700 rounded-xl transition-colors"
           >
-            Salvează preferințele
+            {t.save}
           </button>
           <button
             onClick={acceptAll}
             className="flex-1 sm:flex-none px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-colors"
           >
-            Acceptă toate
+            {t.acceptAll}
           </button>
           <button
             onClick={rejectOptional}
             className="flex-1 sm:flex-none px-4 py-2.5 text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
           >
-            Respinge opționale
+            {t.rejectOptional}
           </button>
         </div>
       </div>
