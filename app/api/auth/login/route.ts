@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { AUTH_COOKIE_MAX_AGE_SECONDS, AUTH_COOKIE_NAME } from "@/lib/auth/session";
 import { createSessionToken } from "@/lib/auth/sessionToken";
-import { authenticateUser } from "@/lib/server/authStore";
+import { authenticateUser, ensureSeededVisitor, FRONTEND_VISITOR_EMAIL } from "@/lib/server/authStore";
 import { checkRateLimit, getClientIp } from "@/lib/server/rateLimit";
+import { checkAndCreateVisitorSession } from "@/lib/server/visitorSessionStore";
 
 type LoginBody = {
   email?: string;
@@ -37,11 +38,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
   }
 
-  const email = body.email?.trim() ?? "";
+  const email = body.email?.trim().toLowerCase() ?? "";
   const password = body.password ?? "";
 
   if (!email || !password) {
     return NextResponse.json({ error: "Email and password are required." }, { status: 400 });
+  }
+
+  // Ensure visitor user exists in DB before auth attempt
+  if (email === FRONTEND_VISITOR_EMAIL) {
+    await ensureSeededVisitor().catch(() => null);
   }
 
   const auth = await authenticateUser(email, password);
@@ -61,6 +67,51 @@ export async function POST(request: NextRequest) {
   }
 
   const user = auth.user;
+
+  // ── Visitor IP enforcement ───────────────────────────────────────────────────
+  if (email === FRONTEND_VISITOR_EMAIL) {
+    const access = checkAndCreateVisitorSession(ip);
+    if (!access.allowed) {
+      if (access.reason === "already_active") {
+        return NextResponse.json(
+          { error: "Sesiunea de vizitator este deja activa pentru acest IP." },
+          { status: 403 },
+        );
+      }
+      if (access.reason === "blocked") {
+        return NextResponse.json(
+          { error: `Accesul de pe acest IP este blocat. Reveniti in ${access.blockRemainingMinutes} minute sau contactati administratorul.` },
+          { status: 403 },
+        );
+      }
+      // expired_locked
+      return NextResponse.json(
+        { error: "Accesul de pe acest IP a expirat. Contactati administratorul pentru a reseta accesul." },
+        { status: 403 },
+      );
+    }
+
+    // Issue 15-minute session for visitor
+    const token = await createSessionToken(
+      { id: user.id, name: user.name, email: user.email, role: user.role },
+      access.maxAgeSeconds,
+    );
+
+    const response = NextResponse.json({
+      user,
+      isVisitor: true,
+      sessionExpiresAt: access.sessionExpiresAt,
+    });
+    response.cookies.set(AUTH_COOKIE_NAME, token, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      maxAge: access.maxAgeSeconds,
+    });
+    return response;
+  }
+  // ── End visitor logic ────────────────────────────────────────────────────────
 
   const token = await createSessionToken(
     { id: user.id, name: user.name, email: user.email, role: user.role },

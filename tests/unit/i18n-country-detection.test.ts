@@ -9,13 +9,13 @@ describe("country-based language detection", () => {
     expect(inferLanguageFromCountry("RO")).toBe("ro");
   });
 
-  it("returns Romanian for non-RO country codes in RO-only mode", () => {
-    expect(detectLanguageFromCountry("DE")).toBe("ro");
-    expect(detectLanguageFromCountry("US")).toBe("ro");
-    expect(inferLanguageFromCountry("FR")).toBe("ro");
+  it("returns English for non-RO country codes", () => {
+    expect(detectLanguageFromCountry("DE")).toBe("en");
+    expect(detectLanguageFromCountry("US")).toBe("en");
+    expect(inferLanguageFromCountry("FR")).toBe("en");
   });
 
-  it("returns Romanian when country code is missing", () => {
+  it("returns Romanian (default) when country code is missing", () => {
     expect(detectLanguageFromCountry(null)).toBe("ro");
     expect(inferLanguageFromCountry(null)).toBe("ro");
   });

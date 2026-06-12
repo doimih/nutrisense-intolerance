@@ -31,6 +31,18 @@ export type SuperadminSession = {
   ip: string;
   issuedAt: number;
   exp: number;
+  isVisitor?: boolean;
+};
+
+export type VisitorIpSession = {
+  id: string;
+  system: 'backend' | 'frontend';
+  ip: string;
+  sessionStartsAt: string;
+  sessionExpiresAt: string;
+  blockUntil: string;
+  resetBy: string | null;
+  resetAt: string | null;
 };
 
 export type SubscriptionRecord = {
@@ -234,6 +246,16 @@ export type PlatformSettings = {
   };
 };
 
+export type ArchiveLink = {
+  id: string;
+  token: string;
+  sentToEmail: string;
+  generatedBy: string;
+  expiresAt: string;
+  downloadedAt: string | null;
+  createdAt: string;
+};
+
 export type SuperadminDb = {
   users: SuperadminUser[];
   subscriptions: SubscriptionRecord[];
@@ -243,5 +265,7 @@ export type SuperadminDb = {
   securityEvents: SecurityEvent[];
   aiLogs: AIExecutionLog[];
   AI_Logs: AILogRecord[];
+  archiveLinks: ArchiveLink[];
+  visitorSessions: VisitorIpSession[];
   settings: PlatformSettings;
 };

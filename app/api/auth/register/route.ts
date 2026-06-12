@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createUser } from "@/lib/server/authStore";
 import { sendVerificationEmail } from "@/lib/server/email";
 import { checkRateLimit, getClientIp } from "@/lib/server/rateLimit";
+import { isAppLanguage } from "@/lib/i18n/config";
 
 type RegisterBody = {
   name?: string;
@@ -67,12 +68,16 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const rawLang = request.cookies.get("ns_lang")?.value;
+  const lang = isAppLanguage(rawLang) ? rawLang : "ro";
+
   // Send verification email — errors are logged server-side, never exposed to client
   try {
     await sendVerificationEmail({
       email: created.user.email,
       name: created.user.name,
       token: created.verificationToken,
+      lang,
     });
   } catch {
     // sendVerificationEmail never throws, safety net only

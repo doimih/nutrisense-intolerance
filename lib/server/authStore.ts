@@ -18,6 +18,10 @@ const FRONTEND_SUPERADMIN_EMAIL = (
 const FRONTEND_SUPERADMIN_PASSWORD =
   process.env.FRONTEND_SUPERADMIN_PASSWORD || "PassTemp123!";
 
+export const FRONTEND_VISITOR_EMAIL = "visitor@nutriaid.eu";
+export const FRONTEND_VISITOR_ID = "usr_frontend_visitor";
+const FRONTEND_VISITOR_PASSWORD = "NutriDemo@2025!";
+
 function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
 }
@@ -55,6 +59,29 @@ async function ensureSeededSuperadmin(): Promise<void> {
     isVerified: true,
     verifiedAt: nowIso,
     plan: null,
+    createdAt: nowIso,
+    updatedAt: nowIso,
+  });
+}
+
+export async function ensureSeededVisitor(): Promise<void> {
+  const existing = await db.query.users.findFirst({
+    where: eq(users.email, FRONTEND_VISITOR_EMAIL),
+  });
+  if (existing) return;
+
+  const nowIso = new Date().toISOString();
+  const salt = randomBytes(16).toString("hex");
+  await db.insert(users).values({
+    id: FRONTEND_VISITOR_ID,
+    name: "Visitor Demo",
+    email: FRONTEND_VISITOR_EMAIL,
+    role: "user",
+    passwordHash: hashPassword(FRONTEND_VISITOR_PASSWORD, salt),
+    salt,
+    isVerified: true,
+    verifiedAt: nowIso,
+    plan: "pro_plus",
     createdAt: nowIso,
     updatedAt: nowIso,
   });

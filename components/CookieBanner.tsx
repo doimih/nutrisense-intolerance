@@ -2,15 +2,33 @@
 
 import React, { useEffect, useState } from "react";
 import { useCookies } from "./CookieContext";
+import { useLanguage } from "./LanguageProvider";
+
+const copy = {
+  ro: {
+    text: "folosește cookie-uri pentru funcționarea corectă a platformei, pentru analiză și pentru personalizarea experienței. Poți alege ce tipuri de date permiți.",
+    customize: "Personalizează",
+    reject: "Respinge opționale",
+    accept: "Acceptă toate",
+  },
+  en: {
+    text: "uses cookies for the correct functioning of the platform, for analytics and to personalise your experience. You can choose which data types to allow.",
+    customize: "Customise",
+    reject: "Reject optional",
+    accept: "Accept all",
+  },
+} as const;
 
 export default function CookieBanner() {
   const { showBanner, acceptAll, rejectOptional, openModal } = useCookies();
+  const { lang } = useLanguage();
+  const t = copy[lang];
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
     if (showBanner) {
-      const t = setTimeout(() => setVisible(true), 300);
-      return () => clearTimeout(t);
+      const timer = setTimeout(() => setVisible(true), 300);
+      return () => clearTimeout(timer);
     } else {
       setVisible(false);
     }
@@ -37,7 +55,8 @@ export default function CookieBanner() {
                 </svg>
               </div>
               <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
-                <span className="font-semibold text-slate-900 dark:text-white">NutriAID</span> folosește cookie-uri pentru funcționarea corectă a platformei, pentru analiză și pentru personalizarea experienței. Poți alege ce tipuri de date permiți.
+                <span className="font-semibold text-slate-900 dark:text-white">NutriAID</span>{" "}
+                {t.text}
               </p>
             </div>
 
@@ -47,19 +66,19 @@ export default function CookieBanner() {
                 onClick={openModal}
                 className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-600 rounded-xl hover:border-slate-300 dark:hover:border-slate-500 transition-colors"
               >
-                Personalizează
+                {t.customize}
               </button>
               <button
                 onClick={rejectOptional}
                 className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-600 rounded-xl hover:border-slate-300 dark:hover:border-slate-500 transition-colors"
               >
-                Respinge opționale
+                {t.reject}
               </button>
               <button
                 onClick={acceptAll}
                 className="px-5 py-2 text-sm font-semibold text-white bg-green-600 hover:bg-green-700 rounded-xl transition-colors shadow-sm"
               >
-                Acceptă toate
+                {t.accept}
               </button>
             </div>
           </div>

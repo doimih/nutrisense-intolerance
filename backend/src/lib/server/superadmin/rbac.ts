@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { SUPERADMIN_COOKIE_NAME, readSessionToken } from '@/lib/server/superadmin/auth';
-import { appendSecurityEvent, mutateDb, readDb } from '@/lib/server/superadmin/store';
+import { appendSecurityEvent, mutateDb, readDb, VISITOR_USER_ID } from '@/lib/server/superadmin/store';
 
 export function getClientIp(request: NextRequest): string {
   const forwarded = request.headers.get('x-forwarded-for');
@@ -33,6 +33,19 @@ export async function requireSuperadmin(request: NextRequest) {
 
   if (session.issuedAt < user.sessionInvalidBefore) {
     return { error: unauthorized('Session expired by policy. Please sign in again.') };
+  }
+
+  // Visitor: allow GET only, reject all write operations
+  if (session.isVisitor || session.userId === VISITOR_USER_ID) {
+    const method = request.method.toUpperCase();
+    if (method !== 'GET') {
+      return {
+        error: NextResponse.json(
+          { error: 'Acces vizualizare. Operatiile de modificare nu sunt permise pentru vizitator.' },
+          { status: 403 },
+        ),
+      };
+    }
   }
 
   const ip = getClientIp(request);

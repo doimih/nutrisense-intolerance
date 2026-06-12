@@ -7,6 +7,7 @@ import { deleteMonitoringEntriesByUser } from "@/lib/server/monitoringStore";
 import { deleteAllGuidanceForUser } from "@/lib/server/guidance/store";
 import { deleteUserProblem } from "@/lib/server/userProblemsStore";
 import { sendDeletionConfirmationEmail, sendDeletionFeedbackEmail } from "@/lib/server/email";
+import { isAppLanguage } from "@/lib/i18n/config";
 
 export const runtime = "nodejs";
 
@@ -23,6 +24,8 @@ export async function DELETE(request: NextRequest) {
 
   const email = session.user.email;
   const name = session.user.name;
+  const rawLang = request.cookies.get("ns_lang")?.value;
+  const lang = isAppLanguage(rawLang) ? rawLang : "ro";
 
   // Delete all associated data first, then remove the user
   await Promise.all([
@@ -38,8 +41,8 @@ export async function DELETE(request: NextRequest) {
   }
 
   // Send deletion emails (fire-and-forget)
-  sendDeletionFeedbackEmail({ email, name }).catch(() => undefined);
-  sendDeletionConfirmationEmail({ email, name }).catch(() => undefined);
+  sendDeletionFeedbackEmail({ email, name, lang }).catch(() => undefined);
+  sendDeletionConfirmationEmail({ email, name, lang }).catch(() => undefined);
 
   const response = NextResponse.json({ ok: true, message: "Account deleted successfully." });
   response.cookies.set(AUTH_COOKIE_NAME, "", {

@@ -8,6 +8,7 @@ import clsx from "clsx";
 import { getSessionUser, logout } from "@/lib/api/auth";
 import { useLanguage } from "@/components/LanguageProvider";
 import { getUiCopy } from "@/lib/i18n/ui";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 const THEME_STORAGE_KEY = "ns_theme";
 const FALLBACK_ADMIN_CONSOLE_URL = "https://backend.nutriaid.eu";
@@ -148,6 +149,9 @@ export default function Navbar() {
 
         {/* Actions */}
         <div className="flex items-center gap-2">
+          {/* Language switcher */}
+          <LanguageSwitcher />
+
           {/* Dark mode */}
           <button
             onClick={toggleDark}
@@ -231,6 +235,13 @@ export default function Navbar() {
               {link.label}
             </Link>
           ))}
+          <div className="border-t border-gray-100 dark:border-slate-800 mt-2 pt-3 pb-1 flex items-center justify-between px-3">
+            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+              {lang === "ro" ? "Limbă" : "Language"}
+            </span>
+            <LanguageSwitcher />
+          </div>
+
           <div className="border-t border-gray-100 dark:border-slate-800 mt-2 pt-2">
             {authed ? (
               <>
