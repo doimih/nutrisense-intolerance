@@ -550,8 +550,8 @@ export default function FaqPage() {
           </h2>
           <p className="text-slate-700 dark:text-slate-300">
             {isRo
-              ? "Intoleranțele alimentare sunt reacții întârziate ale sistemului digestiv la anumite alimente sau combinații de alimente — diferite de alergii, care sunt imediate și implică sistemul imunitar. Simptomele tipice includ balonare, dureri abdominale, oboseală sau cefalee apărute la 2–48 ore după masă. NutriAID identifică aceste corelații prin analiza AI a datelor tale de mese și simptome. Procesul nu necesită analize medicale și funcționează în paralel cu orice tratament sau recomandare medicală."
-              : "Food intolerances are delayed reactions of the digestive system to certain foods or food combinations — different from allergies, which are immediate and involve the immune system. Typical symptoms include bloating, abdominal pain, fatigue, or headaches appearing 2–48 hours after eating. NutriAID identifies these correlations through AI analysis of your meal and symptom data. The process requires no medical tests and works in parallel with any medical treatment or recommendation."}
+              ? "Intoleranțele alimentare sunt reacții întârziate ale sistemului digestiv la anumite alimente sau combinații de alimente. Simptomele tipice includ balonare, dureri abdominale, oboseală sau cefalee apărute la 2–48 ore după masă. NutriAID identifică aceste tipare de disconfort prin analiza AI a jurnalului tău de mese și simptome. Procesul nu necesită analize medicale și funcționează independent — ca instrument de conștientizare alimentară, nu ca instrument de diagnostic."
+              : "Food intolerances are delayed reactions of the digestive system to certain foods or food combinations. Typical symptoms include bloating, abdominal pain, fatigue, or headaches appearing 2–48 hours after eating. NutriAID identifies these discomfort patterns through AI analysis of your meal and symptom journal. The process requires no medical tests and works independently — as a food awareness tool, not a diagnostic instrument."}
           </p>
         </div>
         <div>
