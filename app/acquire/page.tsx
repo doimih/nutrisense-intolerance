@@ -129,7 +129,7 @@ const DOC_SECTIONS: DocSection[] = [
       {
         title: "Unique Selling Points",
         description:
-          "A structured comparison of the 12 capabilities that no competing nutrition app ships: AI orchestration, self-healing output validation, celiac-grade intolerance detection, zero-code admin, multi-model support, and more.",
+          "A structured comparison of the 12 capabilities that no competing nutrition app ships: AI orchestration, self-healing output validation, advanced food comfort-pattern detection, GEO-localization engine, zero-code admin, multi-model support, and more.",
         file: "Unique-Selling-Points.pdf",
       },
       {
