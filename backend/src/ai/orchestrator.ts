@@ -112,6 +112,7 @@ const INTENT_WORKER_ROUTES: Record<DetectedIntent, readonly string[]> = {
     'allergy-checker',
     'recipe-builder',
     'nutrition-calculator',
+    'medical-safety',
   ],
   'shopping-list': [
     'profile-analyzer',
