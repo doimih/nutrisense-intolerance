@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Sparkles, CheckCircle2, XCircle, UtensilsCrossed, Lightbulb, AlertTriangle, Lock, Zap, FileDown } from "lucide-react";
+import { Sparkles, CheckCircle2, XCircle, UtensilsCrossed, Lightbulb, AlertTriangle, Lock, Zap, FileDown, RefreshCw } from "lucide-react";
 import Card, { CardHeader, CardTitle } from "@/components/Card";
 import Button from "@/components/Button";
 import Badge from "@/components/Badge";
@@ -71,7 +71,7 @@ export default function GuidancePage() {
   const [planTier, setPlanTier] = useState<PlanTier>("none");
   const [form, setForm] = useState({
     intolerances: [] as Intolerance[],
-    dietaryPreference: "normal" as DietaryPreference,
+    dietaryPreferences: ["normal"] as DietaryPreference[],
     detailLevel: "basic" as DetailLevel,
   });
 
@@ -89,12 +89,23 @@ export default function GuidancePage() {
       setForm((f) => ({
         ...f,
         intolerances: p.intolerances,
-        dietaryPreference: p.dietaryPreference,
+        dietaryPreferences: p.dietaryPreferences ?? [p.dietaryPreference],
         detailLevel: defaultDetail,
       }));
       setLoadingProfile(false);
     });
   }, []);
+
+  const toggleDietaryPreference = (pref: DietaryPreference) => {
+    setForm((f) => {
+      const current = f.dietaryPreferences;
+      if (current.includes(pref)) {
+        const next = current.filter((p) => p !== pref);
+        return { ...f, dietaryPreferences: next.length > 0 ? next : ["normal"] };
+      }
+      return { ...f, dietaryPreferences: [...current, pref] };
+    });
+  };
 
   const toggleIntolerance = (intol: Intolerance) => {
     setForm((f) => ({
@@ -105,11 +116,17 @@ export default function GuidancePage() {
     }));
   };
 
-  const handleGenerate = async () => {
+  const handleGenerate = async (forceRegenerate = false) => {
     setError("");
     setGenerating(true);
     try {
-      const res = await generateGuidance(form);
+      const res = await generateGuidance({
+        ...form,
+        dietaryPreference: form.dietaryPreferences[0] ?? "normal",
+        dietaryPreferences: form.dietaryPreferences,
+        lang: lang as "ro" | "en",
+        forceRegenerate,
+      });
       setResult(res);
     } catch (err: unknown) {
       const fallbackMessage = isRo
@@ -201,28 +218,32 @@ export default function GuidancePage() {
             </div>
           </div>
 
-          {/* Dietary preference */}
+          {/* Dietary preferences - multi-select */}
           <div>
-            <p className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-              {isRo ? "Preferinta alimentara" : "Dietary preference"}
+            <p className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              {isRo ? "Preferinte alimentare" : "Dietary preferences"}
+            </p>
+            <p className="text-xs text-slate-400 dark:text-slate-500 mb-2">
+              {isRo ? "Poti selecta mai multe. AI-ul le combina." : "You can select multiple. The AI combines them."}
             </p>
             <div className="flex flex-wrap gap-2">
-              {(Object.keys(DIETARY_PREFERENCE_LABELS) as DietaryPreference[]).map(
-                (pref) => (
+              {(Object.keys(DIETARY_PREFERENCE_LABELS) as DietaryPreference[]).map((pref) => {
+                const selected = form.dietaryPreferences.includes(pref);
+                return (
                   <button
                     key={pref}
                     type="button"
-                    onClick={() => setForm({ ...form, dietaryPreference: pref })}
+                    onClick={() => toggleDietaryPreference(pref)}
                     className={`px-3 py-1.5 text-sm font-medium rounded-full border transition-all duration-150 ${
-                      form.dietaryPreference === pref
+                      selected
                         ? "bg-teal-600 border-teal-600 text-white"
                         : "bg-white dark:bg-slate-700 border-gray-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:border-teal-400"
                     }`}
                   >
                     {getDietaryLabel(pref, lang)}
                   </button>
-                )
-              )}
+                );
+              })}
             </div>
           </div>
 
@@ -273,7 +294,7 @@ export default function GuidancePage() {
           </div>
 
           <Button
-            onClick={handleGenerate}
+            onClick={() => handleGenerate()}
             loading={generating}
             leftIcon={<Sparkles className="w-4 h-4" />}
             size="lg"
@@ -338,13 +359,15 @@ export default function GuidancePage() {
                   <p className="font-semibold text-slate-900 dark:text-white text-sm mb-2">
                     {meal.name}
                   </p>
-                  <div className="flex flex-wrap gap-1.5 mb-2">
-                    {meal.ingredients.map((ing, j) => (
-                      <Badge key={j} variant="teal" size="sm">
-                        {ing}
-                      </Badge>
-                    ))}
-                  </div>
+                  {(meal.ingredients ?? []).length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mb-2">
+                      {(meal.ingredients ?? []).map((ing, j) => (
+                        <Badge key={j} variant="teal" size="sm">
+                          {ing}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
                   {meal.notes && (
                     <p className="text-xs text-slate-500 dark:text-slate-400 italic">
                       {meal.notes}
@@ -352,6 +375,17 @@ export default function GuidancePage() {
                   )}
                 </div>
               ))}
+            </div>
+            <div className="pt-2 flex justify-center">
+              <button
+                type="button"
+                onClick={() => handleGenerate(true)}
+                disabled={generating}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-teal-300 dark:border-teal-700 bg-teal-50 dark:bg-teal-950/30 text-teal-700 dark:text-teal-300 text-sm font-semibold hover:bg-teal-100 dark:hover:bg-teal-900/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <RefreshCw className={`w-4 h-4 ${generating ? "animate-spin" : ""}`} />
+                {generating ? (isRo ? "Se regenereaza..." : "Regenerating...") : (isRo ? "Regenereaza mese noi" : "Regenerate new meals")}
+              </button>
             </div>
           </Card>
 

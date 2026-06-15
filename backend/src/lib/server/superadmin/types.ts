@@ -256,6 +256,16 @@ export type ArchiveLink = {
   createdAt: string;
 };
 
+export type AcquisitionDownloadRecord = {
+  id: string;
+  timestamp: string;
+  ip: string;
+  country: string | null;
+  userAgent: string;
+  file: string;
+  subfolder: string;
+};
+
 export type SuperadminDb = {
   users: SuperadminUser[];
   subscriptions: SubscriptionRecord[];
@@ -267,5 +277,6 @@ export type SuperadminDb = {
   AI_Logs: AILogRecord[];
   archiveLinks: ArchiveLink[];
   visitorSessions: VisitorIpSession[];
+  acquisitionDownloads: AcquisitionDownloadRecord[];
   settings: PlatformSettings;
 };

@@ -7,6 +7,17 @@ export const runtime = 'nodejs';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
+type PreviousMealExampleEntry = {
+  name: string;
+  ingredients?: string[];
+};
+
+type GeoContext = {
+  country: string;
+  region: string;
+  cuisine: string;
+};
+
 type OrchestratorRequest = {
   sessionId?: unknown;
   userId?: unknown;
@@ -23,6 +34,7 @@ type OrchestratorRequest = {
   subscriptionTier?: unknown;
   context?: unknown;
   previousGuidance?: unknown;
+  previousMealExamples?: unknown;
 };
 
 type MonitoringEntry = {
@@ -51,7 +63,7 @@ type PhysicalProfile = {
 type GuidanceResult = {
   recommendedFoods: string[];
   avoidFoods: string[];
-  mealExamples: Array<{ name: string; ingredients: string[]; notes?: string }>;
+  mealExamples: Array<{ name: string; ingredients?: string[]; notes?: string }>;
   generalTips: string[];
   disclaimer: string;
   warnings?: string[];
@@ -132,63 +144,106 @@ function buildJsonFormatBlock(lang: 'ro' | 'en'): string {
   if (lang === 'ro') {
     return `FORMAT JSON OBLIGATORIU — Raspunde EXCLUSIV in JSON valid, FARA text in afara JSON-ului:
 {
-  "recommendedFoods": ["aliment1", "aliment2", ...],
-  "avoidFoods": ["aliment1", "aliment2", ...],
+  "recommendedFoods": ["aliment1", "aliment2", "aliment3", ...minimum 15 alimente unice...],
+  "avoidFoods": ["aliment1", "aliment2", ...minimum 8 alimente unice...],
   "mealExamples": [
-    {"name": "Masa 1 - varianta echilibrata", "ingredients": ["ingredient1", "ingredient2"], "notes": "observatie"},
-    {"name": "Masa 2 - varianta usoara", "ingredients": ["ingredient1"], "notes": "observatie"}
+    {"name": "Luni - Denumire idee masa", "ingredients": [], "notes": "Descriere scurta a ideii de masa, mod de preparare simplu si context cultural"},
+    {"name": "Marti - Denumire idee masa", "ingredients": [], "notes": "Descriere scurta"},
+    {"name": "Miercuri - Denumire idee masa", "ingredients": [], "notes": "Descriere scurta"},
+    {"name": "Joi - Denumire idee masa", "ingredients": [], "notes": "Descriere scurta"},
+    {"name": "Vineri - Denumire idee masa", "ingredients": [], "notes": "Descriere scurta"},
+    {"name": "Sambata - Denumire idee masa", "ingredients": [], "notes": "Descriere scurta"},
+    {"name": "Duminica - Denumire idee masa", "ingredients": [], "notes": "Descriere scurta"}
   ],
-  "generalTips": ["sfat1", "sfat2", "sfat3"],
-  "disclaimer": "Aceste recomandari sunt orientative si nu reprezinta sfat medical.",
-  "warnings": ["avertisment1"]
-}`;
+  "generalTips": ["sfat_confort1", "sfat_confort2", "sfat_confort3", ...minimum 5 sfaturi...],
+  "disclaimer": "Aceste sugestii sunt bazate pe tipare de confort si preferinte personale si nu reprezinta sfat medical sau nutritional.",
+  "warnings": []
+}
+IMPORTANT: campul "ingredients" trebuie sa fie INTOTDEAUNA un array gol []. Nu lista ingrediente. Pune descrierea mesei in campul "notes".`;
   }
   return `REQUIRED JSON FORMAT — Respond EXCLUSIVELY in valid JSON, NO text outside the JSON:
 {
-  "recommendedFoods": ["food1", "food2", ...],
-  "avoidFoods": ["food1", "food2", ...],
+  "recommendedFoods": ["food1", "food2", "food3", ...minimum 15 unique foods...],
+  "avoidFoods": ["food1", "food2", ...minimum 8 unique foods...],
   "mealExamples": [
-    {"name": "Meal 1 - balanced option", "ingredients": ["ingredient1", "ingredient2"], "notes": "note"},
-    {"name": "Meal 2 - light option", "ingredients": ["ingredient1"], "notes": "note"}
+    {"name": "Monday - Meal idea name", "ingredients": [], "notes": "Brief description of the meal idea, simple preparation context and cultural familiarity"},
+    {"name": "Tuesday - Meal idea name", "ingredients": [], "notes": "Brief description"},
+    {"name": "Wednesday - Meal idea name", "ingredients": [], "notes": "Brief description"},
+    {"name": "Thursday - Meal idea name", "ingredients": [], "notes": "Brief description"},
+    {"name": "Friday - Meal idea name", "ingredients": [], "notes": "Brief description"},
+    {"name": "Saturday - Meal idea name", "ingredients": [], "notes": "Brief description"},
+    {"name": "Sunday - Meal idea name", "ingredients": [], "notes": "Brief description"}
   ],
-  "generalTips": ["tip1", "tip2", "tip3"],
-  "disclaimer": "These recommendations are indicative and are not medical advice.",
-  "warnings": ["warning1"]
-}`;
+  "generalTips": ["comfort_tip1", "comfort_tip2", "comfort_tip3", ...minimum 5 tips...],
+  "disclaimer": "These suggestions are based on comfort patterns and personal preferences and do not constitute medical or nutritional advice.",
+  "warnings": []
+}
+IMPORTANT: the "ingredients" field must ALWAYS be an empty array []. Do not list ingredients. Put the meal description in the "notes" field.`;
+}
+
+function detectGeoContext(lang: 'ro' | 'en', acceptLanguage: string): GeoContext {
+  const al = acceptLanguage.toLowerCase();
+  if (lang === 'ro' || al.includes('ro')) {
+    return { country: 'Romania', region: 'Eastern Europe', cuisine: 'Romanian/Mediterranean/Balkanic' };
+  }
+  if (al.includes('hu')) return { country: 'Hungary', region: 'Central Europe', cuisine: 'Hungarian/Central European' };
+  if (al.includes('fr')) return { country: 'France', region: 'Western Europe', cuisine: 'French/Mediterranean' };
+  if (al.includes('de')) return { country: 'DACH region', region: 'Central Europe', cuisine: 'German/Swiss/Austrian' };
+  if (al.includes('es')) return { country: 'Spain/Latin America', region: 'Iberian/LatAm', cuisine: 'Spanish/Mediterranean' };
+  if (al.includes('it')) return { country: 'Italy', region: 'Southern Europe', cuisine: 'Italian/Mediterranean' };
+  if (al.includes('pl')) return { country: 'Poland', region: 'Eastern Europe', cuisine: 'Polish/Slavic' };
+  if (al.includes('cs') || al.includes('sk')) return { country: 'Czech/Slovak', region: 'Central Europe', cuisine: 'Central European/Slavic' };
+  return { country: 'International', region: 'Western Europe/International', cuisine: 'International/Mediterranean' };
 }
 
 function buildNutritionCore(lang: 'ro' | 'en'): string {
   if (lang === 'ro') {
-    return `Esti un asistent de nutritie non-medical specializat in sensibilitati alimentare.
+    return `Esti un asistent de wellness alimentar non-medical, specializat in tipare de confort si preferinte alimentare personalizate.
 
 REGULI STRICTE:
-- Nu da diagnostice, nu prescrie tratamente, medicamente sau suplimente.
-- Nu folosi cuvinte absolute: "intotdeauna", "niciodata", "garantat", "cert", "100%".
-- Recomandarile descriu probabilitati si corelatii din jurnal, nu sfat medical.
+- Nu da diagnostice, nu prescrie tratamente sau medicamente.
+- Nu folosi cuvinte absolute: "intotdeauna", "niciodata", "garantat", "cert".
+- Focuseaza-te exclusiv pe tipare de confort, preferinte culturale si familiaritate cu alimentele.
+- Toate recomandarile reflecta tendinte observate in jurnal, nu sfat medical.
+- Evita orice referire la valori nutritionale, calorii, macronutrienti sau beneficii medicale.
 
-ANALIZA CERUTA:
-1. REACTII INTARZIATE: Daca o intrare din jurnal are campul "latency" intre 30 si 2880 minute SI are simptome, alimentele din acea masa sunt SUSPECTE. Noteaza aceste alimente in avoidFoods si mentioneaza latenta in generalTips.
-2. COMBINATII PROBLEMATICE: Identifica perechi de alimente care apar impreuna in mai multe intrari cu simptome. Mentioneaza combinatiile detectate in generalTips.
-3. ALIMENTE SIGURE: Alimentele care apar frecvent in intrari FARA simptome sunt probabil sigure. Pune-le in recommendedFoods.
-4. INTENSITATE: Pondereaza importanta unui aliment cu intensitatea simptomelor (campul "intensity", scala 1-10). Intensitate >= 7 = risc ridicat.`;
+ANALIZA COMPORTAMENTALA CERUTA:
+1. TIPARE DE CONFORT: Identifica alimentele care apar frecvent in zilele cu wellbeing ridicat si fara disconfort raportat. Acestea sunt alimente de confort potrivite pentru acest utilizator — includeaza-le in recommendedFoods.
+2. POSIBILI DECLANSATORI DE DISCONFORT: Alimentele asociate cu zile in care utilizatorul a raportat disconfort pot sa nu i se potriveasca. Listeaza-le in avoidFoods cu limbaj bland: "poate cauza disconfort unora", "unii utilizatori pot fi sensibili la acest aliment".
+3. REACTII RAPORTATE: Daca o intrare are disconfort raportat si latenta intre 30-2880 minute, alimentele consumate pot fi asociate cu senzatia de disconfort. Noteaza tendinta in generalTips fara a face afirmatii medicale.
+4. FAMILIARITATE CULTURALA: Recomandarile trebuie sa fie adaptate culturii locale a utilizatorului, cu alimente familiare si disponibile regional.`;
   }
 
-  return `You are a non-medical nutrition assistant specializing in food sensitivities.
+  return `You are a non-medical food wellness assistant specializing in personal comfort patterns and food preferences.
 
 STRICT RULES:
-- No diagnoses, treatments, medications, or supplement recommendations.
-- Do not use absolute language: "always", "never", "guaranteed", "certain", "100%".
-- Recommendations describe journal-based probabilities and correlations, not medical advice.
+- No diagnoses, treatments, or medication recommendations.
+- Do not use absolute language: "always", "never", "guaranteed", "certain".
+- Focus exclusively on comfort patterns, cultural preferences, and food familiarity.
+- All recommendations reflect journal-based behavioral tendencies, not medical advice.
+- Avoid any reference to nutritional values, calories, macronutrients, or medical benefits.
 
-REQUIRED ANALYSIS:
-1. DELAYED REACTIONS: If a journal entry has a "latency" field between 30 and 2880 minutes AND has symptoms, the foods in that meal are SUSPECTED. Note these foods in avoidFoods and mention the latency in generalTips.
-2. PROBLEMATIC COMBINATIONS: Identify food pairs that appear together in multiple entries with symptoms. Mention detected combinations in generalTips.
-3. SAFE FOODS: Foods that appear frequently in entries WITHOUT symptoms are likely safe. Put them in recommendedFoods.
-4. INTENSITY: Weight the importance of a food by symptom intensity (field "intensity", scale 1-10). Intensity >= 7 = high risk.`;
+REQUIRED BEHAVIORAL ANALYSIS:
+1. COMFORT PATTERNS: Identify foods that appear frequently on days with high wellbeing and no reported discomfort. These are comfort foods that suit this user — include them in recommendedFoods.
+2. POSSIBLE DISCOMFORT TRIGGERS: Foods associated with days when the user reported discomfort may not suit them well. List in avoidFoods with gentle language: "may cause discomfort in some people", "some users may be sensitive to this food".
+3. REPORTED REACTIONS: If an entry has reported discomfort with latency between 30-2880 minutes, the consumed foods may be associated with the sensation of discomfort. Note the tendency in generalTips without making medical claims.
+4. CULTURAL FAMILIARITY: Recommendations must be adapted to the user's local culture, with familiar and regionally available foods.`;
 }
 
 function buildSystemPrompt(lang: 'ro' | 'en'): string {
   return `${buildNutritionCore(lang)}\n\n${buildJsonFormatBlock(lang)}`;
+}
+
+function normalizePreviousMealExamples(value: unknown): PreviousMealExampleEntry[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter((e): e is Record<string, unknown> => !!e && typeof e === 'object' && !Array.isArray(e))
+    .slice(0, 30)
+    .map((e) => ({
+      name: typeof e.name === 'string' ? e.name : '',
+      ingredients: asStringArray(e.ingredients),
+    }))
+    .filter((e) => e.name || e.ingredients.length > 0);
 }
 
 function buildUserPrompt(params: {
@@ -196,18 +251,30 @@ function buildUserPrompt(params: {
   userMessage: string;
   intolerances: string[];
   dietaryPreference: unknown;
+  dietaryPreferences?: string[];
   detailLevel: unknown;
   subscriptionTier: unknown;
   entries: MonitoringEntry[];
   physicalProfile?: PhysicalProfile | null;
   previousGuidance?: PreviousGuidanceSummary[];
+  previousMealExamples?: PreviousMealExampleEntry[];
+  geoContext?: GeoContext;
 }): string {
-  const { lang, userMessage, intolerances, dietaryPreference, detailLevel, subscriptionTier, entries, physicalProfile, previousGuidance } = params;
+  const { lang, userMessage, intolerances, dietaryPreference, dietaryPreferences, detailLevel, subscriptionTier, entries, physicalProfile, previousGuidance, previousMealExamples, geoContext } = params;
+
+  const effectiveDietaryLabel = dietaryPreferences && dietaryPreferences.length > 1
+    ? dietaryPreferences.join(', ')
+    : String(dietaryPreference ?? 'normal');
 
   const lines: string[] = [];
   lines.push(`REQUEST: ${userMessage}`);
   lines.push(`LANG: ${lang}`);
-  lines.push(`DIETARY_PREFERENCE: ${dietaryPreference ?? 'normal'}`);
+  if (geoContext) {
+    lines.push(lang === 'ro'
+      ? `GEO_CONTEXT: tara=${geoContext.country}, regiune=${geoContext.region}, bucatarie_culturala=${geoContext.cuisine}. Adapteaza TOATE recomandarile si ideile de mese la alimente locale, familiar culturale si disponibile in aceasta regiune. Prioritizeaza ingrediente si preparate tipice regiunii.`
+      : `GEO_CONTEXT: country=${geoContext.country}, region=${geoContext.region}, cultural_cuisine=${geoContext.cuisine}. Adapt ALL recommendations and meal ideas to locally available, culturally familiar foods from this region. Prioritize ingredients and dishes typical to this area.`);
+  }
+  lines.push(`DIETARY_PREFERENCES: ${effectiveDietaryLabel}`);
   lines.push(`DETAIL_LEVEL: ${detailLevel ?? 'basic'}`);
   lines.push(`SUBSCRIPTION_TIER: ${subscriptionTier ?? 'new'}`);
   lines.push(`INTOLERANCES: ${intolerances.length > 0 ? intolerances.join(', ') : 'none'}`);
@@ -249,20 +316,42 @@ function buildUserPrompt(params: {
     }
   }
 
-  // Translate detailLevel into concrete numeric requirements so the AI knows
-  // exactly how much content to produce — not just a label.
+  if (previousMealExamples && previousMealExamples.length > 0) {
+    lines.push('RETETE_ANTERIOARE (EVITA sa repeti aceste retete - genereaza altele complet diferite):');
+    for (const meal of previousMealExamples.slice(0, 20)) {
+      lines.push(JSON.stringify({ nume: meal.name, ingrediente: meal.ingredients }));
+    }
+  }
+
+  lines.push(lang === 'ro'
+    ? 'DIVERSITATE_OBLIGATORIE: Genereaza 7 idei de mese (una pe zi, Luni-Duminica) complet diferite de cele anterioare. Variaza: tipul de bucatarie (mediteraneana, romaneasca, asiatica, orientala, mexicana, balcanica, greceasca), momentul zilei (mic dejun consistent, pranz usor, cina calda, etc.) si categoria de baza a mesei (supa/ciorba, salata, mancare la cuptor, mancare la tigaie, la gratar). Nu repeta nicio idee de masa. Nu lista ingrediente - descrie ideea in "notes". Obiectiv pe termen lung: 100+ idei de mese unice generate cumulativ.'
+    : 'MANDATORY DIVERSITY: Generate 7 meal ideas (one per day, Monday-Sunday) completely different from previous ones. Vary: cuisine type (Mediterranean, Romanian, Asian, Middle Eastern, Mexican, Balkan, Greek), meal time context (hearty breakfast, light lunch, warm dinner, etc.), and base category (soup/stew, salad, oven dish, pan dish, grilled). Do not repeat any meal idea. Do not list ingredients — describe the idea in "notes". Long-term goal: 100+ unique meal ideas generated cumulatively.');
+
+  if (intolerances.length > 0) {
+    lines.push(lang === 'ro'
+      ? `REGULA_CRITICA_MESE: In campul "mealExamples", ingredientele NU trebuie sa contina NICIUN aliment din lista INTOLERANCES (${intolerances.join(', ')}). Aceasta regula este OBLIGATORIE si are prioritate maxima. Verifica fiecare ingredient din fiecare reteta inainte de a raspunde. Daca o reteta ar necesita un ingredient interzis, inlocuieste-l cu un aliment sigur.`
+      : `CRITICAL_MEAL_RULE: In the "mealExamples" field, ingredients must NOT contain ANY food from the INTOLERANCES list (${intolerances.join(', ')}). This rule is MANDATORY and has maximum priority. Check every ingredient in every recipe before responding. If a recipe would require a forbidden ingredient, replace it with a safe food.`);
+  }
+
+  if (dietaryPreferences && dietaryPreferences.length > 0 && !(dietaryPreferences.length === 1 && dietaryPreferences[0] === 'normal')) {
+    lines.push(lang === 'ro'
+      ? `REGULA_DIETA_MESE: Preferintele alimentare ale utilizatorului sunt: ${dietaryPreferences.join(', ')}. Toate cele 7 retete generate in "mealExamples" trebuie sa respecte aceste preferinte. Nu include ingrediente incompatibile cu dieta selectata.`
+      : `DIET_MEAL_RULE: User dietary preferences are: ${dietaryPreferences.join(', ')}. All 7 recipes generated in "mealExamples" must comply with these preferences. Do not include ingredients incompatible with the selected diet.`);
+  }
+
+  // Volume requirements — concrete minimums so the AI knows how much to produce.
   if (detailLevel === 'comprehensive') {
     lines.push(lang === 'ro'
-      ? 'NIVEL_DETALIU COMPLET: minim 12 alimente recomandate variate, minim 8 alimente de evitat, minim 3 exemple de mese complet diferite, minim 5 sfaturi generale detaliate. Nu repeta ingrediente intre mese. Nu folosi raspunsuri scurte.'
-      : 'DETAIL LEVEL COMPREHENSIVE: min 12 varied recommended foods, min 8 foods to avoid, min 3 fully distinct meal examples, min 5 detailed general tips. Do not repeat ingredients across meals. Do not give short answers.');
+      ? 'VOLUM_COMPLET: minimum 20 alimente recomandate unice variate GEO-adaptate, minimum 12 alimente de evitat unice, EXACT 7 idei de mese (Luni pana Duminica) cu descriere culturala in "notes", minimum 7 sfaturi de confort si rutina detaliate. Nu repeta niciun element. Raspunsuri bogate si detaliate in fiecare sectiune.'
+      : 'VOLUME_COMPREHENSIVE: minimum 20 unique GEO-adapted recommended foods, minimum 12 unique foods to avoid, EXACTLY 7 meal ideas (Monday through Sunday) with cultural description in "notes", minimum 7 detailed comfort and routine tips. No element repetition. Rich, detailed responses in every section.');
   } else if (detailLevel === 'detailed') {
     lines.push(lang === 'ro'
-      ? 'NIVEL_DETALIU DETALIAT: minim 8 alimente recomandate, minim 5 alimente de evitat, minim 2 exemple de mese diferite, minim 3 sfaturi generale.'
-      : 'DETAIL LEVEL DETAILED: min 8 recommended foods, min 5 foods to avoid, min 2 distinct meal examples, min 3 general tips.');
+      ? 'VOLUM_DETALIAT: minimum 15 alimente recomandate unice, minimum 8 alimente de evitat unice, EXACT 7 idei de mese (Luni pana Duminica) cu "notes" descriptiv, minimum 5 sfaturi de confort. Nu repeta elemente.'
+      : 'VOLUME_DETAILED: minimum 15 unique recommended foods, minimum 8 unique foods to avoid, EXACTLY 7 meal ideas (Monday through Sunday) with descriptive "notes", minimum 5 comfort tips. No repeated elements.');
   } else {
     lines.push(lang === 'ro'
-      ? 'NIVEL_DETALIU DE BAZA: minim 4 alimente recomandate, minim 3 alimente de evitat, 1 exemplu de masa, 2 sfaturi generale.'
-      : 'DETAIL LEVEL BASIC: min 4 recommended foods, min 3 foods to avoid, 1 meal example, 2 general tips.');
+      ? 'VOLUM_BAZA: minimum 8 alimente recomandate unice, minimum 5 alimente de evitat, EXACT 7 idei simple de mese (Luni pana Duminica) cu "notes" scurt, minimum 3 sfaturi de confort.'
+      : 'VOLUME_BASIC: minimum 8 unique recommended foods, minimum 5 foods to avoid, EXACTLY 7 simple meal ideas (Monday through Sunday) with short "notes", minimum 3 comfort tips.');
   }
 
   return lines.join('\n');
@@ -338,10 +427,10 @@ function parseGuidanceJson(raw: string): GuidanceResult {
       .filter((item): item is Record<string, unknown> => !!item && typeof item === 'object' && !Array.isArray(item))
       .map((item, idx) => ({
         name: typeof item.name === 'string' && item.name.trim() ? item.name : `Meal ${idx + 1}`,
-        ingredients: toStringArray(item.ingredients),
+        ingredients: Array.isArray(item.ingredients) ? toStringArray(item.ingredients) : [],
         notes: typeof item.notes === 'string' ? item.notes : undefined,
       }))
-      .filter((meal) => meal.ingredients.length > 0);
+      .filter((meal) => meal.name.length > 0);
   }
 
   const recommendedFoods = toStringArray(parsed.recommendedFoods);
@@ -408,6 +497,13 @@ export async function POST(request: NextRequest) {
   const contextObj = asObject(body.context);
   const intolerances = asStringArray(body.intolerances ?? contextObj.intolerances);
   const dietaryPreference = body.dietaryPreference ?? contextObj.dietaryPreference;
+  const userProfileObj = asObject(body.userProfile);
+  const rawDietTypes = userProfileObj.dietTypes;
+  const dietaryPreferences: string[] = Array.isArray(rawDietTypes)
+    ? asStringArray(rawDietTypes)
+    : typeof dietaryPreference === 'string' && dietaryPreference
+    ? [dietaryPreference]
+    : [];
   const detailLevel = body.detailLevel ?? contextObj.detailLevel;
   const subscriptionTier = body.subscriptionTier ?? contextObj.subscriptionTier;
   const rawEntries = Array.isArray(body.monitoringEntries)
@@ -417,11 +513,14 @@ export async function POST(request: NextRequest) {
       : [];
   const entries = normalizeEntries(rawEntries);
   const previousGuidance = normalizePreviousGuidance(body.previousGuidance);
-  const userProfileObj = asObject(body.userProfile);
+  const previousMealExamples = normalizePreviousMealExamples(body.previousMealExamples);
   const physicalProfile = normalizePhysicalProfile(userProfileObj);
 
   const userId = typeof body.userId === 'string' ? body.userId : 'anonymous';
   const userEmail = typeof body.userEmail === 'string' ? body.userEmail : 'unknown';
+
+  const acceptLanguage = request.headers.get('accept-language') ?? '';
+  const geoContext = detectGeoContext(lang, acceptLanguage);
 
   const dbSystemPrompt = aiBrain?.systemPrompt?.trim();
   // Admin custom prompt is SUPPLEMENTARY — nutrition core + JSON format are always
@@ -429,7 +528,7 @@ export async function POST(request: NextRequest) {
   const systemPrompt = dbSystemPrompt && dbSystemPrompt.length > 20
     ? `${buildNutritionCore(lang)}\n\nINSTRUCTIUNI SUPLIMENTARE ADMINISTRATOR:\n${dbSystemPrompt}\n\n${buildJsonFormatBlock(lang)}`
     : buildSystemPrompt(lang);
-  const userPrompt = buildUserPrompt({ lang, userMessage, intolerances, dietaryPreference, detailLevel, subscriptionTier, entries, physicalProfile, previousGuidance });
+  const userPrompt = buildUserPrompt({ lang, userMessage, intolerances, dietaryPreference, dietaryPreferences, detailLevel, subscriptionTier, entries, physicalProfile, previousGuidance, previousMealExamples, geoContext });
 
   const messages: OpenAIMessage[] = [
     { role: 'system', content: systemPrompt },

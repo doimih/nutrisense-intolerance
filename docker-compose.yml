@@ -68,6 +68,7 @@ services:
       - "3000:3000"
     volumes:
       - frontend_data:/app/data
+      - ./data/acquisition:/app/data/acquisition:ro
     networks:
       - default
       - traefik

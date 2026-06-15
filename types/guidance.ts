@@ -16,13 +16,16 @@ export interface MonitoringContextItem {
 export interface GuidanceRequest {
   intolerances: Intolerance[];
   dietaryPreference: DietaryPreference;
+  dietaryPreferences?: DietaryPreference[];
   detailLevel: DetailLevel;
   monitoringEntries?: MonitoringContextItem[];
+  lang?: "ro" | "en";
+  forceRegenerate?: boolean;
 }
 
 export interface MealExample {
   name: string;
-  ingredients: string[];
+  ingredients?: string[];
   notes?: string;
 }
 

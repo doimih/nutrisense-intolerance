@@ -145,13 +145,13 @@ function getPlanLimits(planTier: PlanTier): PlanLimits {
   switch (planTier) {
     case "enterprise":
     case "pro_plus":
-      return { maxRecommendedFoods: 15, maxAvoidFoods: 12, maxMealExamples: 4, maxTips: 5, comboAnalysis: true, advancedPredictions: true, delayedReactionDetection: true };
+      return { maxRecommendedFoods: 15, maxAvoidFoods: 12, maxMealExamples: 7, maxTips: 5, comboAnalysis: true, advancedPredictions: true, delayedReactionDetection: true };
     case "pro":
-      return { maxRecommendedFoods: 12, maxAvoidFoods: 10, maxMealExamples: 3, maxTips: 3, comboAnalysis: true, advancedPredictions: false, delayedReactionDetection: false };
+      return { maxRecommendedFoods: 12, maxAvoidFoods: 10, maxMealExamples: 7, maxTips: 3, comboAnalysis: true, advancedPredictions: false, delayedReactionDetection: false };
     case "basic":
-      return { maxRecommendedFoods: 8, maxAvoidFoods: 6, maxMealExamples: 2, maxTips: 2, comboAnalysis: false, advancedPredictions: false, delayedReactionDetection: false };
+      return { maxRecommendedFoods: 8, maxAvoidFoods: 6, maxMealExamples: 7, maxTips: 2, comboAnalysis: false, advancedPredictions: false, delayedReactionDetection: false };
     default:
-      return { maxRecommendedFoods: 4, maxAvoidFoods: 3, maxMealExamples: 1, maxTips: 1, comboAnalysis: false, advancedPredictions: false, delayedReactionDetection: false };
+      return { maxRecommendedFoods: 4, maxAvoidFoods: 3, maxMealExamples: 7, maxTips: 1, comboAnalysis: false, advancedPredictions: false, delayedReactionDetection: false };
   }
 }
 
@@ -159,46 +159,76 @@ function buildMealExamples(lang: "ro" | "en", recommendedFoods: string[], count:
   const allMeals: MealExample[] = lang === "ro"
     ? [
         {
-          name: "Masa 1 - varianta echilibrata",
+          name: "Luni - masa echilibrata",
           ingredients: recommendedFoods.slice(0, 3).length > 0 ? recommendedFoods.slice(0, 3) : ["orez", "legume", "proteina slaba"],
-          notes: "Portie moderata, ritm lent, observatie simptome in primele 120 minute.",
+          notes: "Portie moderata, ritm lent, observa simptomele in primele 120 minute.",
         },
         {
-          name: "Masa 2 - varianta usoara",
+          name: "Marti - masa usoara",
           ingredients: recommendedFoods.slice(3, 6).length > 0 ? recommendedFoods.slice(3, 6) : ["cartof dulce", "salata verde", "peste"],
           notes: "Evita combinatiile multiple noi in aceeasi zi.",
         },
         {
-          name: "Masa 3 - varianta personalizata",
+          name: "Miercuri - masa personalizata",
           ingredients: recommendedFoods.slice(6, 9).length > 0 ? recommendedFoods.slice(6, 9) : ["quinoa", "broccoli", "pui la gratar"],
           notes: "Plan adaptat profilului tau alimentar. Ajusteaza portiile treptat.",
         },
         {
-          name: "Masa 4 - ghidare premium",
-          ingredients: recommendedFoods.slice(9, 12).length > 0 ? recommendedFoods.slice(9, 12) : ["ovaz", "fructe de padure", "seminte de in"],
-          notes: "Analiza extinsa: monitorizare reactii la 2h, 6h si 24h pentru fiecare ingredient nou.",
+          name: "Joi - masa proteica",
+          ingredients: recommendedFoods.slice(2, 5).length > 0 ? recommendedFoods.slice(2, 5) : ["linte", "spanac", "ou fiert"],
+          notes: "Zi buna pentru a introduce un ingredient nou. Monitorizeaza reactiile la 2h si 6h.",
+        },
+        {
+          name: "Vineri - masa de recuperare",
+          ingredients: recommendedFoods.slice(0, 2).length > 0 ? [...recommendedFoods.slice(0, 2), "morcovi"] : ["morcovi", "orez", "pui fiert"],
+          notes: "Mese simple la sfarsit de saptamana. Favorizeaza ingredientele deja testate.",
+        },
+        {
+          name: "Sambata - masa diversificata",
+          ingredients: recommendedFoods.slice(4, 7).length > 0 ? recommendedFoods.slice(4, 7) : ["ovaz", "fructe de padure", "seminte de in"],
+          notes: "Zi potrivita pentru retete noi. Pastreaza portiile moderate.",
+        },
+        {
+          name: "Duminica - masa de baza",
+          ingredients: recommendedFoods.slice(1, 4).length > 0 ? recommendedFoods.slice(1, 4) : ["hrisca", "dovlecel", "somon la gratar"],
+          notes: "Analiza saptamanala: compara cum te-ai simtit dupa fiecare masa si noteaza in jurnal.",
         },
       ]
     : [
         {
-          name: "Meal 1 - balanced option",
+          name: "Monday - balanced meal",
           ingredients: recommendedFoods.slice(0, 3).length > 0 ? recommendedFoods.slice(0, 3) : ["rice", "vegetables", "lean protein"],
           notes: "Moderate portion, slow pace, observe symptoms in the first 120 minutes.",
         },
         {
-          name: "Meal 2 - light option",
+          name: "Tuesday - light meal",
           ingredients: recommendedFoods.slice(3, 6).length > 0 ? recommendedFoods.slice(3, 6) : ["sweet potato", "green salad", "fish"],
           notes: "Avoid introducing multiple new combinations on the same day.",
         },
         {
-          name: "Meal 3 - personalized option",
+          name: "Wednesday - personalized meal",
           ingredients: recommendedFoods.slice(6, 9).length > 0 ? recommendedFoods.slice(6, 9) : ["quinoa", "broccoli", "grilled chicken"],
           notes: "Adapted to your food profile. Adjust portions gradually.",
         },
         {
-          name: "Meal 4 - premium guidance",
-          ingredients: recommendedFoods.slice(9, 12).length > 0 ? recommendedFoods.slice(9, 12) : ["oats", "berries", "flaxseeds"],
-          notes: "Extended analysis: monitor reactions at 2h, 6h and 24h for each new ingredient.",
+          name: "Thursday - protein meal",
+          ingredients: recommendedFoods.slice(2, 5).length > 0 ? recommendedFoods.slice(2, 5) : ["lentils", "spinach", "boiled egg"],
+          notes: "Good day to introduce a new ingredient. Monitor reactions at 2h and 6h.",
+        },
+        {
+          name: "Friday - recovery meal",
+          ingredients: recommendedFoods.slice(0, 2).length > 0 ? [...recommendedFoods.slice(0, 2), "carrots"] : ["carrots", "rice", "boiled chicken"],
+          notes: "Simple meals at the end of the week. Favor already-tested ingredients.",
+        },
+        {
+          name: "Saturday - diverse meal",
+          ingredients: recommendedFoods.slice(4, 7).length > 0 ? recommendedFoods.slice(4, 7) : ["oats", "berries", "flaxseeds"],
+          notes: "Good day for new recipes. Keep portions moderate.",
+        },
+        {
+          name: "Sunday - base meal",
+          ingredients: recommendedFoods.slice(1, 4).length > 0 ? recommendedFoods.slice(1, 4) : ["buckwheat", "zucchini", "grilled salmon"],
+          notes: "Weekly review: compare how you felt after each meal and log it in your journal.",
         },
       ];
   return allMeals.slice(0, Math.max(1, count));
@@ -239,78 +269,96 @@ function baseAvoidByIntolerance(intolerances: Intolerance[], lang: "ro" | "en"):
   if (intolerances.includes("crustacee")) {
     items.push(lang === "ro" ? "creveti" : "shrimp");
   }
+  if (intolerances.includes("proteina-lapte")) {
+    items.push(lang === "ro" ? "lapte de vaca" : "cow's milk");
+  }
+  if (intolerances.includes("solanacee")) {
+    items.push(
+      ...(lang === "ro"
+        ? ["rosii", "ardei", "vinete", "cartofi"]
+        : ["tomatoes", "peppers", "eggplant", "potatoes"])
+    );
+  }
   return items;
 }
 
-function dietaryAvoidByPreference(
-  preference: GuidanceGenerateInput["dietaryPreference"],
-  lang: "ro" | "en"
-): string[] {
+function dietaryAvoidBySinglePreference(preference: string, lang: "ro" | "en"): string[] {
   if (preference === "vegan") {
     return lang === "ro"
       ? ["carne rosie", "oua", "branzeturi"]
       : ["red meat", "eggs", "cheese"];
   }
-
   if (preference === "vegetarian") {
     return lang === "ro"
       ? ["carne rosie", "pui", "peste"]
       : ["red meat", "chicken", "fish"];
   }
-
   if (preference === "low-carb") {
     return lang === "ro"
       ? ["paine", "paste", "bauturi indulcite"]
       : ["bread", "pasta", "sweetened drinks"];
   }
-
   if (preference === "gluten-free") {
     return lang === "ro" ? ["grau", "orz", "secara"] : ["wheat", "barley", "rye"];
   }
-
   if (preference === "dairy-free") {
     return lang === "ro"
       ? ["lapte integral", "iaurt clasic", "smantana"]
       : ["whole milk", "regular yogurt", "cream"];
   }
-
   return [];
 }
 
-function defaultsByPreference(
-  preference: GuidanceGenerateInput["dietaryPreference"],
+function dietaryAvoidByPreference(
+  preferences: GuidanceGenerateInput["dietaryPreferences"],
   lang: "ro" | "en"
 ): string[] {
+  const all: string[] = [];
+  for (const pref of preferences) {
+    all.push(...dietaryAvoidBySinglePreference(pref, lang));
+  }
+  return Array.from(new Set(all));
+}
+
+function defaultsBySinglePreference(preference: string, lang: "ro" | "en"): string[] {
   if (preference === "vegan") {
     return lang === "ro"
       ? ["quinoa", "linte", "tofu", "broccoli"]
       : ["quinoa", "lentils", "tofu", "broccoli"];
   }
-
   if (preference === "vegetarian") {
     return lang === "ro"
       ? ["linte", "naut", "iaurt fara lactoza", "spanac"]
       : ["lentils", "chickpeas", "lactose-free yogurt", "spinach"];
   }
-
   if (preference === "low-carb") {
     return lang === "ro"
       ? ["somon", "avocado", "dovlecel", "oua"]
       : ["salmon", "avocado", "zucchini", "eggs"];
   }
-
   if (preference === "gluten-free") {
     return lang === "ro"
       ? ["orez", "hrisca", "cartof dulce", "pui la gratar"]
       : ["rice", "buckwheat", "sweet potato", "grilled chicken"];
   }
-
   if (preference === "dairy-free") {
     return lang === "ro"
       ? ["ovaz", "lapte de migdale", "curcan", "morcovi"]
       : ["oats", "almond milk", "turkey", "carrots"];
   }
+  return [];
+}
 
+function defaultsByPreference(
+  preferences: GuidanceGenerateInput["dietaryPreferences"],
+  lang: "ro" | "en"
+): string[] {
+  const all: string[] = [];
+  for (const pref of preferences) {
+    all.push(...defaultsBySinglePreference(pref, lang));
+  }
+  const unique = Array.from(new Set(all));
+  if (unique.length > 0) return unique;
   return lang === "ro"
     ? ["orez", "dovlecel", "morcovi", "peste slab"]
     : ["rice", "zucchini", "carrots", "lean fish"];
@@ -323,7 +371,7 @@ export function buildGuidancePrompt(input: GuidanceGenerateInput): string {
   lines.push(`LANG: ${input.lang}`);
   lines.push(`SUBSCRIPTION_TIER: ${input.subscriptionTier}`);
   lines.push(`DETAIL_LEVEL: ${input.detailLevel}`);
-  lines.push(`DIETARY_PREFERENCE: ${input.dietaryPreference}`);
+  lines.push(`DIETARY_PREFERENCES: ${input.dietaryPreferences.join(",") || input.dietaryPreference}`);
   lines.push(`INTOLERANCES: ${input.intolerances.join(",") || "none"}`);
 
   if (input.physicalProfile) {
@@ -362,6 +410,14 @@ export function buildGuidancePrompt(input: GuidanceGenerateInput): string {
     }
   }
 
+  if (input.previousMealExamples && input.previousMealExamples.length > 0) {
+    lines.push("PREVIOUS_MEAL_EXAMPLES (diversifica - nu repeta exact aceste retete):");
+    for (const meal of input.previousMealExamples.slice(0, 20)) {
+      lines.push(JSON.stringify({ name: meal.name, ingredients: meal.ingredients }));
+    }
+  }
+
+  lines.push("DIVERSITATE_RETETE: Genereaza retete complet diferite de cele anterioare. Variaza bucatariile (mediteraneana, asiatica, romaneasca, mexicana etc.), metodele de preparare (fiert, copt, la gratar, fiert abur) si ingredientele principale. Obiectiv: cel putin 100 retete unice in timp.");
   lines.push("OUTPUT_SCHEMA: recommendedFoods[], avoidFoods[], mealExamples[], generalTips[], disclaimer");
   return lines.join("\n");
 }
@@ -372,7 +428,7 @@ function applyDetailLevelToLimits(limits: PlanLimits, detailLevel: string): Plan
       ...limits,
       maxRecommendedFoods: Math.max(limits.maxRecommendedFoods, 12),
       maxAvoidFoods: Math.max(limits.maxAvoidFoods, 8),
-      maxMealExamples: Math.max(limits.maxMealExamples, 3),
+      maxMealExamples: 7,
       maxTips: Math.max(limits.maxTips, 5),
     };
   }
@@ -381,7 +437,7 @@ function applyDetailLevelToLimits(limits: PlanLimits, detailLevel: string): Plan
       ...limits,
       maxRecommendedFoods: Math.max(limits.maxRecommendedFoods, 8),
       maxAvoidFoods: Math.max(limits.maxAvoidFoods, 5),
-      maxMealExamples: Math.max(limits.maxMealExamples, 2),
+      maxMealExamples: 7,
       maxTips: Math.max(limits.maxTips, 3),
     };
   }
@@ -406,7 +462,7 @@ export function runDeterministicGuidance(input: GuidanceGenerateInput): Guidance
 
   const avoidSeed = new Set<string>([
     ...baseAvoidByIntolerance(input.intolerances, input.lang),
-    ...dietaryAvoidByPreference(input.dietaryPreference, input.lang),
+    ...dietaryAvoidByPreference(input.dietaryPreferences, input.lang),
     ...highRiskFoods,
     ...delayedRisk,
   ]);
@@ -416,7 +472,7 @@ export function runDeterministicGuidance(input: GuidanceGenerateInput): Guidance
   );
 
   if (recommendedSeed.size === 0) {
-    const defaults = defaultsByPreference(input.dietaryPreference, input.lang);
+    const defaults = defaultsByPreference(input.dietaryPreferences, input.lang);
     for (const item of defaults) recommendedSeed.add(item);
   }
 
@@ -468,7 +524,7 @@ export function runDeterministicGuidance(input: GuidanceGenerateInput): Guidance
     id: `guidance_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
     generatedAt: new Date().toISOString(),
     intolerances: input.intolerances,
-    dietaryPreference: input.dietaryPreference,
+    dietaryPreference: input.dietaryPreferences[0] ?? input.dietaryPreference,
     detailLevel: input.detailLevel,
     recommendedFoods: sanitizeStringArray(Array.from(recommendedSeed).slice(0, limits.maxRecommendedFoods), input.lang),
     avoidFoods: sanitizeStringArray(Array.from(avoidSeed).slice(0, limits.maxAvoidFoods), input.lang),

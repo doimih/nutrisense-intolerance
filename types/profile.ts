@@ -18,7 +18,9 @@ export type Intolerance =
   | "ou"
   | "soia"
   | "peste"
-  | "crustacee";
+  | "crustacee"
+  | "proteina-lapte"
+  | "solanacee";
 
 export type ActivityLevel = "sedentary" | "light" | "moderate" | "active" | "very_active";
 
@@ -27,22 +29,26 @@ export interface UserProfile {
   name: string;
   email: string;
   dietaryPreference: DietaryPreference;
+  dietaryPreferences: DietaryPreference[];
   intolerances: Intolerance[];
   updatedAt: string;
   age?: number | null;
   heightCm?: number | null;
   weightKg?: number | null;
   activityLevel?: ActivityLevel | null;
+  onboardingCompleted: boolean;
 }
 
 export interface UpdateProfileRequest {
   name?: string;
   dietaryPreference?: DietaryPreference;
+  dietaryPreferences?: DietaryPreference[];
   intolerances?: Intolerance[];
   age?: number | null;
   heightCm?: number | null;
   weightKg?: number | null;
   activityLevel?: ActivityLevel | null;
+  onboardingCompleted?: boolean;
 }
 
 export const ACTIVITY_LEVEL_LABELS: Record<ActivityLevel, string> = {
@@ -67,6 +73,8 @@ export const INTOLERANCE_LABELS: Record<Intolerance, string> = {
   soia: "Soia",
   peste: "Pește",
   crustacee: "Crustacee",
+  "proteina-lapte": "Proteină din lapte",
+  solanacee: "Solanacee",
 };
 
 export const DIETARY_PREFERENCE_LABELS: Record<DietaryPreference, string> = {

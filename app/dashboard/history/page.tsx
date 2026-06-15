@@ -1,16 +1,16 @@
 "use client";
 
 import React, { useEffect, useState, useMemo } from "react";
-import { History, Sparkles, ChevronRight, Inbox, TrendingUp, Lock, Zap, BarChart2 } from "lucide-react";
+import { History, Sparkles, ChevronRight, ChevronDown, Inbox, TrendingUp, Lock, BarChart2, CheckCircle2, XCircle, UtensilsCrossed, Lightbulb, Loader2, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import Card from "@/components/Card";
 import Badge from "@/components/Badge";
 import { PageLoader } from "@/components/LoadingOverlay";
 import { useLanguage } from "@/components/LanguageProvider";
-import { getHistory } from "@/lib/api/guidance";
+import { getHistory, getGuidanceById } from "@/lib/api/guidance";
 import { listMonitoringEntries } from "@/lib/api/monitoring";
 import { getDietaryLabel, getIntoleranceLabel, getSymptomLabel } from "@/lib/i18n/labels";
-import type { GuidanceHistoryEntry } from "@/types/guidance";
+import type { GuidanceHistoryEntry, GuidanceResult } from "@/types/guidance";
 import type { MonitoringEntry, Symptom } from "@/types/monitoring";
 
 type PlanTier = "none" | "basic" | "pro" | "pro_plus" | "enterprise";
@@ -231,6 +231,8 @@ function ProPlusDailyReports({ entries, isRo, locale }: { entries: MonitoringEnt
   );
 }
 
+type DetailState = GuidanceResult | "loading" | "error";
+
 export default function HistoryPage() {
   const { lang } = useLanguage();
   const isRo = lang === "ro";
@@ -240,6 +242,8 @@ export default function HistoryPage() {
   const [planTier, setPlanTier] = useState<PlanTier>("basic");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [detailCache, setDetailCache] = useState<Record<string, DetailState>>({});
 
   useEffect(() => {
     Promise.allSettled([
@@ -257,6 +261,22 @@ export default function HistoryPage() {
       })
       .finally(() => setLoading(false));
   }, [isRo]);
+
+  const handleToggleDetails = async (id: string) => {
+    if (expandedId === id) {
+      setExpandedId(null);
+      return;
+    }
+    setExpandedId(id);
+    if (detailCache[id]) return;
+    setDetailCache((prev) => ({ ...prev, [id]: "loading" }));
+    try {
+      const result = await getGuidanceById(id);
+      setDetailCache((prev) => ({ ...prev, [id]: result ?? "error" }));
+    } catch {
+      setDetailCache((prev) => ({ ...prev, [id]: "error" }));
+    }
+  };
 
   if (loading) return <PageLoader />;
 
@@ -387,43 +407,157 @@ export default function HistoryPage() {
           </div>
         ) : (
           <div className="space-y-3">
-            {entries.map((entry) => (
-              <div
-                key={entry.id}
-                className="bg-white dark:bg-slate-800 rounded-xl border border-gray-100 dark:border-slate-700 p-5 hover:shadow-sm transition-shadow"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Sparkles className="w-4 h-4 text-green-500 flex-shrink-0" />
-                      <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">
-                        {getEntrySummary(entry)}
-                      </p>
-                    </div>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
-                      {formatDate(entry.generatedAt, locale)}
-                    </p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {entry.intolerances.map((intol) => (
-                        <Badge key={intol} variant="green" size="sm">
-                          {getIntoleranceLabel(intol, lang)}
-                        </Badge>
-                      ))}
-                      <Badge variant="teal" size="sm">
-                        {getDietaryLabel(entry.dietaryPreference, lang)}
-                      </Badge>
+            {entries.map((entry) => {
+              const isExpanded = expandedId === entry.id;
+              const detail = detailCache[entry.id];
+              return (
+                <div
+                  key={entry.id}
+                  className="bg-white dark:bg-slate-800 rounded-xl border border-gray-100 dark:border-slate-700 overflow-hidden transition-shadow hover:shadow-sm"
+                >
+                  <div className="p-5">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Sparkles className="w-4 h-4 text-green-500 flex-shrink-0" />
+                          <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">
+                            {getEntrySummary(entry)}
+                          </p>
+                        </div>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
+                          {formatDate(entry.generatedAt, locale)}
+                        </p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {entry.intolerances.map((intol) => (
+                            <Badge key={intol} variant="green" size="sm">
+                              {getIntoleranceLabel(intol, lang)}
+                            </Badge>
+                          ))}
+                          <Badge variant="teal" size="sm">
+                            {getDietaryLabel(entry.dietaryPreference, lang)}
+                          </Badge>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleToggleDetails(entry.id)}
+                        className="flex-shrink-0 flex items-center gap-1 text-xs text-slate-400 hover:text-green-600 dark:hover:text-green-400 transition-colors"
+                      >
+                        <span className="hidden sm:block">{isRo ? "Vezi detalii" : "View details"}</span>
+                        {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                      </button>
                     </div>
                   </div>
-                  <Link
-                    href="/dashboard/guidance"
-                    className="flex-shrink-0 flex items-center gap-1 text-xs text-slate-400 hover:text-green-600 dark:hover:text-green-400 transition-colors"
-                  >
-                    <span className="hidden sm:block">{isRo ? "Vezi detalii" : "View details"}</span>
-                    <ChevronRight className="w-4 h-4" />
-                  </Link>
+
+                  {isExpanded && (
+                    <div className="border-t border-slate-100 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-900/30 px-5 py-4 space-y-5">
+                      {detail === "loading" && (
+                        <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 py-4 justify-center">
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          {isRo ? "Se incarca detaliile..." : "Loading details..."}
+                        </div>
+                      )}
+                      {detail === "error" && (
+                        <div className="flex items-center gap-2 text-sm text-red-600 dark:text-red-400 py-4 justify-center">
+                          <AlertTriangle className="w-4 h-4" />
+                          {isRo ? "Nu am putut incarca detaliile." : "Could not load details."}
+                        </div>
+                      )}
+                      {detail && detail !== "loading" && detail !== "error" && (
+                        <>
+                          {detail.recommendedFoods.length > 0 && (
+                            <div>
+                              <div className="flex items-center gap-1.5 mb-2">
+                                <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
+                                <p className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                                  {isRo ? "Alimente recomandate" : "Recommended foods"}
+                                </p>
+                              </div>
+                              <div className="flex flex-wrap gap-1.5">
+                                {detail.recommendedFoods.map((food, i) => (
+                                  <span key={i} className="inline-flex items-center px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-xs font-medium">
+                                    {food}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {detail.avoidFoods.length > 0 && (
+                            <div>
+                              <div className="flex items-center gap-1.5 mb-2">
+                                <XCircle className="w-3.5 h-3.5 text-red-500" />
+                                <p className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                                  {isRo ? "Alimente de evitat" : "Foods to avoid"}
+                                </p>
+                              </div>
+                              <div className="flex flex-wrap gap-1.5">
+                                {detail.avoidFoods.map((food, i) => (
+                                  <span key={i} className="inline-flex items-center px-2 py-0.5 rounded-full bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 text-xs font-medium">
+                                    {food}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {detail.mealExamples.length > 0 && (
+                            <div>
+                              <div className="flex items-center gap-1.5 mb-2">
+                                <UtensilsCrossed className="w-3.5 h-3.5 text-teal-500" />
+                                <p className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                                  {isRo ? "Exemple de mese" : "Meal examples"}
+                                </p>
+                              </div>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                {detail.mealExamples.map((meal, i) => (
+                                  <div key={i} className="rounded-lg bg-white dark:bg-slate-800 border border-teal-100 dark:border-teal-900/40 p-3">
+                                    <p className="text-xs font-semibold text-teal-700 dark:text-teal-300 mb-1">{meal.name}</p>
+                                    {(meal.ingredients ?? []).length > 0 && (
+                                      <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                                        {(meal.ingredients ?? []).join(", ")}
+                                      </p>
+                                    )}
+                                    {meal.notes && (
+                                      <p className="text-xs text-slate-400 dark:text-slate-500 mt-1 italic">{meal.notes}</p>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {detail.generalTips.length > 0 && (
+                            <div>
+                              <div className="flex items-center gap-1.5 mb-2">
+                                <Lightbulb className="w-3.5 h-3.5 text-amber-500" />
+                                <p className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                                  {isRo ? "Sfaturi generale" : "General tips"}
+                                </p>
+                              </div>
+                              <ul className="space-y-1.5">
+                                {detail.generalTips.map((tip, i) => (
+                                  <li key={i} className="flex items-start gap-2 text-xs text-slate-600 dark:text-slate-400">
+                                    <span className="mt-1 w-1 h-1 rounded-full bg-amber-400 flex-shrink-0" />
+                                    {tip}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+
+                          <div className="pt-1 border-t border-slate-100 dark:border-slate-700/50">
+                            <p className="text-xs text-slate-400 dark:text-slate-500 italic">
+                              {detail.disclaimer}
+                            </p>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

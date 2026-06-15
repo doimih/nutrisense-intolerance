@@ -18,9 +18,15 @@ export type PreviousGuidanceSummary = {
   avoidFoods: string[];
 };
 
+export type PreviousMealExample = {
+  name: string;
+  ingredients: string[];
+};
+
 export type GuidanceGenerateInput = {
   intolerances: Intolerance[];
   dietaryPreference: DietaryPreference;
+  dietaryPreferences: DietaryPreference[];
   detailLevel: DetailLevel;
   monitoringEntries: MonitoringContextItem[];
   userEmail: string;
@@ -29,6 +35,7 @@ export type GuidanceGenerateInput = {
   planTier: PlanTier;
   physicalProfile?: PhysicalProfile;
   previousGuidance?: PreviousGuidanceSummary[];
+  previousMealExamples?: PreviousMealExample[];
 };
 
 export type GuidanceHistoryRecord = {

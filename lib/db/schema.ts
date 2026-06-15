@@ -46,6 +46,7 @@ export const userProfiles = pgTable("user_profiles", {
   heightCm: integer("height_cm"),
   weightKg: integer("weight_kg"),
   activityLevel: text("activity_level"),
+  onboardingCompleted: boolean("onboarding_completed").notNull().default(false),
 });
 
 export const monitoringEntries = pgTable("monitoring_entries", {

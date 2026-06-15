@@ -63,7 +63,7 @@ function isMealExample(value: unknown): value is MealExample {
   const candidate = value as Record<string, unknown>;
   return (
     typeof candidate.name === "string" &&
-    isStringArray(candidate.ingredients) &&
+    (candidate.ingredients === undefined || isStringArray(candidate.ingredients)) &&
     (typeof candidate.notes === "string" || typeof candidate.notes === "undefined")
   );
 }
@@ -73,9 +73,8 @@ function isDietaryPreference(value: unknown): value is DietaryPreference {
     value === "normal" ||
     value === "vegetarian" ||
     value === "vegan" ||
-    value === "keto" ||
-    value === "low-fodmap" ||
-    value === "mediterranean" ||
+    value === "low-carb" ||
+    value === "gluten-free" ||
     value === "dairy-free"
   );
 }
@@ -88,7 +87,14 @@ function isIntolerance(value: unknown): value is Intolerance {
     value === "histamina" ||
     value === "fructoza" ||
     value === "sulfiti" ||
-    value === "fodmap"
+    value === "fodmap" ||
+    value === "sorbitol" ||
+    value === "ou" ||
+    value === "soia" ||
+    value === "peste" ||
+    value === "crustacee" ||
+    value === "proteina-lapte" ||
+    value === "solanacee"
   );
 }
 

@@ -28,6 +28,8 @@ const VALID_INTOLERANCES: Intolerance[] = [
   "soia",
   "peste",
   "crustacee",
+  "proteina-lapte",
+  "solanacee",
 ];
 
 const VALID_ACTIVITY_LEVELS: ActivityLevel[] = ["sedentary", "light", "moderate", "active", "very_active"];
@@ -75,6 +77,15 @@ export async function PATCH(request: NextRequest) {
     return badRequest("Invalid dietaryPreference field.");
   }
 
+  if (typeof body.dietaryPreferences !== "undefined") {
+    if (!Array.isArray(body.dietaryPreferences) || body.dietaryPreferences.length === 0) {
+      return badRequest("Invalid dietaryPreferences field.");
+    }
+    if (!body.dietaryPreferences.every((p) => VALID_DIETARY.includes(p))) {
+      return badRequest("Invalid dietaryPreferences value provided.");
+    }
+  }
+
   if (typeof body.intolerances !== "undefined") {
     if (!Array.isArray(body.intolerances)) {
       return badRequest("Invalid intolerances field.");
@@ -112,6 +123,10 @@ export async function PATCH(request: NextRequest) {
     if (!VALID_ACTIVITY_LEVELS.includes(body.activityLevel)) {
       return badRequest("Invalid activityLevel field.");
     }
+  }
+
+  if (typeof body.onboardingCompleted !== "undefined" && typeof body.onboardingCompleted !== "boolean") {
+    return badRequest("Invalid onboardingCompleted field.");
   }
 
   const profile = await updateProfileForUser(session.user, body);

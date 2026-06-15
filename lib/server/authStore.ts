@@ -68,7 +68,17 @@ export async function ensureSeededVisitor(): Promise<void> {
   const existing = await db.query.users.findFirst({
     where: eq(users.email, FRONTEND_VISITOR_EMAIL),
   });
-  if (existing) return;
+
+  if (existing) {
+    // Ensure visitor never accidentally has superadmin role
+    if (existing.role === "superadmin") {
+      await db
+        .update(users)
+        .set({ role: "user", updatedAt: new Date().toISOString() })
+        .where(eq(users.email, FRONTEND_VISITOR_EMAIL));
+    }
+    return;
+  }
 
   const nowIso = new Date().toISOString();
   const salt = randomBytes(16).toString("hex");

@@ -14,18 +14,34 @@ function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
 }
 
+const VALID_DIETARY: DietaryPreference[] = ["normal", "vegetarian", "vegan", "low-carb", "gluten-free", "dairy-free"];
+
+function parseDietaryPreferences(raw: string): DietaryPreference[] {
+  const parts = raw.split("|").map((s) => s.trim()).filter(Boolean) as DietaryPreference[];
+  const valid = parts.filter((p) => VALID_DIETARY.includes(p));
+  return valid.length > 0 ? valid : ["normal"];
+}
+
+function joinDietaryPreferences(prefs: DietaryPreference[]): string {
+  const unique = Array.from(new Set(prefs.filter((p) => VALID_DIETARY.includes(p))));
+  return unique.length > 0 ? unique.join("|") : "normal";
+}
+
 function rowToProfile(row: typeof userProfiles.$inferSelect): UserProfile {
+  const dietaryPreferences = parseDietaryPreferences(row.dietaryPreference);
   return {
     userId: row.userId,
     name: row.name,
     email: row.email,
-    dietaryPreference: row.dietaryPreference as DietaryPreference,
+    dietaryPreference: dietaryPreferences[0],
+    dietaryPreferences,
     intolerances: (row.intolerances as string[]) as Intolerance[],
     updatedAt: row.updatedAt,
     age: row.age ?? null,
     heightCm: row.heightCm ?? null,
     weightKg: row.weightKg ?? null,
     activityLevel: (row.activityLevel as ActivityLevel) ?? null,
+    onboardingCompleted: row.onboardingCompleted ?? false,
   };
 }
 
@@ -51,7 +67,7 @@ export async function getProfileForUser(user: SessionUser): Promise<UserProfile>
       activityLevel: null,
     };
     await db.insert(userProfiles).values(newProfile);
-    return rowToProfile({ ...newProfile, id: 0 });
+    return rowToProfile({ ...newProfile, id: 0, onboardingCompleted: false });
   }
 
   // Sync session identity if needed
@@ -84,7 +100,13 @@ export async function updateProfileForUser(user: SessionUser, input: UpdateProfi
     updatedAt: now,
   };
 
-  const nextDietary = (input.dietaryPreference ?? base.dietaryPreference) as DietaryPreference;
+  const nextDietaryPreferences: DietaryPreference[] = Array.isArray(input.dietaryPreferences) && input.dietaryPreferences.length > 0
+    ? input.dietaryPreferences
+    : input.dietaryPreference
+    ? [input.dietaryPreference]
+    : parseDietaryPreferences(base.dietaryPreference);
+  const nextDietaryRaw = joinDietaryPreferences(nextDietaryPreferences);
+  const nextDietary = nextDietaryRaw as DietaryPreference;
   const nextIntolerances = Array.isArray(input.intolerances)
     ? Array.from(new Set(input.intolerances)) as Intolerance[]
     : (base.intolerances as Intolerance[]);
@@ -102,6 +124,7 @@ export async function updateProfileForUser(user: SessionUser, input: UpdateProfi
     heightCm: "heightCm" in input ? (input.heightCm ?? null) : (existing?.heightCm ?? null),
     weightKg: "weightKg" in input ? (input.weightKg ?? null) : (existing?.weightKg ?? null),
     activityLevel: "activityLevel" in input ? (input.activityLevel as string | null ?? null) : (existing?.activityLevel ?? null),
+    onboardingCompleted: "onboardingCompleted" in input ? (input.onboardingCompleted ?? false) : (existing?.onboardingCompleted ?? false),
   };
 
   if (existing) {

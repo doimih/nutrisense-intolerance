@@ -58,10 +58,11 @@ export const WORKER_SCHEMAS: Record<string, WorkerSchema> = {
 
   'intolerance-checker': {
     workerName: 'Intolerance Checker Worker',
-    required: [...BASE_REQUIRED, 'data.flaggedIngredients'],
+    required: [...BASE_REQUIRED],
     fields: {
       ...BASE_FIELDS,
-      'data.flaggedIngredients': { type: 'array' },
+      'data.flaggedIngredients': { type: 'array', optional: true },
+      'data.possibleTriggers': { type: 'array', optional: true },
       'data.safeIngredients': { type: 'array', optional: true },
       'data.conflicts': { type: 'array', optional: true },
     },
@@ -69,11 +70,13 @@ export const WORKER_SCHEMAS: Record<string, WorkerSchema> = {
   },
 
   'allergy-checker': {
-    workerName: 'Allergy Checker Worker',
-    required: [...BASE_REQUIRED, 'data.allergenHits'],
+    workerName: 'Reaction Pattern Analyzer Worker',
+    required: [...BASE_REQUIRED],
     fields: {
       ...BASE_FIELDS,
-      'data.allergenHits': { type: 'array' },
+      'data.reactionPatterns': { type: 'array', optional: true },
+      'data.associatedFoods': { type: 'array', optional: true },
+      'data.allergenHits': { type: 'array', optional: true },
       'data.safe': { type: 'boolean', optional: true },
       'data.rejectedMeals': { type: 'array', optional: true },
     },
@@ -93,25 +96,29 @@ export const WORKER_SCHEMAS: Record<string, WorkerSchema> = {
   },
 
   'nutrition-calculator': {
-    workerName: 'Nutrition Calculator Worker',
-    required: [...BASE_REQUIRED, 'data.kcal'],
+    workerName: 'Recommended Foods Generator Worker',
+    required: [...BASE_REQUIRED],
     fields: {
       ...BASE_FIELDS,
-      'data.kcal': { type: 'number' },
+      'data.recommendedFoods': { type: 'array', optional: true },
+      'data.kcal': { type: 'number', optional: true },
       'data.proteinG': { type: 'number', optional: true },
       'data.carbsG': { type: 'number', optional: true },
       'data.fatG': { type: 'number', optional: true },
       'data.disclaimer': { type: 'string', optional: true },
     },
-    requiresDisclaimer: true,
+    requiresDisclaimer: false,
   },
 
   'meal-plan-generator': {
     workerName: 'Meal Plan Generator Worker',
-    required: [...BASE_REQUIRED, 'data.meals'],
+    required: [...BASE_REQUIRED],
     fields: {
       ...BASE_FIELDS,
-      'data.meals': { type: 'array' },
+      'data.meals': { type: 'array', optional: true },
+      'data.breakfast': { type: 'array', optional: true },
+      'data.lunch': { type: 'array', optional: true },
+      'data.dinner': { type: 'array', optional: true },
       'data.totalKcal': { type: 'number', optional: true },
       'data.alternatives': { type: 'array', optional: true },
       'data.disclaimer': { type: 'string', optional: true },
@@ -146,15 +153,17 @@ export const WORKER_SCHEMAS: Record<string, WorkerSchema> = {
   },
 
   'supplement-advisor': {
-    workerName: 'Supplement Advisor Worker',
-    required: [...BASE_REQUIRED, 'data.supplements'],
+    workerName: 'Lifestyle Tips Worker',
+    required: [...BASE_REQUIRED],
     fields: {
       ...BASE_FIELDS,
-      'data.supplements': { type: 'array' },
-      'data.contraindications': { type: 'array', optional: true },
+      'data.lifestyleTips': { type: 'array', optional: true },
+      'data.routineSuggestions': { type: 'array', optional: true },
+      'data.comfortHabits': { type: 'array', optional: true },
+      'data.supplements': { type: 'array', optional: true },
       'data.disclaimer': { type: 'string', optional: true },
     },
-    requiresDisclaimer: true,
+    requiresDisclaimer: false,
   },
 
   'progress-tracking': {

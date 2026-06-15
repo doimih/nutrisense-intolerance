@@ -33,7 +33,7 @@ export default function ProfilePage() {
   const [error, setError] = useState("");
   const [form, setForm] = useState({
     name: "",
-    dietaryPreference: "normal" as DietaryPreference,
+    dietaryPreferences: ["normal"] as DietaryPreference[],
     intolerances: [] as Intolerance[],
     age: "" as string,
     heightCm: "" as string,
@@ -46,7 +46,7 @@ export default function ProfilePage() {
       setProfile(p);
       setForm({
         name: p.name,
-        dietaryPreference: p.dietaryPreference,
+        dietaryPreferences: p.dietaryPreferences ?? [p.dietaryPreference],
         intolerances: p.intolerances,
         age: p.age ? String(p.age) : "",
         heightCm: p.heightCm ? String(p.heightCm) : "",
@@ -57,6 +57,17 @@ export default function ProfilePage() {
       setLoading(false);
     });
   }, []);
+
+  const toggleDietaryPreference = (pref: DietaryPreference) => {
+    setForm((f) => {
+      const current = f.dietaryPreferences;
+      if (current.includes(pref)) {
+        const next = current.filter((p) => p !== pref);
+        return { ...f, dietaryPreferences: next.length > 0 ? next : ["normal"] };
+      }
+      return { ...f, dietaryPreferences: [...current, pref] };
+    });
+  };
 
   const toggleIntolerance = (intol: Intolerance) => {
     setForm((f) => ({
@@ -79,7 +90,7 @@ export default function ProfilePage() {
     try {
       const updated = await updateProfile({
         name: form.name,
-        dietaryPreference: form.dietaryPreference,
+        dietaryPreferences: form.dietaryPreferences,
         intolerances: form.intolerances,
         age: form.age ? parseInt(form.age, 10) : null,
         heightCm: form.heightCm ? parseInt(form.heightCm, 10) : null,
@@ -98,10 +109,6 @@ export default function ProfilePage() {
   };
 
   if (loading) return <PageLoader />;
-
-  const dietOptions = Object.entries(DIETARY_PREFERENCE_LABELS).map(
-    ([value]) => ({ value, label: getDietaryLabel(value as DietaryPreference, lang) })
-  );
 
   const activityOptions = [
     { value: "", label: isRo ? "— Neselectat —" : "— Not selected —" },
@@ -224,26 +231,44 @@ export default function ProfilePage() {
           </div>
         </Card>
 
-        {/* Dietary preference */}
+        {/* Dietary preferences - multi-select */}
         <Card bordered>
           <CardHeader>
-            <CardTitle>{isRo ? "Preferinta alimentara" : "Dietary preference"}</CardTitle>
+            <CardTitle>{isRo ? "Preferinte alimentare" : "Dietary preferences"}</CardTitle>
             <CardDescription>
-              {isRo ? "Tipul tau de dieta pentru recomandari mai precise" : "Your diet type for more relevant guidance"}
+              {isRo
+                ? "Selecteaza una sau mai multe preferinte. AI-ul le va combina in recomandarile tale."
+                : "Select one or more preferences. The AI will combine them in your guidance."}
             </CardDescription>
           </CardHeader>
-          <FormField label={isRo ? "Preferinta alimentara" : "Dietary preference"}>
-            <Select
-              value={form.dietaryPreference}
-              options={dietOptions}
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  dietaryPreference: e.target.value as DietaryPreference,
-                })
-              }
-            />
-          </FormField>
+          <div className="flex flex-wrap gap-2">
+            {(Object.keys(DIETARY_PREFERENCE_LABELS) as DietaryPreference[]).map((pref) => {
+              const selected = form.dietaryPreferences.includes(pref);
+              return (
+                <button
+                  key={pref}
+                  type="button"
+                  onClick={() => toggleDietaryPreference(pref)}
+                  className={`px-3 py-1.5 text-sm font-medium rounded-full border transition-all duration-150 ${
+                    selected
+                      ? "bg-teal-600 border-teal-600 text-white shadow-sm"
+                      : "bg-white dark:bg-slate-700 border-gray-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:border-teal-400 hover:text-teal-600 dark:hover:text-teal-400"
+                  }`}
+                >
+                  {getDietaryLabel(pref, lang)}
+                </button>
+              );
+            })}
+          </div>
+          {form.dietaryPreferences.length > 1 && (
+            <div className="mt-3 pt-3 border-t border-gray-100 dark:border-slate-700">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                {isRo
+                  ? `Ai selectat ${form.dietaryPreferences.length} preferinte. AI-ul va tine cont de toate combinatiile.`
+                  : `${form.dietaryPreferences.length} preferences selected. The AI will respect all combinations.`}
+              </p>
+            </div>
+          )}
         </Card>
 
         {/* Intolerances */}

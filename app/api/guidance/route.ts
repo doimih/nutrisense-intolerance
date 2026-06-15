@@ -14,7 +14,7 @@ import {
 } from "@/lib/server/guidance/engine";
 import { getEffectivePlanTier, tierAllows, cappedDetailLevel } from "@/lib/billing/features";
 import { mineSimilarPatterns, deriveUserProblemFromMonitoring } from "@/lib/server/userProblemsStore";
-import type { GuidanceGenerateInput, PhysicalProfile, PlanTier, PreviousGuidanceSummary, SubscriptionTier } from "@/lib/server/guidance/types";
+import type { GuidanceGenerateInput, PhysicalProfile, PlanTier, PreviousGuidanceSummary, PreviousMealExample, SubscriptionTier } from "@/lib/server/guidance/types";
 import type { DetailLevel, GuidanceResult, MealExample, MonitoringContextItem } from "@/types/guidance";
 import type { DietaryPreference, Intolerance } from "@/types/profile";
 
@@ -23,8 +23,11 @@ export const runtime = "nodejs";
 type GuidanceBody = {
   intolerances?: unknown;
   dietaryPreference?: unknown;
+  dietaryPreferences?: unknown;
   detailLevel?: unknown;
   monitoringEntries?: unknown;
+  lang?: unknown;
+  forceRegenerate?: unknown;
 };
 
 const dedupeCache = new Map<string, { expiresAt: number; resultId: string }>();
@@ -69,7 +72,9 @@ function isIntoleranceArray(value: unknown): value is Intolerance[] {
         item === "ou" ||
         item === "soia" ||
         item === "peste" ||
-        item === "crustacee"
+        item === "crustacee" ||
+        item === "proteina-lapte" ||
+        item === "solanacee"
     )
   );
 }
@@ -116,9 +121,9 @@ function badRequest(error: string): NextResponse {
   return NextResponse.json({ error }, { status: 400 });
 }
 
-function getLanguage(request: NextRequest): "ro" | "en" {
+function getLanguage(request: NextRequest, body?: GuidanceBody): "ro" | "en" {
   void request;
-  return "ro";
+  return body?.lang === "en" ? "en" : "ro";
 }
 
 function resolveSubscriptionTier(status: string): SubscriptionTier {
@@ -331,12 +336,14 @@ async function runRealOrchestrator(
       },
       userProfile: {
         dietType: input.dietaryPreference,
+        dietTypes: input.dietaryPreferences,
         intolerances: input.intolerances,
         subscriptionTier: input.subscriptionTier,
         planTier: input.planTier,
         physicalProfile: input.physicalProfile,
       },
       previousGuidance: input.previousGuidance ?? [],
+      previousMealExamples: input.previousMealExamples ?? [],
       databasePatterns: dbPatterns ?? {
         similarCases: [],
         commonTriggers: [],
@@ -385,7 +392,7 @@ export async function POST(request: NextRequest) {
     return badRequest("Invalid detailLevel field.");
   }
 
-  const lang = getLanguage(request);
+  const lang = getLanguage(request, body);
   const email = session.user.email.trim().toLowerCase();
 
   const effectiveTier = await getEffectivePlanTier(email);
@@ -430,11 +437,24 @@ export async function POST(request: NextRequest) {
     avoidFoods: r.result.avoidFoods ?? [],
   }));
 
+  const previousMealExamples: PreviousMealExample[] = recentHistory
+    .flatMap((r) => r.result.mealExamples ?? [])
+    .slice(0, 30)
+    .map((m) => ({ name: m.name, ingredients: m.ingredients }));
+
+  const bodyDietaryPreferencesRaw = Array.isArray(body.dietaryPreferences)
+    ? (body.dietaryPreferences as unknown[]).filter(isDietaryPreference)
+    : [];
+  const bodyDietaryPreferences: DietaryPreference[] = bodyDietaryPreferencesRaw.length > 0
+    ? bodyDietaryPreferencesRaw
+    : isDietaryPreference(body.dietaryPreference)
+    ? [body.dietaryPreference]
+    : profile.dietaryPreferences ?? [profile.dietaryPreference];
+
   const input: GuidanceGenerateInput = {
     intolerances: isIntoleranceArray(body.intolerances) ? body.intolerances : profile.intolerances,
-    dietaryPreference: isDietaryPreference(body.dietaryPreference)
-      ? body.dietaryPreference
-      : profile.dietaryPreference,
+    dietaryPreference: bodyDietaryPreferences[0] ?? profile.dietaryPreference,
+    dietaryPreferences: bodyDietaryPreferences,
     detailLevel: safeDetailLevel,
     monitoringEntries,
     userEmail: email,
@@ -443,25 +463,31 @@ export async function POST(request: NextRequest) {
     planTier,
     physicalProfile,
     previousGuidance,
+    previousMealExamples,
   };
 
   const prompt = buildGuidancePrompt(input);
   const fingerprint = guidanceFingerprint({
     intolerances: input.intolerances,
     dietaryPreference: input.dietaryPreference,
+    dietaryPreferences: input.dietaryPreferences,
     detailLevel: input.detailLevel,
     monitoringEntries: input.monitoringEntries,
     tier: input.subscriptionTier,
   });
 
+  const forceRegenerate = body.forceRegenerate === true;
+
   pruneDedupeCache();
   const key = dedupeKey(email, fingerprint);
-  const cached = dedupeCache.get(key);
-  if (cached) {
-    const history = await listGuidanceByUser(email);
-    const existing = history.find((item) => item.result.id === cached.resultId);
-    if (existing) {
-      return NextResponse.json({ result: existing.result, deduped: true });
+  if (!forceRegenerate) {
+    const cached = dedupeCache.get(key);
+    if (cached) {
+      const history = await listGuidanceByUser(email);
+      const existing = history.find((item) => item.result.id === cached.resultId);
+      if (existing) {
+        return NextResponse.json({ result: existing.result, deduped: true });
+      }
     }
   }
 
