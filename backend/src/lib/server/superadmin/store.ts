@@ -126,6 +126,7 @@ function seedDb(): SuperadminDb {
     AI_Logs: [],
     archiveLinks: [],
     visitorSessions: [],
+    acquisitionDownloads: [],
     settings: {
       app: {
         siteUrl: 'https://nutriaid.eu',
@@ -298,6 +299,9 @@ export function readDb(): SuperadminDb {
   }
   if (!Array.isArray(parsed.visitorSessions)) {
     parsed.visitorSessions = [];
+  }
+  if (!Array.isArray(parsed.acquisitionDownloads)) {
+    parsed.acquisitionDownloads = [];
   }
 
   let needsWrite = !hadToken;

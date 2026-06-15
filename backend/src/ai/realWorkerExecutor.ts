@@ -10,40 +10,44 @@ import { readDb } from '@/lib/server/superadmin/store';
 
 const WORKER_ROLES: Record<string, { ro: string; en: string }> = {
   'profile-analyzer': {
-    ro: 'Esti analizorul de profil. Extrage informatii nutritionale cheie din profilul utilizatorului: tip dieta, intolerante, alergii, obiective si nivel de activitate. Identifica datele lipsa.',
-    en: 'You are the profile analyzer. Extract key nutritional info from the user profile: diet type, intolerances, allergies, goals, activity level. Identify missing data.',
+    ro: 'Esti analizorul de tipare comportamentale alimentare. Extrage din profilul utilizatorului: preferintele alimentare declarate, obisnuintele de consum, alimentele preferate si pe cele evitate, tipicul rutinei zilnice si familiaritatea culturala cu anumite alimente. Identifica date lipsa. Nu face interpretari medicale sau nutritionale. Focuseaza-te exclusiv pe comportament si preferinte.',
+    en: 'You are the behavioral food pattern analyzer. Extract from the user profile: declared food preferences, eating habits, favorite and avoided foods, daily routine patterns, and cultural food familiarity. Identify missing data. Make no medical or nutritional interpretations. Focus exclusively on behavior and preferences.',
   },
   'intolerance-checker': {
-    ro: 'Esti verificatorul de intolerante. Analizeaza alimentele din context si identifica pe cele incompatibile cu intolerantele utilizatorului. Listeaza atat alimentele flagate cat si cele sigure. Explica conflictele.',
-    en: 'You are the intolerance checker. Analyze foods in context and flag those incompatible with the user intolerances. List both flagged and safe ingredients. Explain conflicts.',
+    ro: 'Esti analizorul de tipare de disconfort alimentar. Pe baza jurnalului si profilului, identifica alimentele pe care utilizatorul le-a raportat ca ii cauzeaza disconfort sau reactii neplacute. Foloseste limbaj bland si non-medical: "poate cauza disconfort", "utilizatorul a raportat reactii dupa consum", "unii pot fi sensibili". Nu diagnostica. Lista alimentele ca possibleTriggers. Evidentiaza si alimentele consumate fara probleme.',
+    en: 'You are the food discomfort pattern analyzer. Based on the journal and profile, identify foods the user has reported as causing discomfort or unpleasant reactions. Use gentle, non-medical language: "may cause discomfort", "user reported reactions after consumption", "some may be sensitive to this". Do not diagnose. List foods as possibleTriggers. Also highlight foods consumed without issues.',
   },
   'allergy-checker': {
-    ro: 'Esti verificatorul de alergii. Identifica alergenii potentiali in alimentele din context. Evalueaza daca planul propus este sigur si lista mesele respinse daca e cazul.',
-    en: 'You are the allergy checker. Identify potential allergens in foods from context. Evaluate if the proposed plan is safe and list rejected meals if needed.',
+    ro: 'Esti analizorul de tipare de reactii alimentare. Identifica din jurnal si profil alimentele asociate cu reactii neplacute raportate de utilizator. Foloseste limbaj comportamental, nu medical: "asociat cu reactii raportate", "utilizatorul a raportat disconfort dupa". Nu certifica, nu diagnostica. Focuseaza-te pe pattern-uri observate in comportamentul utilizatorului.',
+    en: 'You are the food reaction pattern analyzer. Identify from journal and profile foods associated with unpleasant reactions reported by the user. Use behavioral, non-medical language: "associated with reported reactions", "user reported discomfort after". Do not certify or diagnose. Focus on patterns observed in user behavior.',
   },
   'meal-plan-generator': {
-    ro: 'Esti generatorul de plan alimentar. Creeaza un plan de mese personalizat, evitand complet ingredientele flagate de verificatoarele anterioare. Fiecare masa trebuie sa fie completa, variata si nutritiv echilibrata.',
-    en: 'You are the meal plan generator. Create a personalized meal plan, completely avoiding ingredients flagged by previous checkers. Each meal must be complete, varied and nutritionally balanced.',
+    ro: 'Esti generatorul de idei de mese adaptate cultural. Creeaza 7 idei simple de mese (nu retete detaliate, nu liste de ingrediente) adaptate la preferintele utilizatorului si contextul sau cultural. Genereaza idei separate pentru mic dejun, pranz si cina. Fiecare idee de masa trebuie sa fie o sugestie scurta si familiara, nu o reteta elaborata. Variaza tipul de bucatarie si contextul cultural. Evita orice aliment raportat ca problematic. Returneaza breakfast[], lunch[], dinner[] sau meals[].',
+    en: 'You are the culturally-adapted meal idea generator. Create 7 simple meal ideas (not detailed recipes, not ingredient lists) adapted to the user\'s preferences and cultural context. Generate separate ideas for breakfast, lunch, and dinner. Each meal idea should be a short, familiar suggestion, not an elaborate recipe. Vary the cuisine type and cultural context. Avoid any food reported as problematic. Return breakfast[], lunch[], dinner[] or meals[].',
   },
   'recipe-builder': {
-    ro: 'Esti constructorul de retete. Creeaza o reteta detaliata si sigura pentru utilizator, cu pasi clari, ingrediente compatibile cu profilul sau si note de substitutie.',
-    en: 'You are the recipe builder. Create a detailed, safe recipe for the user with clear steps, ingredients compatible with their profile, and substitution notes.',
+    ro: 'Esti generatorul de idei de retete simple. Sugereaza idei de retete la nivel conceptual — denumire, descriere scurta si context cultural. Nu lista pasi de preparare detaliati, nu include valori nutritionale, nu face afirmatii medicale. Focuseaza-te pe familiaritate, simplicitate si potrivire cu preferintele utilizatorului.',
+    en: 'You are the simple recipe idea generator. Suggest recipes at a conceptual level — name, brief description, and cultural context. Do not list detailed preparation steps, do not include nutritional values, do not make medical claims. Focus on familiarity, simplicity, and fit with user preferences.',
   },
   'nutrition-calculator': {
-    ro: 'Esti calculatorul nutritional. Estimeaza valorile nutritionale realiste (calorii, proteine, carbohidrati, grasimi) pentru planul de mese generat.',
-    en: 'You are the nutrition calculator. Estimate realistic nutritional values (calories, protein, carbs, fat) for the generated meal plan.',
+    ro: 'Esti generatorul de alimente recomandate adaptate GEO-cultural. Pe baza profilului si preferintelor utilizatorului, genereaza o lista bogata de alimente recomandate disponibile local, familiare cultural si potrivite pentru tiparele de confort ale utilizatorului. Nu calcula calorii, macronutrienti sau valori nutritionale. Focuseaza-te pe diversitate, familiaritate culturala si accesibilitate locala. Returneaza recommendedFoods[] cu minimum 20 alimente unice.',
+    en: 'You are the GEO-culturally adapted recommended foods generator. Based on the user profile and preferences, generate a rich list of recommended foods that are locally available, culturally familiar, and suited to the user\'s comfort patterns. Do not calculate calories, macronutrients, or nutritional values. Focus on diversity, cultural familiarity, and local availability. Return recommendedFoods[] with minimum 20 unique foods.',
   },
   'medical-safety': {
-    ro: 'Esti verificatorul de siguranta medicala. Revizuieste continutul generat si asigura-te ca nu contine diagnostic, tratament, medicatie sau limbaj absolut. Adauga disclaimer medical obligatoriu.',
-    en: 'You are the medical safety reviewer. Review generated content ensuring no diagnosis, treatment, medication or absolute language. Add mandatory medical disclaimer.',
+    ro: 'Esti generatorul de note de constientizare. Revizuieste continutul generat si asigura-te ca nu contine: diagnostice, tratamente, medicamente, suplimente, valori nutritionale sau limbaj absolut. Adauga un disclaimer clar ca recomandarile sunt bazate pe preferinte si tipare de confort, nu pe sfat medical. Returneaza safetyApproved: true si un disclaimer bland si uman.',
+    en: 'You are the awareness notes generator. Review the generated content and ensure it contains no: diagnoses, treatments, medications, supplements, nutritional values, or absolute language. Add a clear disclaimer that recommendations are based on preferences and comfort patterns, not medical advice. Return safetyApproved: true and a gentle, human disclaimer.',
   },
   'supplement-advisor': {
-    ro: 'Esti consultantul de suplimente. Sugereaza suplimente generale si sigure bazate pe lacunele dietetice identificate. Nu prescrie, nu diagnostica. Adauga avertismente si disclaimer.',
-    en: 'You are the supplement advisor. Suggest general, safe supplements based on identified dietary gaps. Do not prescribe or diagnose. Add warnings and disclaimer.',
+    ro: 'Esti generatorul de sfaturi de stil de viata si rutine de confort. Nu sugera suplimente, medicamente sau produse nutritionale. In schimb, genereaza sfaturi practice de rutina zilnica, obiceiuri alimentare de confort, sugestii comportamentale si tipare de wellness non-medical. Focuseaza-te pe simplitate, consecventa si bunastare generala. Returneaza lifestyleTips[] si routineSuggestions[].',
+    en: 'You are the lifestyle tips and comfort routine generator. Do not suggest supplements, medications, or nutritional products. Instead, generate practical daily routine tips, comfort eating habits, behavioral suggestions, and non-medical wellness patterns. Focus on simplicity, consistency, and general wellbeing. Return lifestyleTips[] and routineSuggestions[].',
   },
   'progress-tracking': {
-    ro: 'Esti analizorul de progres. Analizeaza jurnalul de monitorizare si rezuma tendintele: alimente frecvente, simptome recurente, tendinte de imbunatatire sau agravare.',
-    en: 'You are the progress tracker. Analyze the monitoring journal and summarize trends: frequent foods, recurring symptoms, improvement or worsening tendencies.',
+    ro: 'Esti analizorul de consecventa si varietate alimentara. Analizeaza jurnalul de monitorizare si rezuma: consecventa rutinei alimentare, varietatea alimentelor consumate, tipare de confort observate si tendinte comportamentale. Nu evalua starea de sanatate, nu comenta valori nutritionale. Focuseaza-te pe comportament, obiceiuri si varietate.',
+    en: 'You are the food consistency and variety analyzer. Analyze the monitoring journal and summarize: food routine consistency, variety of consumed foods, observed comfort patterns, and behavioral tendencies. Do not evaluate health status or comment on nutritional values. Focus on behavior, habits, and variety.',
+  },
+  'shopping-list': {
+    ro: 'Esti generatorul de lista de alimente. Pe baza ideilor de mese si preferintelor utilizatorului, creeaza o lista simpla de alimente de cumparat. Grupeaza pe categorii (fructe, legume, cereale, proteina, lactate, altele). Exclude orice aliment raportat ca problematic. Nu adauga context nutritional sau medical. Lista cat mai variata si adaptata cultural.',
+    en: 'You are the grocery list generator. Based on meal ideas and user preferences, create a simple list of foods to buy. Group by category (fruits, vegetables, grains, protein, dairy, other). Exclude any food reported as problematic. Do not add nutritional or medical context. Make the list as varied and culturally adapted as possible.',
   },
 };
 
@@ -114,11 +118,29 @@ function buildWorkerUserMessage(
   lines.push(`INTOLERANCES: ${context.intolerances?.join(', ') || 'none'}`);
   lines.push(`ALLERGIES: ${context.allergies?.join(', ') || 'none'}`);
 
-  if (context.nutritionalGoals && Object.keys(context.nutritionalGoals).length > 0) {
-    lines.push(`GOALS: ${JSON.stringify(context.nutritionalGoals)}`);
+  // GEO context
+  if (context.country || context.region || context.culturalCuisine) {
+    const geoParts: string[] = [];
+    if (context.country) geoParts.push(`tara/country=${context.country}`);
+    if (context.region) geoParts.push(`regiune/region=${context.region}`);
+    if (context.culturalCuisine) geoParts.push(`bucatarie/cuisine=${context.culturalCuisine}`);
+    lines.push(lang === 'ro'
+      ? `GEO_CONTEXT: ${geoParts.join(', ')}. Adapteaza recomandarile la alimente locale familiare cultural.`
+      : `GEO_CONTEXT: ${geoParts.join(', ')}. Adapt all recommendations to locally available, culturally familiar foods.`);
   }
+
   if (context.userProfile && Object.keys(context.userProfile).length > 0) {
     lines.push(`PROFILE: ${JSON.stringify(context.userProfile)}`);
+  }
+
+  // Diversity blacklist — items already mentioned by previous workers
+  const diversityBlacklist = Array.isArray(input._diversityBlacklist)
+    ? (input._diversityBlacklist as string[]).slice(0, 80)
+    : [];
+  if (diversityBlacklist.length > 0) {
+    lines.push(lang === 'ro'
+      ? `REGULA_DIVERSITATE: Nu repeta NICIUNUL din urmatoarele elemente deja mentionate de workeri anteriori. Genereaza EXCLUSIV elemente noi, unice: ${diversityBlacklist.join(', ')}`
+      : `DIVERSITY_RULE: Do NOT repeat ANY of the following items already mentioned by previous workers. Generate EXCLUSIVELY new, unique items: ${diversityBlacklist.join(', ')}`);
   }
 
   // Pass only non-meta accumulated context (previous worker outputs)
@@ -134,8 +156,8 @@ function buildWorkerUserMessage(
 
   lines.push(
     lang === 'ro'
-      ? `Genereaza outputul complet pentru worker-ul "${workerId}".`
-      : `Generate the complete output for the "${workerId}" worker.`,
+      ? `Genereaza outputul complet pentru worker-ul "${workerId}". Minimum 15 elemente unice per lista. Fara valori nutritionale, fara diagnostice, fara sfat medical.`
+      : `Generate the complete output for the "${workerId}" worker. Minimum 15 unique items per list. No nutritional values, no diagnoses, no medical advice.`,
   );
 
   return lines.join('\n');

@@ -16,9 +16,11 @@ import {
   ChevronRight,
   ShieldCheck,
   Shield,
+  Briefcase,
 } from "lucide-react";
 import clsx from "clsx";
 import { getSessionUser, logout } from "@/lib/api/auth";
+import { getProfile } from "@/lib/api/profile";
 import { useLanguage } from "@/components/LanguageProvider";
 import { getUiCopy } from "@/lib/i18n/ui";
 import TrialExpiredModal from "@/components/TrialExpiredModal";
@@ -80,9 +82,10 @@ export default function DashboardShell({ children }: { children: React.ReactNode
 
   useEffect(() => {
     let active = true;
-    getSessionUser()
-      .then((user) => {
-        if (active && user) {
+    Promise.all([getSessionUser(), getProfile()])
+      .then(([user, profile]) => {
+        if (!active) return;
+        if (user) {
           setIsSuperadmin(user.role === "superadmin");
           setCurrentUser({ id: user.id, name: user.name, email: user.email, plan: user.plan, trialEndsAt: user.trialEndsAt });
           if (user.sessionExpiresAt) setSessionExpiresAt(user.sessionExpiresAt);
@@ -90,6 +93,9 @@ export default function DashboardShell({ children }: { children: React.ReactNode
           const noPlan = !user.plan;
           const notAdmin = user.role !== "superadmin";
           if (trialExpired && noPlan && notAdmin) setShowTrialModal(true);
+          if (profile && !profile.onboardingCompleted) {
+            router.push("/onboarding");
+          }
         }
       })
       .catch(() => {
@@ -99,6 +105,25 @@ export default function DashboardShell({ children }: { children: React.ReactNode
     return () => {
       active = false;
     };
+  }, [router]);
+
+  // Auto-refresh session when user returns to the PWA (e.g. switches tabs or apps on mobile)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState !== "visible") return;
+      fetch("/api/auth/refresh", { method: "POST" })
+        .then((res) => {
+          if (res.ok) return res.json() as Promise<{ sessionExpiresAt?: number }>;
+          return null;
+        })
+        .then((data) => {
+          if (data?.sessionExpiresAt) setSessionExpiresAt(data.sessionExpiresAt);
+        })
+        .catch(() => undefined);
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
   }, []);
 
   useEffect(() => {
@@ -120,12 +145,17 @@ export default function DashboardShell({ children }: { children: React.ReactNode
     };
   }, []);
 
+  const canSeeAcquisition = isSuperadmin || currentUser?.email === "visitor@nutriaid.eu";
+
   const navItems = [
     { href: "/dashboard", icon: LayoutDashboard, label: copy.nav.dashboard, exact: true },
     { href: "/dashboard/profile", icon: User, label: isRo ? "Profil" : "Profile" },
     { href: "/dashboard/guidance", icon: Sparkles, label: isRo ? "Recomandari" : "Guidance" },
     { href: "/dashboard/history", icon: History, label: isRo ? "Istoric" : "History" },
     { href: "/dashboard/monitoring", icon: BookOpen, label: isRo ? "Jurnal" : "Journal" },
+    ...(canSeeAcquisition
+      ? [{ href: "/acquire", icon: Briefcase, label: isRo ? "Achiziție" : "Acquisition" }]
+      : []),
     { href: "/dashboard/gdpr", icon: Shield, label: isRo ? "GDPR" : "GDPR" },
   ];
 

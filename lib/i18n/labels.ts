@@ -16,6 +16,8 @@ const intoleranceLabels: Record<AppLanguage, Record<Intolerance, string>> = {
     soia: "Soia",
     peste: "Peste",
     crustacee: "Crustacee",
+    "proteina-lapte": "Proteina din lapte",
+    solanacee: "Solanacee",
   },
   en: {
     lactoza: "Lactose",
@@ -30,6 +32,8 @@ const intoleranceLabels: Record<AppLanguage, Record<Intolerance, string>> = {
     soia: "Soy",
     peste: "Fish",
     crustacee: "Shellfish",
+    "proteina-lapte": "Milk protein",
+    solanacee: "Nightshades",
   },
 };
 

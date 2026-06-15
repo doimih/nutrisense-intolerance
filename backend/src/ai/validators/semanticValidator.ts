@@ -109,11 +109,10 @@ function validateAllergens(
 
 // ─── B. Nutritional Logic Validation ─────────────────────────────────────────
 
+// nutrition-calculator is now a food recommender (no kcal/macros) — excluded
 const NUTRITION_WORKERS = [
-  'nutrition-calculator',
   'meal-plan-generator',
   'recipe-builder',
-  'nutritionCalculator',
   'mealPlanGenerator',
   'recipeBuilder',
 ];
@@ -196,9 +195,11 @@ const MEDICAL_RISK_TERMS = [
   'medication', 'medicate',
 ];
 
+// Only medical-safety requires a disclaimer — nutrition-calculator and supplement-advisor
+// are now behavioral workers (food recommender / lifestyle tips) with no medical content
 const DISCLAIMER_WORKERS = [
-  'medical-safety', 'nutrition-calculator', 'meal-plan-generator', 'supplement-advisor',
-  'medicalSafety', 'nutritionCalculator', 'mealPlanGenerator', 'supplementAdvisor',
+  'medical-safety',
+  'medicalSafety',
 ];
 
 function validateSafety(output: JsonObject, workerId: string): { safetyErrors: string[] } {

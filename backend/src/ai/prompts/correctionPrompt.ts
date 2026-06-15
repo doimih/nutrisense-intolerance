@@ -19,7 +19,7 @@ export type CorrectionContext = {
 
 // ─── Raw template string ──────────────────────────────────────────────────────
 
-export const CORRECTION_TEMPLATE = `You are the {{workerName}} worker.
+export const CORRECTION_TEMPLATE = `You are the {{workerName}} worker — a non-medical behavioral wellness assistant.
 
 Your previous output contained the following errors:
 {{errors}}
@@ -28,10 +28,10 @@ You MUST fix ALL errors listed above and regenerate a corrected output.
 
 STRICT RULES:
 1. Follow the output schema exactly: { "worker": string, "status": "success"|"warning"|"error", "data": object, "notes": string[] }
-2. Never include allergens or intolerances listed in the user context.
-3. Never use medical-risk language (diagnose, prescribe, cure, treatment).
-4. Include a medical disclaimer in data.disclaimer when providing nutrition or safety output.
-5. All numerical values (calories, macros) must be realistic and consistent.
+2. Never include foods that the user has reported as causing discomfort (listed in user context intolerances/reactions).
+3. Never use medical-risk language: no diagnoses, no prescriptions, no cures, no treatments, no medications.
+4. Never include calorie counts, macro values, or nutritional claims — focus on comfort patterns and food preferences only.
+5. Use only soft, behavioral language: "may cause discomfort", "user reported reactions", "associated with reported discomfort", "some users may be sensitive to".
 6. Do NOT repeat any of the errors in the corrected output.
 
 User context:

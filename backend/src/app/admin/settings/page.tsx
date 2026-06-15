@@ -15,6 +15,7 @@ import RecaptchaSettings from './components/RecaptchaSettings';
 import SecuritySettings from './components/SecuritySettings';
 import ArchiveSettings from './components/ArchiveSettings';
 import VisitorSettings from './components/VisitorSettings';
+import AcquisitionSettings from './components/AcquisitionSettings';
 
 type SettingsSection =
   | 'email'
@@ -29,7 +30,8 @@ type SettingsSection =
   | 'recaptcha'
   | 'security'
   | 'archive'
-  | 'visitor';
+  | 'visitor'
+  | 'acquisition';
 
 interface SectionItem {
   id: SettingsSection;
@@ -187,6 +189,15 @@ function VisitorIcon({ className }: { className?: string }) {
   );
 }
 
+function AcquisitionIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+    </svg>
+  );
+}
+
 const sections: SectionItem[] = [
   {
     id: 'email',
@@ -266,6 +277,12 @@ const sections: SectionItem[] = [
     description: 'Acces demo temporar',
     icon: <VisitorIcon className="w-5 h-5" />,
   },
+  {
+    id: 'acquisition',
+    label: 'Acquisition',
+    description: 'Download tracking & analytics',
+    icon: <AcquisitionIcon className="w-5 h-5" />,
+  },
 ];
 
 const sectionComponents: Record<SettingsSection, React.ReactNode> = {
@@ -282,6 +299,7 @@ const sectionComponents: Record<SettingsSection, React.ReactNode> = {
   security: <SecuritySettings />,
   archive: <ArchiveSettings />,
   visitor: <VisitorSettings />,
+  acquisition: <AcquisitionSettings />,
 };
 
 export default function AdminSettingsPage() {
