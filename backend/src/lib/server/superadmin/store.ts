@@ -7,6 +7,8 @@ import type {
   AIExecutionLog,
   AuditEvent,
   LogRecord,
+  PlanContent,
+  PlanPricing,
   SecurityEvent,
   SubscriptionRecord,
   SuperadminDb,
@@ -14,6 +16,84 @@ import type {
 } from '@/lib/server/superadmin/types';
 
 const DB_PATH = join(process.cwd(), 'data', 'superadmin-db.json');
+
+// ─── Pricing defaults (bilingual) ──────────────────────────────────────────────
+
+const PRICING_DEFAULTS: Record<'basic' | 'pro' | 'pro_plus', { amount: string; ro: PlanContent; en: PlanContent }> = {
+  basic: {
+    amount: '9.99',
+    ro: {
+      name: 'Basic',
+      description: 'Ideal pentru cei care vor sa inceapa.',
+      features: ['introducerea meselor', 'introducerea simptomelor', 'corelatii de baza', 'alimente suspecte', 'alimente sigure', 'evolutia simptomelor'],
+    },
+    en: {
+      name: 'Basic',
+      description: 'Ideal for people who want to start.',
+      features: ['meal logging', 'symptom logging', 'basic correlations', 'suspected foods', 'safe foods', 'symptom evolution'],
+    },
+  },
+  pro: {
+    amount: '14.99',
+    ro: {
+      name: 'Pro',
+      description: 'Cel mai popular. Perfect pentru claritate rapida.',
+      features: ['tot din Basic', 'analiza AI avansata', 'detectarea combinatiilor problematice', 'recomandari personalizate', 'planuri alimentare adaptate', 'rapoarte zilnice', 'evolutie detaliata'],
+    },
+    en: {
+      name: 'Pro',
+      description: 'Most popular. Perfect for fast clarity.',
+      features: ['everything in Basic', 'advanced AI analysis', 'problematic combination detection', 'personalized recommendations', 'adapted food plans', 'daily reports', 'detailed evolution'],
+    },
+  },
+  pro_plus: {
+    amount: '35.99',
+    ro: {
+      name: 'Pro+',
+      description: 'Pentru cei care vor maximul de precizie.',
+      features: ['tot din Pro', 'analiza AI extinsa', 'predictii avansate', 'detectarea reactiilor intarziate complexe', 'ghidare premium', 'suport prioritar', 'actualizari personalizate in timp real'],
+    },
+    en: {
+      name: 'Pro+',
+      description: 'For those who want maximum precision.',
+      features: ['everything in Pro', 'extended AI analysis', 'advanced predictions', 'complex delayed reaction detection', 'premium guidance', 'priority support', 'real-time personalized updates'],
+    },
+  },
+};
+
+// Reads a saved plan from the DB — possibly in the legacy flat (RO-only) shape
+// used before bilingual pricing was introduced — and normalizes it to the
+// current { amount, currency, interval, ro, en } shape, preserving any
+// admin-entered customizations.
+function normalizePlanPricing(
+  saved: (Partial<PlanPricing> & { name?: string; description?: string; features?: string[] }) | undefined,
+  defaults: { amount: string; ro: PlanContent; en: PlanContent },
+): PlanPricing {
+  if (!saved) {
+    return { amount: defaults.amount, currency: 'eur', interval: 'month', ro: defaults.ro, en: defaults.en };
+  }
+  if (saved.ro || saved.en) {
+    return {
+      amount: saved.amount ?? defaults.amount,
+      currency: saved.currency ?? 'eur',
+      interval: saved.interval ?? 'month',
+      ro: { ...defaults.ro, ...saved.ro },
+      en: { ...defaults.en, ...saved.en },
+    };
+  }
+  // Legacy flat shape — migrate, keeping the admin's existing RO customizations.
+  return {
+    amount: saved.amount ?? defaults.amount,
+    currency: saved.currency ?? 'eur',
+    interval: saved.interval ?? 'month',
+    ro: {
+      name: saved.name ?? defaults.ro.name,
+      description: saved.description ?? defaults.ro.description,
+      features: saved.features ?? defaults.ro.features,
+    },
+    en: defaults.en,
+  };
+}
 
 function nowIso(): string {
   return new Date().toISOString();
@@ -247,30 +327,9 @@ export function readDb(): SuperadminDb {
       },
     },
     pricing: {
-      basic: parsed.settings?.pricing?.basic ?? {
-        name: 'Basic',
-        description: 'Ideal pentru cei care vor sa inceapa.',
-        amount: '9.99',
-        currency: 'eur',
-        interval: 'month',
-        features: ['introducerea meselor', 'introducerea simptomelor', 'corelatii de baza', 'alimente suspecte', 'alimente sigure', 'evolutia simptomelor'],
-      },
-      pro: parsed.settings?.pricing?.pro ?? {
-        name: 'Pro',
-        description: 'Cel mai popular. Perfect pentru claritate rapida.',
-        amount: '14.99',
-        currency: 'eur',
-        interval: 'month',
-        features: ['tot din Basic', 'analiza AI avansata', 'detectarea combinatiilor problematice', 'recomandari personalizate', 'planuri alimentare adaptate', 'rapoarte zilnice', 'evolutie detaliata'],
-      },
-      pro_plus: parsed.settings?.pricing?.pro_plus ?? {
-        name: 'Pro+',
-        description: 'Pentru cei care vor maximul de precizie.',
-        amount: '35.99',
-        currency: 'eur',
-        interval: 'month',
-        features: ['tot din Pro', 'analiza AI extinsa', 'predictii avansate', 'detectarea reactiilor intarziate complexe', 'ghidare premium', 'suport prioritar', 'actualizari personalizate in timp real'],
-      },
+      basic: normalizePlanPricing(parsed.settings?.pricing?.basic, PRICING_DEFAULTS.basic),
+      pro: normalizePlanPricing(parsed.settings?.pricing?.pro, PRICING_DEFAULTS.pro),
+      pro_plus: normalizePlanPricing(parsed.settings?.pricing?.pro_plus, PRICING_DEFAULTS.pro_plus),
     },
     backup: {
       schedule: parsed.settings?.backup?.schedule ?? 'daily',
@@ -289,6 +348,16 @@ export function readDb(): SuperadminDb {
       siteKey: '',
       secretKey: '',
       scoreThreshold: '0.5',
+    },
+    analytics: parsed.settings?.analytics ?? {
+      enabled: false,
+      measurementId: '',
+    },
+    brevo: {
+      apiKey: parsed.settings?.brevo?.apiKey ?? '',
+      listIdUsers: parsed.settings?.brevo?.listIdUsers ?? '',
+      listIdPublic: parsed.settings?.brevo?.listIdPublic ?? '',
+      eventsKey: parsed.settings?.brevo?.eventsKey ?? '',
     },
   };
   if (!Array.isArray(parsed.AI_Logs)) {

@@ -371,6 +371,7 @@ export function generateMetadata(): Metadata {
     description: t.metaDescription,
     alternates: {
       canonical: "/trust",
+      languages: { ro: "/trust", en: "/trust", "x-default": "/trust" },
     },
     openGraph: {
       title: isRo ? "De ce să ai încredere în NutriAID Intolerances" : "Why Trust NutriAID Intolerances",

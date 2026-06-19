@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
 
   return NextResponse.json({
     ok: true,
-    message: `Acces vizitator resetat (${resetCount} sesiune/sesiuni sterse). IP-ul poate acum accesa din nou.`,
+    message: `Visitor access reset (${resetCount} session(s) deleted). The IP can now access again.`,
     resetCount,
   });
 }

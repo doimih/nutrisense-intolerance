@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
       // Already in active window → deny new login (session cookie is still valid)
       if (now < sessionExpiresAt) {
         return NextResponse.json(
-          { error: 'Sesiunea de vizitator este deja activa pentru acest IP.' },
+          { error: 'A visitor session is already active for this IP.' },
           { status: 403 },
         );
       }
@@ -94,14 +94,14 @@ export async function POST(request: NextRequest) {
       if (now < blockUntil) {
         const remainingMinutes = Math.ceil((blockUntil - now) / 60000);
         return NextResponse.json(
-          { error: `Accesul de pe acest IP este blocat. Reveniti in ${remainingMinutes} minute sau contactati administratorul.` },
+          { error: `Access from this IP is blocked. Try again in ${remainingMinutes} minutes or contact the administrator.` },
           { status: 403 },
         );
       }
 
       // Block expired BUT still locked — only superadmin reset unlocks permanently
       return NextResponse.json(
-        { error: 'Accesul de pe acest IP a expirat. Contactati administratorul pentru a reseta accesul.' },
+        { error: 'Access from this IP has expired. Contact the administrator to reset access.' },
         { status: 403 },
       );
     }

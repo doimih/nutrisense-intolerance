@@ -7,6 +7,7 @@ import { useLanguage } from "@/components/LanguageProvider";
 import { getUiCopy } from "@/lib/i18n/ui";
 import { useCookies } from "@/components/CookieContext";
 import { usePathname } from "next/navigation";
+import NewsletterFooterForm from "@/components/NewsletterFooterForm";
 
 export default function Footer() {
   const { lang } = useLanguage();
@@ -131,6 +132,13 @@ export default function Footer() {
                 </button>
               </li>
             </ul>
+          </div>
+        </div>
+
+        {/* Newsletter */}
+        <div className="border-t border-slate-800 pt-8 mb-8">
+          <div className="max-w-sm">
+            <NewsletterFooterForm lang={isRo ? "ro" : "en"} />
           </div>
         </div>
 

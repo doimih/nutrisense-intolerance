@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import DashboardShell from "@/components/DashboardShell";
+import NewsletterPopup from "@/components/NewsletterPopup";
 import { getServerLanguage } from "@/lib/i18n/server";
 
 export function generateMetadata(): Metadata {
@@ -19,5 +20,10 @@ export function generateMetadata(): Metadata {
 }
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  return <DashboardShell>{children}</DashboardShell>;
+  return (
+    <DashboardShell>
+      {children}
+      <NewsletterPopup />
+    </DashboardShell>
+  );
 }

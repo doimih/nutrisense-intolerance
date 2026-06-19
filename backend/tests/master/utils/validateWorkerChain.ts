@@ -4,8 +4,8 @@
  */
 
 import assert from 'node:assert/strict';
-import type { OrchestratorResult } from '../../src/ai/orchestrator';
-import type { SupervisionReport } from '../../src/ai/supervisor/WorkerSupervisor';
+import type { OrchestratorResult } from '../../../src/ai/orchestrator';
+import type { SupervisionReport } from '../../../src/ai/supervisor/WorkerSupervisor';
 
 export type WorkerChainAssertion = {
   /** All worker IDs must appear in this exact order */

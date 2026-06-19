@@ -12,7 +12,7 @@ export function generateMetadata(): Metadata {
     description: isRo
       ? "Cum analizează AI-ul NutriAID mesele tale: ce date contează, cum le introduci și ce informații extrage sistemul pentru a identifica intoleranțele."
       : "How NutriAID AI analyzes your meals: what data matters, how to log them, and what information the system extracts to identify intolerances.",
-    alternates: { canonical: "/knowledge-hub/analiza-meselor" },
+    alternates: { canonical: "/knowledge-hub/analiza-meselor", languages: { ro: "/knowledge-hub/analiza-meselor", en: "/knowledge-hub/analiza-meselor", "x-default": "/knowledge-hub/analiza-meselor" } },
     openGraph: {
       title: isRo ? "Analiza meselor cu AI — NutriAID" : "AI Meal Analysis — NutriAID",
       description: isRo

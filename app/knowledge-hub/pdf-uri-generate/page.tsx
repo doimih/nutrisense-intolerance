@@ -12,7 +12,7 @@ export function generateMetadata(): Metadata {
     description: isRo
       ? "Rapoartele PDF generate automat de NutriAID: ce conțin, cum le obții, cum le partajezi cu medicul sau nutriționistul tău."
       : "NutriAID's automatically generated PDF reports: what they contain, how to get them, and how to share them with your doctor or nutritionist.",
-    alternates: { canonical: "/knowledge-hub/pdf-uri-generate" },
+    alternates: { canonical: "/knowledge-hub/pdf-uri-generate", languages: { ro: "/knowledge-hub/pdf-uri-generate", en: "/knowledge-hub/pdf-uri-generate", "x-default": "/knowledge-hub/pdf-uri-generate" } },
     openGraph: {
       title: isRo ? "PDF-uri generate cu AI — NutriAID" : "AI-Generated PDFs — NutriAID",
       description: isRo

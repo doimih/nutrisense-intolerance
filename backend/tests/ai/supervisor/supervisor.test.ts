@@ -14,10 +14,10 @@ import assert from 'node:assert/strict';
 
 // ─── We test the pure validator functions directly ────────────────────────────
 // Imports use relative paths to avoid tsconfig path aliases in plain node runs.
-import { validateWorkerSchema } from '../../src/ai/validators/schemaValidator.js';
-import { validateSemantics } from '../../src/ai/validators/semanticValidator.js';
-import { buildCorrectionPrompt } from '../../src/ai/prompts/correctionPrompt.js';
-import { detectIntent } from '../../src/ai/orchestrator.js';
+import { validateWorkerSchema } from '../../../src/ai/validators/schemaValidator.js';
+import { validateSemantics } from '../../../src/ai/validators/semanticValidator.js';
+import { buildCorrectionPrompt } from '../../../src/ai/prompts/correctionPrompt.js';
+import { detectIntent } from '../../../src/ai/orchestrator.js';
 
 // ─── Fixtures ─────────────────────────────────────────────────────────────────
 
@@ -201,7 +201,7 @@ describe('Safety Validation', () => {
 
 describe('Auto-Correction', () => {
   it('adds missing required fields', async () => {
-    const { autoCorrect } = await import('../../src/ai/autoCorrector.js');
+    const { autoCorrect } = await import('../../../src/ai/autoCorrector.js');
     const result = await autoCorrect(
       {
         workerId: 'profile-analyzer',
@@ -221,7 +221,7 @@ describe('Auto-Correction', () => {
   });
 
   it('marks output as warning after correction', async () => {
-    const { autoCorrect } = await import('../../src/ai/autoCorrector.js');
+    const { autoCorrect } = await import('../../../src/ai/autoCorrector.js');
     const result = await autoCorrect(
       {
         workerId: 'nutrition-calculator',
@@ -242,7 +242,7 @@ describe('Auto-Correction', () => {
   });
 
   it('removes allergen ingredients during rule-based correction', async () => {
-    const { autoCorrect } = await import('../../src/ai/autoCorrector.js');
+    const { autoCorrect } = await import('../../../src/ai/autoCorrector.js');
     const result = await autoCorrect(
       {
         workerId: 'meal-plan-generator',
@@ -266,7 +266,7 @@ describe('Auto-Correction', () => {
 
 describe('Auto-Correction Failure', () => {
   it('uses rule-based corrector when primary AI model fails (no key)', async () => {
-    const { autoCorrect } = await import('../../src/ai/autoCorrector.js');
+    const { autoCorrect } = await import('../../../src/ai/autoCorrector.js');
     const result = await autoCorrect(
       {
         workerId: 'profile-analyzer',
@@ -290,7 +290,7 @@ describe('Auto-Correction Failure', () => {
 
 describe('Fallback Model Logic', () => {
   it('returns model=rule-based when apiKey is null', async () => {
-    const { autoCorrect } = await import('../../src/ai/autoCorrector.js');
+    const { autoCorrect } = await import('../../../src/ai/autoCorrector.js');
     const result = await autoCorrect(
       {
         workerId: 'progress-tracking',

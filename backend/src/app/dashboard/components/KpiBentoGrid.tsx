@@ -179,21 +179,21 @@ export default function KpiBentoGrid({ snapshot }: { snapshot: DashboardSnapshot
           value: String(snapshot.activeUsers),
           subValue: 'superadmin scope',
           trendLabel: 'Live from API',
-          href: '/admin/settings',
+          href: '/admin/settings?section=users',
         },
         {
           ...kpiData[1],
           label: 'Active Subscriptions',
           value: String(snapshot.activeSubscriptions),
           subValue: 'Stripe synced snapshot',
-          href: '/admin/settings',
+          href: '/admin/settings?section=archive',
         },
         {
           ...kpiData[2],
           label: 'MRR',
           value: `$${snapshot.mrr}`,
           subValue: 'Monthly recurring revenue',
-          href: '/admin/settings',
+          href: '/admin/settings?section=stripe',
         },
         {
           ...kpiData[3],
@@ -201,7 +201,7 @@ export default function KpiBentoGrid({ snapshot }: { snapshot: DashboardSnapshot
           value: String(snapshot.infrastructure.criticalErrors),
           subValue: `AI status: ${snapshot.ai.status}`,
           trendLabel: 'Live from logs',
-          href: '/admin/settings',
+          href: '/admin/logs?level=error',
         },
       ]
     : kpiData;

@@ -4,6 +4,7 @@ import { createSessionToken } from "@/lib/auth/sessionToken";
 import { authenticateUser, ensureSeededVisitor, FRONTEND_VISITOR_EMAIL } from "@/lib/server/authStore";
 import { checkRateLimit, getClientIp } from "@/lib/server/rateLimit";
 import { checkAndCreateVisitorSession } from "@/lib/server/visitorSessionStore";
+import { brevoEvents } from "@/lib/server/brevoEventService";
 
 type LoginBody = {
   email?: string;
@@ -117,6 +118,8 @@ export async function POST(request: NextRequest) {
     { id: user.id, name: user.name, email: user.email, role: user.role },
     AUTH_COOKIE_MAX_AGE_SECONDS
   );
+
+  void brevoEvents.userLoggedIn(user.email, { ip }).catch(() => {});
 
   const response = NextResponse.json({ user });
   response.cookies.set(AUTH_COOKIE_NAME, token, {

@@ -19,27 +19,31 @@ export async function GET() {
         siteKey: settings.recaptcha?.siteKey ?? '',
         scoreThreshold: settings.recaptcha?.scoreThreshold ?? '0.5',
       },
+      analytics: {
+        enabled: settings.analytics?.enabled ?? false,
+        measurementId: settings.analytics?.measurementId ?? '',
+      },
       pricing: {
         basic: {
           amount: settings.pricing?.basic?.amount ?? '9.99',
           currency: settings.pricing?.basic?.currency ?? 'eur',
           interval: settings.pricing?.basic?.interval ?? 'month',
-          features: settings.pricing?.basic?.features ?? [],
-          description: settings.pricing?.basic?.description ?? '',
+          ro: settings.pricing?.basic?.ro ?? { name: 'Basic', description: '', features: [] },
+          en: settings.pricing?.basic?.en ?? { name: 'Basic', description: '', features: [] },
         },
         pro: {
           amount: settings.pricing?.pro?.amount ?? '14.99',
           currency: settings.pricing?.pro?.currency ?? 'eur',
           interval: settings.pricing?.pro?.interval ?? 'month',
-          features: settings.pricing?.pro?.features ?? [],
-          description: settings.pricing?.pro?.description ?? '',
+          ro: settings.pricing?.pro?.ro ?? { name: 'Pro', description: '', features: [] },
+          en: settings.pricing?.pro?.en ?? { name: 'Pro', description: '', features: [] },
         },
         pro_plus: {
           amount: settings.pricing?.pro_plus?.amount ?? '35.99',
           currency: settings.pricing?.pro_plus?.currency ?? 'eur',
           interval: settings.pricing?.pro_plus?.interval ?? 'month',
-          features: settings.pricing?.pro_plus?.features ?? [],
-          description: settings.pricing?.pro_plus?.description ?? '',
+          ro: settings.pricing?.pro_plus?.ro ?? { name: 'Pro+', description: '', features: [] },
+          en: settings.pricing?.pro_plus?.en ?? { name: 'Pro+', description: '', features: [] },
         },
       },
       pwa: {

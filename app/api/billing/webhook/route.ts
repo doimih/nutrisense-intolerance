@@ -7,6 +7,7 @@ import {
   upsertSubscriptionSnapshot,
 } from "@/lib/server/subscriptionStore";
 import { setUserPlan, removeUserPlan } from "@/lib/server/authStore";
+import { brevoEvents } from "@/lib/server/brevoEventService";
 
 export const runtime = "nodejs";
 
@@ -73,6 +74,7 @@ export async function POST(request: NextRequest) {
         });
         if (planCode) {
           await setUserPlan(email, planCode);
+          void brevoEvents.subscriptionStarted(email, { plan: planCode, provider: 'stripe' }).catch(() => {});
         }
       }
       break;
@@ -86,6 +88,10 @@ export async function POST(request: NextRequest) {
       const subscriptionStatus = toSubscriptionStatus(subscription.status);
 
       if (metadataEmail) {
+        const previousPlanCode = extractPlanCode(
+          (event.data.previous_attributes as Record<string, unknown> | undefined)?.['metadata']
+        );
+
         await upsertSubscriptionSnapshot(metadataEmail, {
           planCode,
           status: subscriptionStatus,
@@ -94,12 +100,23 @@ export async function POST(request: NextRequest) {
         });
         if (planCode && (subscriptionStatus === "active" || subscriptionStatus === "trialing")) {
           await setUserPlan(metadataEmail, planCode);
+          if (previousPlanCode && previousPlanCode !== planCode) {
+            const planRank: Record<string, number> = { basic: 1, pro: 2, pro_plus: 3 };
+            const prev = planRank[previousPlanCode] ?? 0;
+            const next = planRank[planCode] ?? 0;
+            if (next > prev) {
+              void brevoEvents.subscriptionUpgraded(metadataEmail, { fromPlan: previousPlanCode, toPlan: planCode }).catch(() => {});
+            } else {
+              void brevoEvents.subscriptionDowngraded(metadataEmail, { fromPlan: previousPlanCode, toPlan: planCode }).catch(() => {});
+            }
+          }
         } else if (
           subscriptionStatus === "canceled" ||
           subscriptionStatus === "incomplete_expired" ||
           subscriptionStatus === "unpaid"
         ) {
           await removeUserPlan(metadataEmail);
+          void brevoEvents.subscriptionCanceled(metadataEmail, { plan: planCode ?? 'unknown' }).catch(() => {});
         }
       }
       break;

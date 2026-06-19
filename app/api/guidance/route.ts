@@ -15,8 +15,10 @@ import {
 import { getEffectivePlanTier, tierAllows, cappedDetailLevel } from "@/lib/billing/features";
 import { mineSimilarPatterns, deriveUserProblemFromMonitoring } from "@/lib/server/userProblemsStore";
 import type { GuidanceGenerateInput, PhysicalProfile, PlanTier, PreviousGuidanceSummary, PreviousMealExample, SubscriptionTier } from "@/lib/server/guidance/types";
-import type { DetailLevel, GuidanceResult, MealExample, MonitoringContextItem } from "@/types/guidance";
+import type { DetailLevel, GuidanceResult, MealDay, MealExample, MealType, MonitoringContextItem } from "@/types/guidance";
+import { DAY_ORDER, MEAL_TYPE_ORDER } from "@/lib/guidance/mealGrouping";
 import type { DietaryPreference, Intolerance } from "@/types/profile";
+import { brevoEvents } from "@/lib/server/brevoEventService";
 
 export const runtime = "nodejs";
 
@@ -197,9 +199,11 @@ function toMealExamples(source: unknown, lang: "ro" | "en"): MealExample[] {
             ? `Masa ${idx + 1}`
             : `Meal ${idx + 1}`;
         const notes = typeof item.notes === "string" ? item.notes : undefined;
-        return { name, ingredients, notes };
+        const day = DAY_ORDER.includes(item.day as MealDay) ? (item.day as MealDay) : undefined;
+        const mealType = MEAL_TYPE_ORDER.includes(item.mealType as MealType) ? (item.mealType as MealType) : undefined;
+        return { name, ingredients, notes, day, mealType };
       })
-      .filter((meal) => meal.ingredients.length > 0);
+      .filter((meal) => meal.name.trim().length > 0);
 
     if (asObjectMeals.length > 0) return asObjectMeals;
 
@@ -440,7 +444,7 @@ export async function POST(request: NextRequest) {
   const previousMealExamples: PreviousMealExample[] = recentHistory
     .flatMap((r) => r.result.mealExamples ?? [])
     .slice(0, 30)
-    .map((m) => ({ name: m.name, ingredients: m.ingredients }));
+    .map((m) => ({ name: m.name, ingredients: m.ingredients ?? [] }));
 
   const bodyDietaryPreferencesRaw = Array.isArray(body.dietaryPreferences)
     ? (body.dietaryPreferences as unknown[]).filter(isDietaryPreference)
@@ -539,6 +543,13 @@ export async function POST(request: NextRequest) {
     result,
   });
 
+  const latencyMs = Date.now() - startedAt;
+
+  void brevoEvents.aiChatUsed(email, { latencyMs, intent: 'guidance' }).catch(() => {});
+  if (result.mealExamples && result.mealExamples.length > 0) {
+    void brevoEvents.mealPlanGenerated(email, { mealCount: result.mealExamples.length }).catch(() => {});
+  }
+
   dedupeCache.set(key, {
     expiresAt: Date.now() + 10_000,
     resultId: result.id,
@@ -547,7 +558,7 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({
     result,
     meta: {
-      latencyMs: Date.now() - startedAt,
+      latencyMs,
       subscriptionTier,
       planTier,
     },

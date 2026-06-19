@@ -12,7 +12,7 @@ export function generateMetadata(): Metadata {
     description: isRo
       ? "Ce înseamnă un aliment sigur în contextul intoleranțelor alimentare și cum identifică AI-ul NutriAID alimentele care nu îți provoacă simptome."
       : "What a safe food means in the context of food intolerances and how NutriAID AI identifies foods that do not trigger your symptoms.",
-    alternates: { canonical: "/knowledge-hub/siguranta-alimentara" },
+    alternates: { canonical: "/knowledge-hub/siguranta-alimentara", languages: { ro: "/knowledge-hub/siguranta-alimentara", en: "/knowledge-hub/siguranta-alimentara", "x-default": "/knowledge-hub/siguranta-alimentara" } },
     openGraph: {
       title: isRo ? "Siguranță alimentară cu AI — NutriAID" : "AI Food Safety — NutriAID",
       description: isRo

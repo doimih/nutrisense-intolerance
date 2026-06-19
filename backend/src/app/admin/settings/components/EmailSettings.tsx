@@ -139,7 +139,7 @@ export default function EmailSettings() {
     const data = (await res.json().catch(() => ({}))) as { ok?: boolean; message?: string };
     setSendTestResult({
       ok: res.ok && data.ok !== false,
-      message: data.message || (res.ok ? 'Email trimis.' : 'Trimitere esuata.'),
+      message: data.message || (res.ok ? 'Email sent.' : 'Sending failed.'),
     });
     setTimeout(() => setSendTestResult(null), 8000);
   };
@@ -324,10 +324,10 @@ export default function EmailSettings() {
           {testing ? 'Testing…' : 'Test Connection'}
         </button>
         <button onClick={() => void handleSendTestEmail()} disabled={sendingTest} className="btn-secondary">
-          {sendingTest ? 'Se trimite…' : 'Trimite test'}
+          {sendingTest ? 'Sending…' : 'Send test'}
         </button>
         <button onClick={() => void loadDiagnostics()} disabled={loadingDiagnostics} className="btn-secondary">
-          {loadingDiagnostics ? 'Se verifica…' : 'Diagnostics'}
+          {loadingDiagnostics ? 'Checking…' : 'Diagnostics'}
         </button>
       </div>
 
@@ -335,18 +335,18 @@ export default function EmailSettings() {
         <div className="border border-border rounded-xl overflow-hidden mt-2">
           <div className="px-4 py-3 bg-muted/30 border-b border-border flex items-center justify-between">
             <h3 className="text-sm font-semibold text-foreground">Email Diagnostics</h3>
-            <button type="button" onClick={() => setDiagnostics(null)} className="text-xs text-muted-foreground hover:text-foreground">✕ Inchide</button>
+            <button type="button" onClick={() => setDiagnostics(null)} className="text-xs text-muted-foreground hover:text-foreground">✕ Close</button>
           </div>
           <div className="p-4 space-y-3">
             <div className="grid grid-cols-2 gap-2 text-xs">
-              <DiagRow label="SMTP configurat" ok={diagnostics.smtpConfigured} text={diagnostics.smtpConfigured ? 'Da' : 'Lipseste host sau parola'} />
-              <DiagRow label="Parola SMTP salvata" ok={diagnostics.smtpPasswordSaved} text={diagnostics.smtpPasswordSaved ? 'Da' : 'Nu — salveaza parola!'} />
-              <DiagRow label="SMTP accesibil (TCP)" ok={diagnostics.smtpReachable === true} text={diagnostics.smtpReachable === null ? 'Nestiut (fara host)' : diagnostics.smtpReachable ? 'Accesibil' : 'Inaccesibil'} />
-              <DiagRow label="Token intern exista" ok={diagnostics.internalTokenExists} text={diagnostics.internalTokenExists ? 'Da' : 'Nu — problema critica!'} />
+              <DiagRow label="SMTP configured" ok={diagnostics.smtpConfigured} text={diagnostics.smtpConfigured ? 'Yes' : 'Missing host or password'} />
+              <DiagRow label="SMTP password saved" ok={diagnostics.smtpPasswordSaved} text={diagnostics.smtpPasswordSaved ? 'Yes' : 'No — save the password!'} />
+              <DiagRow label="SMTP reachable (TCP)" ok={diagnostics.smtpReachable === true} text={diagnostics.smtpReachable === null ? 'Unknown (no host)' : diagnostics.smtpReachable ? 'Reachable' : 'Unreachable'} />
+              <DiagRow label="Internal token exists" ok={diagnostics.internalTokenExists} text={diagnostics.internalTokenExists ? 'Yes' : 'No — critical issue!'} />
             </div>
             {diagnostics.recentEmailLogs.length > 0 && (
               <div>
-                <p className="text-xs font-semibold text-muted-foreground mb-2">Loguri recente email (din frontend):</p>
+                <p className="text-xs font-semibold text-muted-foreground mb-2">Recent email logs (from frontend):</p>
                 <div className="space-y-1 max-h-48 overflow-y-auto">
                   {diagnostics.recentEmailLogs.map((log) => (
                     <div key={log.id} className={`text-xs px-3 py-1.5 rounded-lg font-mono ${
@@ -354,7 +354,7 @@ export default function EmailSettings() {
                       log.level === 'warn' ? 'bg-yellow-50 text-yellow-700 border border-yellow-200' :
                       'bg-slate-50 text-slate-600 border border-slate-200'
                     }`}>
-                      <span className="opacity-60">{new Date(log.createdAt).toLocaleTimeString('ro-RO')}</span>{' '}
+                      <span className="opacity-60">{new Date(log.createdAt).toLocaleTimeString('en-GB')}</span>{' '}
                       {log.message}
                     </div>
                   ))}
@@ -362,7 +362,7 @@ export default function EmailSettings() {
               </div>
             )}
             {diagnostics.recentEmailLogs.length === 0 && (
-              <p className="text-xs text-muted-foreground">Nu exista loguri email recente. Inregistreaza-te cu un cont nou pentru a genera un log.</p>
+              <p className="text-xs text-muted-foreground">No recent email logs. Register a new account to generate one.</p>
             )}
           </div>
         </div>

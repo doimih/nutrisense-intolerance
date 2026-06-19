@@ -130,13 +130,18 @@ export type AILogRecord = {
   metadata: Record<string, unknown>;
 };
 
-export type PlanPricing = {
+export type PlanContent = {
   name: string;
   description: string;
+  features: string[];
+};
+
+export type PlanPricing = {
   amount: string;
   currency: string;
   interval: 'month' | 'year';
-  features: string[];
+  ro: PlanContent;
+  en: PlanContent;
 };
 
 export type PlatformSettings = {
@@ -243,6 +248,16 @@ export type PlatformSettings = {
     siteKey: string;
     secretKey: string;
     scoreThreshold: string;
+  };
+  analytics?: {
+    enabled: boolean;
+    measurementId: string;
+  };
+  brevo?: {
+    apiKey: string;
+    listIdUsers: string;
+    listIdPublic: string;
+    eventsKey: string;
   };
 };
 

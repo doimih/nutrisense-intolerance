@@ -12,7 +12,7 @@ export function generateMetadata(): Metadata {
     description: isRo
       ? "NutriAID Intolerances este o platformă AI care identifică alimentele ce îți provoacă simptome. Află ce face, pentru cine este și ce o diferențiază."
       : "NutriAID Intolerances is an AI platform that identifies foods causing your symptoms. Learn what it does, who it is for, and what sets it apart.",
-    alternates: { canonical: "/knowledge-hub/ce-este-nutriaid" },
+    alternates: { canonical: "/knowledge-hub/ce-este-nutriaid", languages: { ro: "/knowledge-hub/ce-este-nutriaid", en: "/knowledge-hub/ce-este-nutriaid", "x-default": "/knowledge-hub/ce-este-nutriaid" } },
     openGraph: {
       title: isRo ? "Ce este NutriAID Intolerances?" : "What is NutriAID Intolerances?",
       description: isRo

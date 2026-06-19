@@ -17,8 +17,8 @@ export async function POST(request: NextRequest) {
   const { filesUploaded, prefix, destination } = result;
   const msg =
     destination === 'hetzner'
-      ? `Backup finalizat — ${filesUploaded} fișier(e) încărcate în ${prefix}`
-      : 'Backup local înregistrat. Configurează Hetzner Object Storage pentru backup în cloud.';
+      ? `Backup completed — ${filesUploaded} file(s) uploaded to ${prefix}`
+      : 'Local backup recorded. Configure Hetzner Object Storage for cloud backups.';
 
   return NextResponse.json({ ok: true, message: msg });
 }

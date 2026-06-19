@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -14,6 +14,9 @@ import {
   Download,
   ChevronRight,
   AlertTriangle,
+  Mail,
+  MailX,
+  CheckCircle2,
 } from "lucide-react";
 import { useLanguage } from "@/components/LanguageProvider";
 
@@ -84,6 +87,72 @@ export default function GdprPage() {
   const [deleteStep, setDeleteStep] = useState<"idle" | "confirm" | "deleting" | "done">("idle");
   const [deleteError, setDeleteError] = useState("");
   const [exporting, setExporting] = useState(false);
+
+  // Newsletter state
+  const [newsletterOptIn, setNewsletterOptIn] = useState<boolean | null>(null);
+  const [newsletterLoading, setNewsletterLoading] = useState(true);
+  const [newsletterWorking, setNewsletterWorking] = useState(false);
+  const [newsletterMsg, setNewsletterMsg] = useState<{ ok: boolean; text: string } | null>(null);
+
+  useEffect(() => {
+    fetch("/api/newsletter/status")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: { newsletterOptIn?: boolean } | null) => {
+        setNewsletterOptIn(d?.newsletterOptIn ?? false);
+      })
+      .catch(() => setNewsletterOptIn(false))
+      .finally(() => setNewsletterLoading(false));
+  }, []);
+
+  const handleNewsletterOptOut = async () => {
+    setNewsletterWorking(true);
+    setNewsletterMsg(null);
+    try {
+      const res = await fetch("/api/newsletter/decline", { method: "POST" });
+      if (res.ok) {
+        setNewsletterOptIn(false);
+        setNewsletterMsg({
+          ok: true,
+          text: isRo
+            ? "Te-ai dezabonat cu succes. Nu vei mai primi emailuri de newsletter."
+            : "Successfully unsubscribed. You will no longer receive newsletter emails.",
+        });
+      } else {
+        setNewsletterMsg({ ok: false, text: isRo ? "A apărut o eroare. Încearcă din nou." : "An error occurred. Please try again." });
+      }
+    } catch {
+      setNewsletterMsg({ ok: false, text: isRo ? "Cererea a eșuat." : "Request failed." });
+    } finally {
+      setNewsletterWorking(false);
+    }
+  };
+
+  const handleNewsletterOptIn = async () => {
+    setNewsletterWorking(true);
+    setNewsletterMsg(null);
+    try {
+      const res = await fetch("/api/newsletter/accept", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ language: lang }),
+      });
+      if (res.ok) {
+        setNewsletterOptIn(true);
+        setNewsletterMsg({
+          ok: true,
+          text: isRo
+            ? "Te-ai abonat cu succes la newsletter."
+            : "Successfully subscribed to the newsletter.",
+        });
+      } else {
+        setNewsletterMsg({ ok: false, text: isRo ? "A apărut o eroare. Încearcă din nou." : "An error occurred. Please try again." });
+      }
+    } catch {
+      setNewsletterMsg({ ok: false, text: isRo ? "Cererea a eșuat." : "Request failed." });
+    } finally {
+      setNewsletterWorking(false);
+    }
+  };
 
   const handleExport = async () => {
     setExporting(true);
@@ -221,6 +290,87 @@ export default function GdprPage() {
               )}
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* Newsletter */}
+      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 overflow-hidden">
+        <div className="px-5 py-4 border-b border-gray-100 dark:border-slate-700">
+          <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+            {isRo ? "Abonare newsletter" : "Newsletter subscription"}
+          </h2>
+        </div>
+        <div className="px-5 py-5">
+          {newsletterLoading ? (
+            <div className="flex items-center gap-2 text-sm text-slate-400 dark:text-slate-500">
+              <span className="w-4 h-4 rounded-full border-2 border-slate-300 border-t-transparent animate-spin" />
+              {isRo ? "Se încarcă..." : "Loading..."}
+            </div>
+          ) : (
+            <div className="flex items-start gap-4">
+              <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                newsletterOptIn
+                  ? "bg-emerald-50 dark:bg-emerald-900/30"
+                  : "bg-slate-100 dark:bg-slate-700"
+              }`}>
+                {newsletterOptIn
+                  ? <Mail className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                  : <MailX className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+                }
+              </div>
+              <div className="flex-1 space-y-3">
+                <div>
+                  <p className="text-sm font-medium text-slate-800 dark:text-slate-100">
+                    {newsletterOptIn
+                      ? (isRo ? "Ești abonat la newsletter" : "You are subscribed to the newsletter")
+                      : (isRo ? "Nu ești abonat la newsletter" : "You are not subscribed to the newsletter")}
+                  </p>
+                  <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
+                    {isRo
+                      ? "Conform GDPR Art. 21, poți refuza sau retrage consimțământul pentru comunicări de marketing oricând."
+                      : "Under GDPR Art. 21, you can refuse or withdraw consent for marketing communications at any time."}
+                  </p>
+                </div>
+
+                {newsletterMsg && (
+                  <div className={`flex items-start gap-2 rounded-xl px-4 py-3 text-sm ${
+                    newsletterMsg.ok
+                      ? "bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300"
+                      : "bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300"
+                  }`}>
+                    {newsletterMsg.ok && <CheckCircle2 className="w-4 h-4 flex-shrink-0 mt-0.5" />}
+                    {newsletterMsg.text}
+                  </div>
+                )}
+
+                <div className="flex gap-2 flex-wrap">
+                  {newsletterOptIn ? (
+                    <button
+                      onClick={() => void handleNewsletterOptOut()}
+                      disabled={newsletterWorking}
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-300 border border-gray-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors disabled:opacity-50"
+                    >
+                      <MailX className="w-4 h-4" />
+                      {newsletterWorking
+                        ? (isRo ? "Se procesează..." : "Processing...")
+                        : (isRo ? "Dezabonare newsletter" : "Unsubscribe from newsletter")}
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => void handleNewsletterOptIn()}
+                      disabled={newsletterWorking}
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-colors disabled:opacity-50"
+                    >
+                      <Mail className="w-4 h-4" />
+                      {newsletterWorking
+                        ? (isRo ? "Se procesează..." : "Processing...")
+                        : (isRo ? "Abonare la newsletter" : "Subscribe to newsletter")}
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

@@ -40,11 +40,11 @@ export default function ArchiveSettings() {
     }).catch(() => null);
     setGenerating(false);
     if (!res) {
-      setResult({ ok: false, message: 'Cererea a esuat. Verifica conexiunea.' });
+      setResult({ ok: false, message: 'Request failed. Check your connection.' });
       return;
     }
     const data = (await res.json().catch(() => ({}))) as { ok?: boolean; message?: string; downloadUrl?: string; expiresAt?: string };
-    setResult({ ok: res.ok && data.ok !== false, message: data.message || (res.ok ? 'Link generat.' : 'Eroare.'), downloadUrl: data.downloadUrl, expiresAt: data.expiresAt });
+    setResult({ ok: res.ok && data.ok !== false, message: data.message || (res.ok ? 'Link generated.' : 'Error.'), downloadUrl: data.downloadUrl, expiresAt: data.expiresAt });
     if (res.ok && data.ok !== false) {
       setEmail('');
       setTimeout(loadLinks, 300);
@@ -68,35 +68,37 @@ export default function ArchiveSettings() {
             </svg>
           </div>
           <div>
-            <h2 className="section-header">Generator Link Arhiva</h2>
+            <h2 className="section-header">Archive Link Generator</h2>
             <p className="text-sm text-muted-foreground mt-0.5">
-              Genereaza un link securizat pentru descarcarea arhivei platformei. Link-ul este valabil <strong>12 ore</strong>.
+              Generates a secure link to download the platform archive. The link is valid for <strong>12 hours</strong>.
             </p>
           </div>
         </div>
 
         <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800 space-y-1">
-          <p className="font-medium">Ce contine arhiva?</p>
-          <p>• Lista utilizatori (fara parole sau date sensibile)</p>
-          <p>• Subscriptii si plati</p>
-          <p>• Ultimele 500 evenimente de audit</p>
-          <p>• Setari platforma (fara chei secrete)</p>
+          <p className="font-medium">What&apos;s in the archive? (541 MB)</p>
+          <p>• Full source code — Next.js frontend + backend</p>
+          <p>• Complete folder structure, configs, and scripts</p>
+          <p>• Dockerfiles, docker-compose, documentation (DOCKER.md)</p>
+          <p>• node_modules and builds included — ready to run</p>
+          <p>• Acquisition data (acquisition folder)</p>
+          <p className="pt-1 text-blue-600 text-xs">Not included: secret keys (.env), runtime database</p>
         </div>
 
         <div className="space-y-3">
           <div>
-            <label className="label-text" htmlFor="archive-email">Email destinatar</label>
+            <label className="label-text" htmlFor="archive-email">Recipient email</label>
             <input
               id="archive-email"
               className="input-field"
               type="email"
-              placeholder="email@exemplu.com"
+              placeholder="email@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') void handleGenerate(); }}
               disabled={generating}
             />
-            <p className="helper-text">Link-ul arhivei va fi trimis la aceasta adresa de email.</p>
+            <p className="helper-text">The archive link will be sent to this email address.</p>
           </div>
 
           <button
@@ -104,7 +106,7 @@ export default function ArchiveSettings() {
             disabled={generating || !email.trim()}
             className="btn-primary"
           >
-            {generating ? 'Se genereaza…' : 'Genereaza si trimite link'}
+            {generating ? 'Generating…' : 'Generate and send link'}
           </button>
         </div>
 
@@ -123,13 +125,13 @@ export default function ArchiveSettings() {
                   onClick={() => void handleCopy(result.downloadUrl!)}
                   className="text-xs px-2 py-1 rounded bg-green-700 text-white hover:bg-green-800 transition-colors flex-shrink-0"
                 >
-                  {copied === result.downloadUrl ? '✓ Copiat' : 'Copiaza'}
+                  {copied === result.downloadUrl ? '✓ Copied' : 'Copy'}
                 </button>
               </div>
             )}
             {result.ok && result.expiresAt && (
               <p className="text-xs text-green-700 font-normal">
-                Expira la: {new Date(result.expiresAt).toLocaleString('ro-RO')}
+                Expires at: {new Date(result.expiresAt).toLocaleString('en-GB')}
               </p>
             )}
           </div>
@@ -139,34 +141,34 @@ export default function ArchiveSettings() {
       {/* History */}
       <div className="card p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-semibold text-foreground">Istoric Link-uri Generate</h3>
+          <h3 className="text-sm font-semibold text-foreground">Generated Links History</h3>
           <button
             onClick={loadLinks}
             className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-            title="Reincarca"
+            title="Reload"
           >
-            ↻ Reincarca
+            ↻ Reload
           </button>
         </div>
 
         {linksError ? (
           <p className="text-sm text-negative text-center py-6">
-            Nu s-au putut incarca link-urile. Apasa ↻ Reincarca.
+            Could not load the links. Click ↻ Reload.
           </p>
         ) : links.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-6">
-            Nu exista link-uri generate inca.
+            No links generated yet.
           </p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border text-left">
-                  <th className="pb-2 pr-4 font-medium text-muted-foreground">Trimis la</th>
-                  <th className="pb-2 pr-4 font-medium text-muted-foreground">Generat de</th>
-                  <th className="pb-2 pr-4 font-medium text-muted-foreground">Expira la</th>
+                  <th className="pb-2 pr-4 font-medium text-muted-foreground">Sent to</th>
+                  <th className="pb-2 pr-4 font-medium text-muted-foreground">Generated by</th>
+                  <th className="pb-2 pr-4 font-medium text-muted-foreground">Expires at</th>
                   <th className="pb-2 pr-4 font-medium text-muted-foreground">Status</th>
-                  <th className="pb-2 font-medium text-muted-foreground">Descarcat la</th>
+                  <th className="pb-2 font-medium text-muted-foreground">Downloaded at</th>
                 </tr>
               </thead>
               <tbody>
@@ -175,7 +177,7 @@ export default function ArchiveSettings() {
                     <td className="py-2 pr-4 text-foreground">{link.sentToEmail}</td>
                     <td className="py-2 pr-4 text-muted-foreground text-xs">{link.generatedBy}</td>
                     <td className="py-2 pr-4 text-muted-foreground text-xs whitespace-nowrap">
-                      {new Date(link.expiresAt).toLocaleString('ro-RO', {
+                      {new Date(link.expiresAt).toLocaleString('en-GB', {
                         day: '2-digit', month: '2-digit', year: 'numeric',
                         hour: '2-digit', minute: '2-digit',
                       })}
@@ -183,17 +185,17 @@ export default function ArchiveSettings() {
                     <td className="py-2 pr-4">
                       {link.expired ? (
                         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-500 border border-slate-200">
-                          Expirat
+                          Expired
                         </span>
                       ) : (
                         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-200">
-                          Activ
+                          Active
                         </span>
                       )}
                     </td>
                     <td className="py-2 text-muted-foreground text-xs">
                       {link.downloadedAt
-                        ? new Date(link.downloadedAt).toLocaleString('ro-RO', {
+                        ? new Date(link.downloadedAt).toLocaleString('en-GB', {
                             day: '2-digit', month: '2-digit', year: 'numeric',
                             hour: '2-digit', minute: '2-digit',
                           })

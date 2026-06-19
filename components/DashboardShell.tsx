@@ -75,7 +75,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isSuperadmin, setIsSuperadmin] = useState(false);
-  const [currentUser, setCurrentUser] = useState<{ id: string; name: string; email: string; plan?: string | null; trialEndsAt?: string | null } | null>(null);
+  const [currentUser, setCurrentUser] = useState<{ id: string; name: string; email: string; plan?: string | null; trialEndsAt?: string | null; earlyAdopter?: boolean } | null>(null);
   const [adminConsoleUrl, setAdminConsoleUrl] = useState(FALLBACK_ADMIN_CONSOLE_URL);
   const [showTrialModal, setShowTrialModal] = useState(false);
   const [sessionExpiresAt, setSessionExpiresAt] = useState<number | null>(null);
@@ -87,7 +87,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
         if (!active) return;
         if (user) {
           setIsSuperadmin(user.role === "superadmin");
-          setCurrentUser({ id: user.id, name: user.name, email: user.email, plan: user.plan, trialEndsAt: user.trialEndsAt });
+          setCurrentUser({ id: user.id, name: user.name, email: user.email, plan: user.plan, trialEndsAt: user.trialEndsAt, earlyAdopter: user.earlyAdopter });
           if (user.sessionExpiresAt) setSessionExpiresAt(user.sessionExpiresAt);
           const trialExpired = user.trialEndsAt && new Date(user.trialEndsAt).getTime() <= Date.now();
           const noPlan = !user.plan;
@@ -215,6 +215,14 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                     <span className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md mb-0.5 bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300">
                       <ShieldCheck className="w-2.5 h-2.5" />
                       Admin
+                    </span>
+                  );
+                }
+                if (currentUser.earlyAdopter) {
+                  return (
+                    <span className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md mb-0.5 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+                      <Sparkles className="w-2.5 h-2.5" />
+                      {isRo ? "Cont Gratuit" : "Free Account"}
                     </span>
                   );
                 }

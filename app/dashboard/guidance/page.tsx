@@ -15,6 +15,7 @@ import { getDietaryLabel, getIntoleranceLabel } from "@/lib/i18n/labels";
 import type { GuidanceResult, DetailLevel } from "@/types/guidance";
 import type { Intolerance, DietaryPreference } from "@/types/profile";
 import { INTOLERANCE_LABELS, DIETARY_PREFERENCE_LABELS } from "@/types/profile";
+import { groupMealExamplesByDay } from "@/lib/guidance/mealGrouping";
 
 type PlanTier = "none" | "basic" | "pro" | "pro_plus" | "enterprise";
 
@@ -350,31 +351,74 @@ export default function GuidancePage() {
                 <CardTitle>{isRo ? "Exemple de mese" : "Meal examples"}</CardTitle>
               </div>
             </CardHeader>
-            <div className="space-y-4">
-              {result.mealExamples.map((meal, i) => (
-                <div
-                  key={i}
-                  className="bg-slate-50 dark:bg-slate-700/50 rounded-xl p-4"
-                >
-                  <p className="font-semibold text-slate-900 dark:text-white text-sm mb-2">
-                    {meal.name}
-                  </p>
-                  {(meal.ingredients ?? []).length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 mb-2">
-                      {(meal.ingredients ?? []).map((ing, j) => (
-                        <Badge key={j} variant="teal" size="sm">
-                          {ing}
-                        </Badge>
-                      ))}
+            <div className="space-y-5">
+              {(() => {
+                const grouped = groupMealExamplesByDay(result.mealExamples, isRo ? "ro" : "en");
+                if (grouped) {
+                  return grouped.map((dayGroup) => (
+                    <div key={dayGroup.day}>
+                      <p className="text-sm font-bold text-slate-900 dark:text-white mb-2">
+                        {dayGroup.label}
+                      </p>
+                      <div className="space-y-2">
+                        {dayGroup.meals.map(({ mealType, label, meal }) => (
+                          <div
+                            key={mealType}
+                            className="bg-slate-50 dark:bg-slate-700/50 rounded-xl p-4"
+                          >
+                            <p className="text-[11px] font-semibold uppercase tracking-wider text-teal-600 dark:text-teal-400 mb-1">
+                              {label}
+                            </p>
+                            <p className="font-semibold text-slate-900 dark:text-white text-sm mb-2">
+                              {meal.name}
+                            </p>
+                            {(meal.ingredients ?? []).length > 0 && (
+                              <div className="flex flex-wrap gap-1.5 mb-2">
+                                {(meal.ingredients ?? []).map((ing, j) => (
+                                  <Badge key={j} variant="teal" size="sm">
+                                    {ing}
+                                  </Badge>
+                                ))}
+                              </div>
+                            )}
+                            {meal.notes && (
+                              <p className="text-xs text-slate-500 dark:text-slate-400 italic">
+                                {meal.notes}
+                              </p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  )}
-                  {meal.notes && (
-                    <p className="text-xs text-slate-500 dark:text-slate-400 italic">
-                      {meal.notes}
+                  ));
+                }
+
+                // Fallback for older results without day/mealType metadata.
+                return result.mealExamples.map((meal, i) => (
+                  <div
+                    key={i}
+                    className="bg-slate-50 dark:bg-slate-700/50 rounded-xl p-4"
+                  >
+                    <p className="font-semibold text-slate-900 dark:text-white text-sm mb-2">
+                      {meal.name}
                     </p>
-                  )}
-                </div>
-              ))}
+                    {(meal.ingredients ?? []).length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 mb-2">
+                        {(meal.ingredients ?? []).map((ing, j) => (
+                          <Badge key={j} variant="teal" size="sm">
+                            {ing}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                    {meal.notes && (
+                      <p className="text-xs text-slate-500 dark:text-slate-400 italic">
+                        {meal.notes}
+                      </p>
+                    )}
+                  </div>
+                ));
+              })()}
             </div>
             <div className="pt-2 flex justify-center">
               <button

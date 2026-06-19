@@ -29,14 +29,6 @@ const WORKER_ROLES: Record<string, { ro: string; en: string }> = {
     ro: 'Esti generatorul de idei de retete simple. Sugereaza idei de retete la nivel conceptual — denumire, descriere scurta si context cultural. Nu lista pasi de preparare detaliati, nu include valori nutritionale, nu face afirmatii medicale. Focuseaza-te pe familiaritate, simplicitate si potrivire cu preferintele utilizatorului.',
     en: 'You are the simple recipe idea generator. Suggest recipes at a conceptual level — name, brief description, and cultural context. Do not list detailed preparation steps, do not include nutritional values, do not make medical claims. Focus on familiarity, simplicity, and fit with user preferences.',
   },
-  'nutrition-calculator': {
-    ro: 'Esti generatorul de alimente recomandate adaptate GEO-cultural. Pe baza profilului si preferintelor utilizatorului, genereaza o lista bogata de alimente recomandate disponibile local, familiare cultural si potrivite pentru tiparele de confort ale utilizatorului. Nu calcula calorii, macronutrienti sau valori nutritionale. Focuseaza-te pe diversitate, familiaritate culturala si accesibilitate locala. Returneaza recommendedFoods[] cu minimum 20 alimente unice.',
-    en: 'You are the GEO-culturally adapted recommended foods generator. Based on the user profile and preferences, generate a rich list of recommended foods that are locally available, culturally familiar, and suited to the user\'s comfort patterns. Do not calculate calories, macronutrients, or nutritional values. Focus on diversity, cultural familiarity, and local availability. Return recommendedFoods[] with minimum 20 unique foods.',
-  },
-  'medical-safety': {
-    ro: 'Esti generatorul de note de constientizare. Revizuieste continutul generat si asigura-te ca nu contine: diagnostice, tratamente, medicamente, suplimente, valori nutritionale sau limbaj absolut. Adauga un disclaimer clar ca recomandarile sunt bazate pe preferinte si tipare de confort, nu pe sfat medical. Returneaza safetyApproved: true si un disclaimer bland si uman.',
-    en: 'You are the awareness notes generator. Review the generated content and ensure it contains no: diagnoses, treatments, medications, supplements, nutritional values, or absolute language. Add a clear disclaimer that recommendations are based on preferences and comfort patterns, not medical advice. Return safetyApproved: true and a gentle, human disclaimer.',
-  },
   'supplement-advisor': {
     ro: 'Esti generatorul de sfaturi de stil de viata si rutine de confort. Genereaza EXCLUSIV: sfaturi de rutina zilnica (ex: mananca la ore fixe, bea apa regulat), obiceiuri alimentare de confort (ex: mese mici si frecvente), sugestii comportamentale (ex: mesteca incet, evita mesele tarziu seara) si tipare de wellness non-medical. INTERZIS: suplimente, vitamine, minerale, medicamente, dozaje sau orice produs nutritional. Nu face afirmatii medicale. Returneaza lifestyleTips[], routineSuggestions[] si comfortHabits[].',
     en: 'You are the lifestyle tips and comfort routine generator. Generate ONLY: daily routine tips (e.g., eat at regular times, drink water consistently), comfort eating habits (e.g., small frequent meals), behavioral suggestions (e.g., chew slowly, avoid late meals), and non-medical wellness patterns. FORBIDDEN: supplements, vitamins, minerals, medications, dosages, or any nutritional products. Do not make medical claims. Return lifestyleTips[], routineSuggestions[] and comfortHabits[].',
@@ -60,9 +52,24 @@ function buildWorkerOutputSchema(workerId: string): string {
   if (!schema) {
     return `{"worker": "${workerId}", "status": "success", "data": {}, "notes": []}`;
   }
+  const requiredDataFields = new Set(
+    schema.required.filter((k) => k.startsWith('data.')).map((k) => k.replace('data.', '')),
+  );
   const dataFields = Object.keys(schema.fields)
     .filter((k) => k.startsWith('data.'))
-    .map((k) => `    "${k.replace('data.', '')}": ...`)
+    .map((k) => {
+      const fieldName = k.replace('data.', '');
+      const def = schema.fields[k];
+      const isRequired = requiredDataFields.has(fieldName);
+      let example: string;
+      if (def.type === 'boolean') example = 'true';
+      else if (def.type === 'array') example = '[]';
+      else if (def.type === 'object') example = '{}';
+      else if (def.type === 'number') example = '0';
+      else example = '"..."';
+      const marker = isRequired ? ' /* REQUIRED */' : ' /* optional */';
+      return `    "${fieldName}": ${example}${marker}`;
+    })
     .join(',\n');
   return `{
   "worker": "${workerId}",
@@ -83,11 +90,13 @@ function buildWorkerSystemMessage(
   const parts: string[] = [];
 
   if (adminGlobalPrompt && adminGlobalPrompt.length > 20) {
-    parts.push(`INSTRUCTIUNI GLOBALE ADMINISTRATOR:\n${adminGlobalPrompt}`);
+    const label = lang === 'ro' ? 'INSTRUCTIUNI GLOBALE ADMINISTRATOR:' : 'GLOBAL ADMIN INSTRUCTIONS:';
+    parts.push(`${label}\n${adminGlobalPrompt}`);
   }
 
   if (workerCustomPrompt && workerCustomPrompt.length > 20) {
-    parts.push(`INSTRUCTIUNI SPECIFICE WORKER:\n${workerCustomPrompt}`);
+    const label = lang === 'ro' ? 'INSTRUCTIUNI SPECIFICE WORKER:' : 'WORKER-SPECIFIC INSTRUCTIONS:';
+    parts.push(`${label}\n${workerCustomPrompt}`);
   } else {
     parts.push(getWorkerRolePrompt(workerId, lang));
   }
@@ -99,7 +108,9 @@ function buildWorkerSystemMessage(
   );
 
   parts.push(
-    `FORMAT JSON OBLIGATORIU — Raspunde EXCLUSIV in JSON valid, FARA text in afara JSON:\n${buildWorkerOutputSchema(workerId)}`,
+    lang === 'ro'
+      ? `FORMAT JSON OBLIGATORIU — Raspunde EXCLUSIV in JSON valid, FARA text in afara JSON:\n${buildWorkerOutputSchema(workerId)}`
+      : `REQUIRED JSON FORMAT — Respond EXCLUSIVELY in valid JSON, NO text outside the JSON:\n${buildWorkerOutputSchema(workerId)}`,
   );
 
   return parts.join('\n\n');
@@ -151,7 +162,8 @@ function buildWorkerUserMessage(
     }
   }
   if (Object.keys(relevantInput).length > 0) {
-    lines.push(`CONTEXT_ACUMULAT:\n${JSON.stringify(relevantInput, null, 2)}`);
+    const label = lang === 'ro' ? 'CONTEXT_ACUMULAT:' : 'ACCUMULATED_CONTEXT:';
+    lines.push(`${label}\n${JSON.stringify(relevantInput, null, 2)}`);
   }
 
   lines.push(

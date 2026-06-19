@@ -28,14 +28,14 @@ export async function POST(request: NextRequest) {
 
   if (!endpoint || !bucket || !accessKey) {
     return NextResponse.json(
-      { ok: false, message: 'Endpoint, bucket și access key sunt obligatorii.' },
+      { ok: false, message: 'Endpoint, bucket, and access key are required.' },
       { status: 400 },
     );
   }
 
   if (!secretKey) {
     return NextResponse.json(
-      { ok: false, message: 'Secret Key este obligatoriu. Salveaza-l mai intai in setarile storage.' },
+      { ok: false, message: 'Secret Key is required. Save it in the storage settings first.' },
       { status: 400 },
     );
   }
@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
     parsedUrl = new URL(normalizedEndpoint);
   } catch {
     return NextResponse.json(
-      { ok: false, message: 'Endpoint URL invalid. Exemplu: https://fsn1.your-objectstorage.com' },
+      { ok: false, message: 'Invalid endpoint URL. Example: https://fsn1.your-objectstorage.com' },
       { status: 400 },
     );
   }
@@ -67,16 +67,16 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       ok: true,
-      message: `✓ Conexiune reusita — bucket "${bucket}" pe ${parsedUrl.hostname} este accesibil.`,
+      message: `✓ Connection successful — bucket "${bucket}" on ${parsedUrl.hostname} is reachable.`,
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     const hint = message.includes('NoSuchBucket')
-      ? `Bucket-ul "${bucket}" nu exista. Creeaza-l in Hetzner Console.`
+      ? `Bucket "${bucket}" does not exist. Create it in Hetzner Console.`
       : message.includes('InvalidAccessKeyId') || message.includes('SignatureDoesNotMatch')
-        ? 'Access Key sau Secret Key incorecte.'
+        ? 'Incorrect Access Key or Secret Key.'
         : message.includes('ECONNREFUSED') || message.includes('ENOTFOUND')
-          ? `Nu se poate conecta la ${parsedUrl.hostname}. Verifica endpoint-ul.`
+          ? `Cannot connect to ${parsedUrl.hostname}. Check the endpoint.`
           : message.slice(0, 150);
     return NextResponse.json({ ok: false, message: `✗ ${hint}` });
   }

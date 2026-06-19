@@ -9,7 +9,7 @@ export default function SecuritySettings() {
 
   const handleSync = async () => {
     if (!currentPassword) {
-      setResult({ ok: false, message: 'Introdu parola curentă.' });
+      setResult({ ok: false, message: 'Enter your current password.' });
       return;
     }
 
@@ -26,13 +26,13 @@ export default function SecuritySettings() {
       const data = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string };
 
       if (!res.ok) {
-        setResult({ ok: false, message: data.error ?? 'Sincronizare eșuată.' });
+        setResult({ ok: false, message: data.error ?? 'Sync failed.' });
       } else {
-        setResult({ ok: true, message: 'Parola a fost sincronizată cu succes în frontend.' });
+        setResult({ ok: true, message: 'Password synced successfully to the frontend.' });
         setCurrentPassword('');
       }
     } catch {
-      setResult({ ok: false, message: 'Eroare de rețea. Verifică dacă frontend-ul rulează.' });
+      setResult({ ok: false, message: 'Network error. Check whether the frontend is running.' });
     } finally {
       setSyncing(false);
     }
@@ -41,9 +41,9 @@ export default function SecuritySettings() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-semibold text-foreground">Securitate</h2>
+        <h2 className="text-lg font-semibold text-foreground">Security</h2>
         <p className="text-sm text-muted-foreground mt-1">
-          Gestionează sincronizarea parolei între backend și frontend.
+          Manage password synchronization between backend and frontend.
         </p>
       </div>
 
@@ -51,35 +51,35 @@ export default function SecuritySettings() {
       <div className="rounded-xl border border-border bg-card p-6 space-y-4">
         <div>
           <h3 className="text-sm font-semibold text-foreground">
-            Sincronizare parolă → Frontend
+            Password sync → Frontend
           </h3>
           <p className="text-sm text-muted-foreground mt-1">
-            Dacă ți-ai schimbat parola în backend și nu te poți autentifica în frontend cu aceeași
-            parolă, folosește această funcție pentru a sincroniza manual.
+            If you changed your password in the backend and can&apos;t log in to the frontend with the same
+            password, use this to sync manually.
           </p>
         </div>
 
         <div className="rounded-lg border border-amber-300/60 bg-amber-50 dark:bg-amber-950/30 px-4 py-3 text-sm text-amber-900 dark:text-amber-300">
-          <strong>Flux automat:</strong> La fiecare schimbare de parolă în backend, sincronizarea
-          se face automat dacă{' '}
+          <strong>Automatic flow:</strong> on every password change in the backend, syncing
+          happens automatically if{' '}
           <code className="font-mono text-xs bg-amber-100 dark:bg-amber-900/50 px-1 rounded">
             INTERNAL_SYNC_SECRET
           </code>{' '}
-          și{' '}
+          and{' '}
           <code className="font-mono text-xs bg-amber-100 dark:bg-amber-900/50 px-1 rounded">
             FRONTEND_INTERNAL_URL
           </code>{' '}
-          sunt configurate în ambele{' '}
+          are configured in both{' '}
           <code className="font-mono text-xs bg-amber-100 dark:bg-amber-900/50 px-1 rounded">
             .env
           </code>
-          .
+          {' '}files.
         </div>
 
         <div className="space-y-3">
           <div>
             <label htmlFor="sync-password" className="label-text">
-              Parola curentă (din backend)
+              Current password (from backend)
             </label>
             <div className="relative mt-1">
               <input
@@ -89,14 +89,14 @@ export default function SecuritySettings() {
                 onChange={(e) => setCurrentPassword(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && void handleSync()}
                 className="input-field pr-10"
-                placeholder="Parola ta curentă de backend"
+                placeholder="Your current backend password"
                 autoComplete="current-password"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword((p) => !p)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                aria-label={showPassword ? 'Ascunde parola' : 'Arată parola'}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
               >
                 {showPassword ? (
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -127,10 +127,10 @@ export default function SecuritySettings() {
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                 </svg>
-                Se sincronizează…
+                Syncing…
               </span>
             ) : (
-              'Sincronizează parola cu frontend-ul'
+              'Sync password with frontend'
             )}
           </button>
 

@@ -12,7 +12,7 @@ export function generateMetadata(): Metadata {
     description: isRo
       ? "Cum sunt protejate datele tale în NutriAID Intolerances, drepturile tale GDPR, ce date colectăm și cum le folosim."
       : "How your data is protected in NutriAID Intolerances, your GDPR rights, what data we collect and how we use it.",
-    alternates: { canonical: "/knowledge-hub/gdpr-confidentialitate" },
+    alternates: { canonical: "/knowledge-hub/gdpr-confidentialitate", languages: { ro: "/knowledge-hub/gdpr-confidentialitate", en: "/knowledge-hub/gdpr-confidentialitate", "x-default": "/knowledge-hub/gdpr-confidentialitate" } },
     openGraph: {
       title: isRo ? "GDPR & Confidențialitate — NutriAID" : "GDPR & Privacy — NutriAID",
       description: isRo

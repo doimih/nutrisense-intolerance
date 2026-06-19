@@ -1,11 +1,17 @@
 import 'server-only';
 
+type PlanContent = {
+  name: string;
+  description: string;
+  features: string[];
+};
+
 type PlanPricing = {
   amount: string;
   currency: string;
   interval: string;
-  features: string[];
-  description: string;
+  ro: PlanContent;
+  en: PlanContent;
 };
 
 type PWASettings = {
@@ -15,6 +21,11 @@ type PWASettings = {
   themeColor: string;
   backgroundColor: string;
   vapidPublicKey: string;
+};
+
+type AnalyticsSettings = {
+  enabled: boolean;
+  measurementId: string;
 };
 
 type RuntimeSettings = {
@@ -27,6 +38,7 @@ type RuntimeSettings = {
     siteKey: string;
     scoreThreshold: string;
   };
+  analytics: AnalyticsSettings;
   pricing: {
     basic: PlanPricing;
     pro: PlanPricing;
@@ -35,7 +47,9 @@ type RuntimeSettings = {
   pwa: PWASettings;
 };
 
-const DEFAULT_PLAN: PlanPricing = { amount: '', currency: 'eur', interval: 'month', features: [], description: '' };
+const EMPTY_PLAN_CONTENT: PlanContent = { name: '', description: '', features: [] };
+
+const DEFAULT_PLAN: PlanPricing = { amount: '', currency: 'eur', interval: 'month', ro: EMPTY_PLAN_CONTENT, en: EMPTY_PLAN_CONTENT };
 
 const DEFAULT_PWA: PWASettings = {
   enabled: false,
@@ -52,6 +66,7 @@ const FALLBACK_SETTINGS: RuntimeSettings = {
   adminConsoleUrl: 'https://backend.nutriaid.eu',
   internalEmailToken: null,
   recaptcha: { enabled: false, siteKey: '', scoreThreshold: '0.5' },
+  analytics: { enabled: false, measurementId: '' },
   pricing: {
     basic: { ...DEFAULT_PLAN, amount: '9.99' },
     pro: { ...DEFAULT_PLAN, amount: '14.99' },
@@ -84,6 +99,7 @@ export async function getRuntimeSettings(): Promise<RuntimeSettings> {
         app?: { siteUrl?: string; backendUrl?: string; adminConsoleUrl?: string };
         internalEmailToken?: string | null;
         recaptcha?: { enabled?: boolean; siteKey?: string; scoreThreshold?: string };
+        analytics?: Partial<AnalyticsSettings>;
         pricing?: {
           basic?: Partial<PlanPricing>;
           pro?: Partial<PlanPricing>;
@@ -95,6 +111,7 @@ export async function getRuntimeSettings(): Promise<RuntimeSettings> {
 
     const appSettings = payload?.settings?.app;
     const rc = payload?.settings?.recaptcha;
+    const an = payload?.settings?.analytics;
     const p = payload?.settings?.pricing;
     const pw = payload?.settings?.pwa;
     return {
@@ -106,6 +123,10 @@ export async function getRuntimeSettings(): Promise<RuntimeSettings> {
         enabled: rc?.enabled ?? false,
         siteKey: rc?.siteKey ?? '',
         scoreThreshold: rc?.scoreThreshold ?? '0.5',
+      },
+      analytics: {
+        enabled: an?.enabled ?? false,
+        measurementId: an?.measurementId ?? '',
       },
       pricing: {
         basic: { ...FALLBACK_SETTINGS.pricing.basic, ...p?.basic },

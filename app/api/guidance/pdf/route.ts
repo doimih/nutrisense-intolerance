@@ -4,6 +4,7 @@ import { AUTH_COOKIE_NAME } from "@/lib/auth/session";
 import { readSessionToken } from "@/lib/auth/sessionToken";
 import { listGuidanceByUser } from "@/lib/server/guidance/store";
 import { isAppLanguage } from "@/lib/i18n/config";
+import { groupMealExamplesByDay } from "@/lib/guidance/mealGrouping";
 
 export const runtime = "nodejs";
 
@@ -252,26 +253,40 @@ export async function GET(request: NextRequest) {
 
       curY = sectionBar(L.mealExamples, TEAL, curY);
 
-      for (const meal of mealExamples) {
-        const estimatedH = 14 + 22 * Math.ceil(meal.ingredients.length / 4) + (meal.notes ? 14 : 0) + 24;
+      const drawMealBox = (meal: { name: string; ingredients?: string[]; notes?: string }, mealTypeLabel?: string): void => {
+        const estimatedH = 14 + (mealTypeLabel ? 12 : 0) + 22 * Math.ceil((meal.ingredients ?? []).length / 4) + (meal.notes ? 14 : 0) + 24;
         if (curY + estimatedH > doc.page.height - MARGIN - 60) {
           doc.addPage();
           curY = MARGIN;
         }
 
         doc.rect(MARGIN, curY, CONTENT, estimatedH).fill(SLATE_LIGHT).stroke(BORDER);
+
+        let titleY = curY + 9;
+        if (mealTypeLabel) {
+          doc
+            .font("Helvetica-Bold")
+            .fontSize(7.5)
+            .fillColor(TEAL)
+            .text(safeText(mealTypeLabel.toUpperCase()), MARGIN + 12, titleY, {
+              width: CONTENT - 24,
+              lineBreak: false,
+            });
+          titleY += 11;
+        }
+
         doc
           .font("Helvetica-Bold")
           .fontSize(10)
           .fillColor(SLATE)
-          .text(safeText(meal.name), MARGIN + 12, curY + 9, {
+          .text(safeText(meal.name), MARGIN + 12, titleY, {
             width: CONTENT - 24,
             lineBreak: false,
           });
 
         let tx = MARGIN + 12;
-        let ty = curY + 25;
-        for (const ing of meal.ingredients) {
+        let ty = titleY + 16;
+        for (const ing of meal.ingredients ?? []) {
           const label = safeText(ing);
           const tw = Math.min(doc.font("Helvetica").fontSize(8.5).widthOfString(label) + 12, COL_W);
           if (tx + tw > MARGIN + CONTENT - 12) {
@@ -296,6 +311,30 @@ export async function GET(request: NextRequest) {
         }
 
         curY += estimatedH + 8;
+      };
+
+      const groupedMeals = groupMealExamplesByDay(mealExamples, lang);
+      if (groupedMeals) {
+        for (const dayGroup of groupedMeals) {
+          if (curY > doc.page.height - 100) {
+            doc.addPage();
+            curY = MARGIN;
+          }
+          doc
+            .font("Helvetica-Bold")
+            .fontSize(10)
+            .fillColor(SLATE)
+            .text(safeText(dayGroup.label), MARGIN, curY, { width: CONTENT, lineBreak: false });
+          curY += 16;
+
+          for (const { label, meal } of dayGroup.meals) {
+            drawMealBox(meal, label);
+          }
+        }
+      } else {
+        for (const meal of mealExamples) {
+          drawMealBox(meal);
+        }
       }
 
       curY += 8;

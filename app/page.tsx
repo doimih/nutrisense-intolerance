@@ -562,6 +562,7 @@ export async function generateMetadata(): Promise<Metadata> {
       : "Discover which foods trigger your symptoms with AI-powered, fast, personalized analysis.",
     alternates: {
       canonical: "/",
+      languages: { ro: "/", en: "/", "x-default": "/" },
     },
   };
 }

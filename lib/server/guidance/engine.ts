@@ -1,8 +1,9 @@
 import "server-only";
 import { createHash } from "node:crypto";
-import type { GuidanceResult, MealExample, MonitoringContextItem } from "@/types/guidance";
+import type { GuidanceResult, MealDay, MealExample, MonitoringContextItem } from "@/types/guidance";
 import type { Intolerance } from "@/types/profile";
 import type { GuidanceGenerateInput, PlanTier } from "@/lib/server/guidance/types";
+import { MEAL_TYPE_ORDER } from "@/lib/guidance/mealGrouping";
 
 const DISALLOWED_PATTERNS = [
   /\bdiagnostic\b/gi,
@@ -145,93 +146,92 @@ function getPlanLimits(planTier: PlanTier): PlanLimits {
   switch (planTier) {
     case "enterprise":
     case "pro_plus":
-      return { maxRecommendedFoods: 15, maxAvoidFoods: 12, maxMealExamples: 7, maxTips: 5, comboAnalysis: true, advancedPredictions: true, delayedReactionDetection: true };
+      return { maxRecommendedFoods: 15, maxAvoidFoods: 12, maxMealExamples: 21, maxTips: 5, comboAnalysis: true, advancedPredictions: true, delayedReactionDetection: true };
     case "pro":
-      return { maxRecommendedFoods: 12, maxAvoidFoods: 10, maxMealExamples: 7, maxTips: 3, comboAnalysis: true, advancedPredictions: false, delayedReactionDetection: false };
+      return { maxRecommendedFoods: 12, maxAvoidFoods: 10, maxMealExamples: 21, maxTips: 3, comboAnalysis: true, advancedPredictions: false, delayedReactionDetection: false };
     case "basic":
-      return { maxRecommendedFoods: 8, maxAvoidFoods: 6, maxMealExamples: 7, maxTips: 2, comboAnalysis: false, advancedPredictions: false, delayedReactionDetection: false };
+      return { maxRecommendedFoods: 8, maxAvoidFoods: 6, maxMealExamples: 21, maxTips: 2, comboAnalysis: false, advancedPredictions: false, delayedReactionDetection: false };
     default:
-      return { maxRecommendedFoods: 4, maxAvoidFoods: 3, maxMealExamples: 7, maxTips: 1, comboAnalysis: false, advancedPredictions: false, delayedReactionDetection: false };
+      return { maxRecommendedFoods: 4, maxAvoidFoods: 3, maxMealExamples: 21, maxTips: 1, comboAnalysis: false, advancedPredictions: false, delayedReactionDetection: false };
   }
 }
 
+type DaySeed = {
+  day: MealDay;
+  breakfast: { ro: string; en: string; roNotes: string; enNotes: string };
+  lunch: { ro: string; en: string; roNotes: string; enNotes: string };
+  dinner: { ro: string; en: string; roNotes: string; enNotes: string };
+};
+
+const DAY_SEEDS: DaySeed[] = [
+  {
+    day: "monday",
+    breakfast: { ro: "Mic dejun echilibrat", en: "Balanced breakfast", roNotes: "Portie moderata, ritm lent, observa simptomele in primele 120 minute.", enNotes: "Moderate portion, slow pace, observe symptoms in the first 120 minutes." },
+    lunch: { ro: "Pranz echilibrat", en: "Balanced lunch", roNotes: "Combina o sursa de proteina cu legume si un cereal integral.", enNotes: "Combine a protein source with vegetables and a whole grain." },
+    dinner: { ro: "Cina echilibrata", en: "Balanced dinner", roNotes: "Cina usoara, cu 2-3 ore inainte de culcare.", enNotes: "Light dinner, 2-3 hours before bedtime." },
+  },
+  {
+    day: "tuesday",
+    breakfast: { ro: "Mic dejun usor", en: "Light breakfast", roNotes: "Evita combinatiile multiple noi in aceeasi zi.", enNotes: "Avoid introducing multiple new combinations on the same day." },
+    lunch: { ro: "Pranz usor", en: "Light lunch", roNotes: "Portie redusa, ingrediente deja testate.", enNotes: "Smaller portion, already-tested ingredients." },
+    dinner: { ro: "Cina usoara", en: "Light dinner", roNotes: "Prefera legume gatite la vapori sau cuptor.", enNotes: "Prefer steamed or oven-cooked vegetables." },
+  },
+  {
+    day: "wednesday",
+    breakfast: { ro: "Mic dejun personalizat", en: "Personalized breakfast", roNotes: "Plan adaptat profilului tau alimentar. Ajusteaza portiile treptat.", enNotes: "Adapted to your food profile. Adjust portions gradually." },
+    lunch: { ro: "Pranz personalizat", en: "Personalized lunch", roNotes: "Alege ingrediente din lista recomandata pentru profilul tau.", enNotes: "Choose ingredients from the recommended list for your profile." },
+    dinner: { ro: "Cina personalizata", en: "Personalized dinner", roNotes: "Adapteaza portiile in functie de cum te-ai simtit in restul zilei.", enNotes: "Adjust portions based on how you felt during the day." },
+  },
+  {
+    day: "thursday",
+    breakfast: { ro: "Mic dejun proteic", en: "Protein breakfast", roNotes: "Zi buna pentru a introduce un ingredient nou. Monitorizeaza reactiile la 2h si 6h.", enNotes: "Good day to introduce a new ingredient. Monitor reactions at 2h and 6h." },
+    lunch: { ro: "Pranz proteic", en: "Protein lunch", roNotes: "Prioritizeaza o sursa de proteina usor digerabila.", enNotes: "Prioritize an easily digestible protein source." },
+    dinner: { ro: "Cina proteica", en: "Protein dinner", roNotes: "Evita portiile mari seara, mai ales dupa introducerea unui ingredient nou.", enNotes: "Avoid large evening portions, especially after introducing a new ingredient." },
+  },
+  {
+    day: "friday",
+    breakfast: { ro: "Mic dejun de recuperare", en: "Recovery breakfast", roNotes: "Mese simple la sfarsit de saptamana. Favorizeaza ingredientele deja testate.", enNotes: "Simple meals at the end of the week. Favor already-tested ingredients." },
+    lunch: { ro: "Pranz de recuperare", en: "Recovery lunch", roNotes: "Pastreaza preparatele simple, cu putine ingrediente.", enNotes: "Keep dishes simple, with few ingredients." },
+    dinner: { ro: "Cina de recuperare", en: "Recovery dinner", roNotes: "Inchide saptamana cu o masa usoara si familiara.", enNotes: "Close the week with a light, familiar meal." },
+  },
+  {
+    day: "saturday",
+    breakfast: { ro: "Mic dejun diversificat", en: "Diverse breakfast", roNotes: "Zi potrivita pentru retete noi. Pastreaza portiile moderate.", enNotes: "Good day for new recipes. Keep portions moderate." },
+    lunch: { ro: "Pranz diversificat", en: "Diverse lunch", roNotes: "Poti experimenta cu o reteta noua, in portii mici.", enNotes: "You can experiment with a new recipe, in small portions." },
+    dinner: { ro: "Cina diversificata", en: "Diverse dinner", roNotes: "Alterneaza intre preparate la cuptor si la tigaie.", enNotes: "Alternate between oven-baked and pan-cooked dishes." },
+  },
+  {
+    day: "sunday",
+    breakfast: { ro: "Mic dejun de baza", en: "Base breakfast", roNotes: "Analiza saptamanala: compara cum te-ai simtit dupa fiecare masa si noteaza in jurnal.", enNotes: "Weekly review: compare how you felt after each meal and log it in your journal." },
+    lunch: { ro: "Pranz de baza", en: "Base lunch", roNotes: "Masa principala a saptamanii, cu ingrediente sigure si testate.", enNotes: "The week's main meal, with safe, tested ingredients." },
+    dinner: { ro: "Cina de baza", en: "Base dinner", roNotes: "Pregateste-te pentru saptamana viitoare cu o cina simpla.", enNotes: "Prepare for the coming week with a simple dinner." },
+  },
+];
+
+const FALLBACK_INGREDIENTS_RO = ["orez", "legume", "proteina slaba"];
+const FALLBACK_INGREDIENTS_EN = ["rice", "vegetables", "lean protein"];
+
 function buildMealExamples(lang: "ro" | "en", recommendedFoods: string[], count: number): MealExample[] {
-  const allMeals: MealExample[] = lang === "ro"
-    ? [
-        {
-          name: "Luni - masa echilibrata",
-          ingredients: recommendedFoods.slice(0, 3).length > 0 ? recommendedFoods.slice(0, 3) : ["orez", "legume", "proteina slaba"],
-          notes: "Portie moderata, ritm lent, observa simptomele in primele 120 minute.",
-        },
-        {
-          name: "Marti - masa usoara",
-          ingredients: recommendedFoods.slice(3, 6).length > 0 ? recommendedFoods.slice(3, 6) : ["cartof dulce", "salata verde", "peste"],
-          notes: "Evita combinatiile multiple noi in aceeasi zi.",
-        },
-        {
-          name: "Miercuri - masa personalizata",
-          ingredients: recommendedFoods.slice(6, 9).length > 0 ? recommendedFoods.slice(6, 9) : ["quinoa", "broccoli", "pui la gratar"],
-          notes: "Plan adaptat profilului tau alimentar. Ajusteaza portiile treptat.",
-        },
-        {
-          name: "Joi - masa proteica",
-          ingredients: recommendedFoods.slice(2, 5).length > 0 ? recommendedFoods.slice(2, 5) : ["linte", "spanac", "ou fiert"],
-          notes: "Zi buna pentru a introduce un ingredient nou. Monitorizeaza reactiile la 2h si 6h.",
-        },
-        {
-          name: "Vineri - masa de recuperare",
-          ingredients: recommendedFoods.slice(0, 2).length > 0 ? [...recommendedFoods.slice(0, 2), "morcovi"] : ["morcovi", "orez", "pui fiert"],
-          notes: "Mese simple la sfarsit de saptamana. Favorizeaza ingredientele deja testate.",
-        },
-        {
-          name: "Sambata - masa diversificata",
-          ingredients: recommendedFoods.slice(4, 7).length > 0 ? recommendedFoods.slice(4, 7) : ["ovaz", "fructe de padure", "seminte de in"],
-          notes: "Zi potrivita pentru retete noi. Pastreaza portiile moderate.",
-        },
-        {
-          name: "Duminica - masa de baza",
-          ingredients: recommendedFoods.slice(1, 4).length > 0 ? recommendedFoods.slice(1, 4) : ["hrisca", "dovlecel", "somon la gratar"],
-          notes: "Analiza saptamanala: compara cum te-ai simtit dupa fiecare masa si noteaza in jurnal.",
-        },
-      ]
-    : [
-        {
-          name: "Monday - balanced meal",
-          ingredients: recommendedFoods.slice(0, 3).length > 0 ? recommendedFoods.slice(0, 3) : ["rice", "vegetables", "lean protein"],
-          notes: "Moderate portion, slow pace, observe symptoms in the first 120 minutes.",
-        },
-        {
-          name: "Tuesday - light meal",
-          ingredients: recommendedFoods.slice(3, 6).length > 0 ? recommendedFoods.slice(3, 6) : ["sweet potato", "green salad", "fish"],
-          notes: "Avoid introducing multiple new combinations on the same day.",
-        },
-        {
-          name: "Wednesday - personalized meal",
-          ingredients: recommendedFoods.slice(6, 9).length > 0 ? recommendedFoods.slice(6, 9) : ["quinoa", "broccoli", "grilled chicken"],
-          notes: "Adapted to your food profile. Adjust portions gradually.",
-        },
-        {
-          name: "Thursday - protein meal",
-          ingredients: recommendedFoods.slice(2, 5).length > 0 ? recommendedFoods.slice(2, 5) : ["lentils", "spinach", "boiled egg"],
-          notes: "Good day to introduce a new ingredient. Monitor reactions at 2h and 6h.",
-        },
-        {
-          name: "Friday - recovery meal",
-          ingredients: recommendedFoods.slice(0, 2).length > 0 ? [...recommendedFoods.slice(0, 2), "carrots"] : ["carrots", "rice", "boiled chicken"],
-          notes: "Simple meals at the end of the week. Favor already-tested ingredients.",
-        },
-        {
-          name: "Saturday - diverse meal",
-          ingredients: recommendedFoods.slice(4, 7).length > 0 ? recommendedFoods.slice(4, 7) : ["oats", "berries", "flaxseeds"],
-          notes: "Good day for new recipes. Keep portions moderate.",
-        },
-        {
-          name: "Sunday - base meal",
-          ingredients: recommendedFoods.slice(1, 4).length > 0 ? recommendedFoods.slice(1, 4) : ["buckwheat", "zucchini", "grilled salmon"],
-          notes: "Weekly review: compare how you felt after each meal and log it in your journal.",
-        },
-      ];
-  return allMeals.slice(0, Math.max(1, count));
+  const all: MealExample[] = [];
+  let slot = 0;
+  for (const seed of DAY_SEEDS) {
+    for (const mealType of MEAL_TYPE_ORDER) {
+      const def = seed[mealType];
+      const start = slot * 2;
+      const ingredients = recommendedFoods.slice(start, start + 2);
+      all.push({
+        day: seed.day,
+        mealType,
+        name: lang === "ro" ? def.ro : def.en,
+        ingredients: ingredients.length > 0
+          ? ingredients
+          : lang === "ro" ? FALLBACK_INGREDIENTS_RO : FALLBACK_INGREDIENTS_EN,
+        notes: lang === "ro" ? def.roNotes : def.enNotes,
+      });
+      slot += 1;
+    }
+  }
+  return all.slice(0, Math.max(1, count));
 }
 
 function baseAvoidByIntolerance(intolerances: Intolerance[], lang: "ro" | "en"): string[] {
@@ -428,7 +428,7 @@ function applyDetailLevelToLimits(limits: PlanLimits, detailLevel: string): Plan
       ...limits,
       maxRecommendedFoods: Math.max(limits.maxRecommendedFoods, 12),
       maxAvoidFoods: Math.max(limits.maxAvoidFoods, 8),
-      maxMealExamples: 7,
+      maxMealExamples: 21,
       maxTips: Math.max(limits.maxTips, 5),
     };
   }
@@ -437,7 +437,7 @@ function applyDetailLevelToLimits(limits: PlanLimits, detailLevel: string): Plan
       ...limits,
       maxRecommendedFoods: Math.max(limits.maxRecommendedFoods, 8),
       maxAvoidFoods: Math.max(limits.maxAvoidFoods, 5),
-      maxMealExamples: 7,
+      maxMealExamples: 21,
       maxTips: Math.max(limits.maxTips, 3),
     };
   }
@@ -550,7 +550,7 @@ export function sanitizeGuidanceResult(result: GuidanceResult, lang: "ro" | "en"
     mealExamples: result.mealExamples.map((meal) => ({
       ...meal,
       name: sanitizeLine(meal.name, lang),
-      ingredients: sanitizeStringArray(meal.ingredients, lang),
+      ingredients: sanitizeStringArray(meal.ingredients ?? [], lang),
       notes: meal.notes ? sanitizeLine(meal.notes, lang) : undefined,
     })),
     disclaimer: sanitizeLine(result.disclaimer, lang),

@@ -12,7 +12,7 @@ export function generateMetadata(): Metadata {
     description: isRo
       ? "Cum generează NutriAID planuri alimentare personalizate bazate pe istoricul tău de simptome și alimente. Nu diete generice — ghidare adaptată corpului tău."
       : "How NutriAID generates personalized food plans based on your symptom and meal history. Not generic diets — guidance adapted to your body.",
-    alternates: { canonical: "/knowledge-hub/plan-alimentar-ai" },
+    alternates: { canonical: "/knowledge-hub/plan-alimentar-ai", languages: { ro: "/knowledge-hub/plan-alimentar-ai", en: "/knowledge-hub/plan-alimentar-ai", "x-default": "/knowledge-hub/plan-alimentar-ai" } },
     openGraph: {
       title: isRo ? "Plan alimentar AI personalizat — NutriAID" : "Personalized AI Food Plan — NutriAID",
       description: isRo

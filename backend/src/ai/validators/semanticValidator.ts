@@ -109,7 +109,6 @@ function validateAllergens(
 
 // ─── B. Nutritional Logic Validation ─────────────────────────────────────────
 
-// nutrition-calculator is now a food recommender (no kcal/macros) — excluded
 const NUTRITION_WORKERS = [
   'meal-plan-generator',
   'recipe-builder',
@@ -195,14 +194,7 @@ const MEDICAL_RISK_TERMS = [
   'medication', 'medicate',
 ];
 
-// Only medical-safety requires a disclaimer — nutrition-calculator and supplement-advisor
-// are now behavioral workers (food recommender / lifestyle tips) with no medical content
-const DISCLAIMER_WORKERS = [
-  'medical-safety',
-  'medicalSafety',
-];
-
-function validateSafety(output: JsonObject, workerId: string): { safetyErrors: string[] } {
+function validateSafety(output: JsonObject): { safetyErrors: string[] } {
   const errors: string[] = [];
   const blob = JSON.stringify(output).toLowerCase();
 
@@ -210,12 +202,6 @@ function validateSafety(output: JsonObject, workerId: string): { safetyErrors: s
     if (blob.includes(term)) {
       errors.push(`Safety violation: medical-risk language "${term}" found in output.`);
     }
-  }
-
-  const normId = workerId.toLowerCase().replace(/[\s_]/g, '-');
-  const needsDisclaimer = DISCLAIMER_WORKERS.some((w) => normId.includes(w.toLowerCase()));
-  if (needsDisclaimer && !blob.includes('disclaimer')) {
-    errors.push('Safety warning: safety-critical worker output is missing a medical disclaimer.');
   }
 
   return { safetyErrors: errors };
@@ -275,7 +261,7 @@ export function validateSemantics(
 ): SemanticValidationResult {
   const { allergenErrors } = validateAllergens(output, allergies, intolerances);
   const { nutritionErrors } = validateNutrition(output, workerId, goals);
-  const { safetyErrors } = validateSafety(output, workerId);
+  const { safetyErrors } = validateSafety(output);
   const { contradictions } = detectContradictions(output);
 
   const allErrors = [...allergenErrors, ...nutritionErrors, ...safetyErrors, ...contradictions];

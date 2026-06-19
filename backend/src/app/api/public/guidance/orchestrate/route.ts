@@ -60,10 +60,16 @@ type PhysicalProfile = {
   activityLevel?: string | null;
 };
 
+type MealDayKey = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
+type MealTypeKey = 'breakfast' | 'lunch' | 'dinner';
+
+const MEAL_DAY_KEYS: readonly MealDayKey[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+const MEAL_TYPE_KEYS: readonly MealTypeKey[] = ['breakfast', 'lunch', 'dinner'];
+
 type GuidanceResult = {
   recommendedFoods: string[];
   avoidFoods: string[];
-  mealExamples: Array<{ name: string; ingredients?: string[]; notes?: string }>;
+  mealExamples: Array<{ name: string; ingredients?: string[]; notes?: string; day?: MealDayKey; mealType?: MealTypeKey }>;
   generalTips: string[];
   disclaimer: string;
   warnings?: string[];
@@ -147,38 +153,32 @@ function buildJsonFormatBlock(lang: 'ro' | 'en'): string {
   "recommendedFoods": ["aliment1", "aliment2", "aliment3", ...minimum 15 alimente unice...],
   "avoidFoods": ["aliment1", "aliment2", ...minimum 8 alimente unice...],
   "mealExamples": [
-    {"name": "Luni - Denumire idee masa", "ingredients": [], "notes": "Descriere scurta a ideii de masa, mod de preparare simplu si context cultural"},
-    {"name": "Marti - Denumire idee masa", "ingredients": [], "notes": "Descriere scurta"},
-    {"name": "Miercuri - Denumire idee masa", "ingredients": [], "notes": "Descriere scurta"},
-    {"name": "Joi - Denumire idee masa", "ingredients": [], "notes": "Descriere scurta"},
-    {"name": "Vineri - Denumire idee masa", "ingredients": [], "notes": "Descriere scurta"},
-    {"name": "Sambata - Denumire idee masa", "ingredients": [], "notes": "Descriere scurta"},
-    {"name": "Duminica - Denumire idee masa", "ingredients": [], "notes": "Descriere scurta"}
+    {"day": "monday", "mealType": "breakfast", "name": "Denumire idee masa", "ingredients": [], "notes": "Descriere scurta a ideii de masa, mod de preparare simplu si context cultural"},
+    {"day": "monday", "mealType": "lunch", "name": "Denumire idee masa", "ingredients": [], "notes": "Descriere scurta"},
+    {"day": "monday", "mealType": "dinner", "name": "Denumire idee masa", "ingredients": [], "notes": "Descriere scurta"},
+    {"day": "tuesday", "mealType": "breakfast", "name": "Denumire idee masa", "ingredients": [], "notes": "Descriere scurta"}
   ],
   "generalTips": ["sfat_confort1", "sfat_confort2", "sfat_confort3", ...minimum 5 sfaturi...],
   "disclaimer": "Aceste sugestii sunt bazate pe tipare de confort si preferinte personale si nu reprezinta sfat medical sau nutritional.",
   "warnings": []
 }
-IMPORTANT: campul "ingredients" trebuie sa fie INTOTDEAUNA un array gol []. Nu lista ingrediente. Pune descrierea mesei in campul "notes".`;
+ATENTIE — exemplul de mai sus arata doar 4 din cele 21 de intrari necesare. "mealExamples" trebuie sa contina EXACT 21 de intrari: cate 3 (breakfast, lunch, dinner, in aceasta ordine) pentru fiecare din cele 7 zile: monday, tuesday, wednesday, thursday, friday, saturday, sunday. Campul "day" trebuie sa fie EXACT una din aceste valori (in engleza, lowercase). Campul "mealType" trebuie sa fie EXACT una din: breakfast, lunch, dinner. Campul "ingredients" trebuie sa fie INTOTDEAUNA un array gol []. Nu lista ingrediente. Pune descrierea mesei in campul "notes". Campul "name" contine DOAR denumirea preparatului, FARA ziua sau tipul de masa in text (acelea sunt deja in "day"/"mealType").`;
   }
   return `REQUIRED JSON FORMAT — Respond EXCLUSIVELY in valid JSON, NO text outside the JSON:
 {
   "recommendedFoods": ["food1", "food2", "food3", ...minimum 15 unique foods...],
   "avoidFoods": ["food1", "food2", ...minimum 8 unique foods...],
   "mealExamples": [
-    {"name": "Monday - Meal idea name", "ingredients": [], "notes": "Brief description of the meal idea, simple preparation context and cultural familiarity"},
-    {"name": "Tuesday - Meal idea name", "ingredients": [], "notes": "Brief description"},
-    {"name": "Wednesday - Meal idea name", "ingredients": [], "notes": "Brief description"},
-    {"name": "Thursday - Meal idea name", "ingredients": [], "notes": "Brief description"},
-    {"name": "Friday - Meal idea name", "ingredients": [], "notes": "Brief description"},
-    {"name": "Saturday - Meal idea name", "ingredients": [], "notes": "Brief description"},
-    {"name": "Sunday - Meal idea name", "ingredients": [], "notes": "Brief description"}
+    {"day": "monday", "mealType": "breakfast", "name": "Meal idea name", "ingredients": [], "notes": "Brief description of the meal idea, simple preparation context and cultural familiarity"},
+    {"day": "monday", "mealType": "lunch", "name": "Meal idea name", "ingredients": [], "notes": "Brief description"},
+    {"day": "monday", "mealType": "dinner", "name": "Meal idea name", "ingredients": [], "notes": "Brief description"},
+    {"day": "tuesday", "mealType": "breakfast", "name": "Meal idea name", "ingredients": [], "notes": "Brief description"}
   ],
   "generalTips": ["comfort_tip1", "comfort_tip2", "comfort_tip3", ...minimum 5 tips...],
   "disclaimer": "These suggestions are based on comfort patterns and personal preferences and do not constitute medical or nutritional advice.",
   "warnings": []
 }
-IMPORTANT: the "ingredients" field must ALWAYS be an empty array []. Do not list ingredients. Put the meal description in the "notes" field.`;
+NOTE — the example above shows only 4 of the 21 required entries. "mealExamples" must contain EXACTLY 21 entries: 3 per day (breakfast, lunch, dinner, in this order) for each of the 7 days: monday, tuesday, wednesday, thursday, friday, saturday, sunday. The "day" field must be EXACTLY one of these values (in English, lowercase). The "mealType" field must be EXACTLY one of: breakfast, lunch, dinner. The "ingredients" field must ALWAYS be an empty array []. Do not list ingredients. Put the meal description in the "notes" field. The "name" field contains ONLY the dish name, WITHOUT the day or meal type in the text (those already live in "day"/"mealType").`;
 }
 
 function detectGeoContext(lang: 'ro' | 'en', acceptLanguage: string): GeoContext {
@@ -281,11 +281,21 @@ function buildUserPrompt(params: {
 
   if (physicalProfile) {
     const parts: string[] = [];
-    if (physicalProfile.age) parts.push(`varsta:${physicalProfile.age}`);
-    if (physicalProfile.heightCm) parts.push(`inaltime:${physicalProfile.heightCm}cm`);
-    if (physicalProfile.weightKg) parts.push(`greutate:${physicalProfile.weightKg}kg`);
-    if (physicalProfile.activityLevel) parts.push(`activitate:${physicalProfile.activityLevel}`);
-    if (parts.length > 0) lines.push(`PROFIL_FIZIC: ${parts.join(', ')}`);
+    if (lang === 'ro') {
+      if (physicalProfile.age) parts.push(`varsta:${physicalProfile.age}`);
+      if (physicalProfile.heightCm) parts.push(`inaltime:${physicalProfile.heightCm}cm`);
+      if (physicalProfile.weightKg) parts.push(`greutate:${physicalProfile.weightKg}kg`);
+      if (physicalProfile.activityLevel) parts.push(`activitate:${physicalProfile.activityLevel}`);
+    } else {
+      if (physicalProfile.age) parts.push(`age:${physicalProfile.age}`);
+      if (physicalProfile.heightCm) parts.push(`height:${physicalProfile.heightCm}cm`);
+      if (physicalProfile.weightKg) parts.push(`weight:${physicalProfile.weightKg}kg`);
+      if (physicalProfile.activityLevel) parts.push(`activity:${physicalProfile.activityLevel}`);
+    }
+    if (parts.length > 0) {
+      const label = lang === 'ro' ? 'PROFIL_FIZIC' : 'PHYSICAL_PROFILE';
+      lines.push(`${label}: ${parts.join(', ')}`);
+    }
   }
 
   if (entries.length > 0) {
@@ -306,26 +316,30 @@ function buildUserPrompt(params: {
   }
 
   if (previousGuidance && previousGuidance.length > 0) {
-    lines.push('RECOMANDARI_ANTERIOARE (nu repeta exact, evolueaza recomandarile):');
+    lines.push(lang === 'ro'
+      ? 'RECOMANDARI_ANTERIOARE (nu repeta exact, evolueaza recomandarile):'
+      : 'PREVIOUS_RECOMMENDATIONS (do not repeat exactly, evolve the recommendations):');
     for (const prev of previousGuidance) {
       lines.push(JSON.stringify({
-        data: prev.generatedAt,
-        recomandate: prev.recommendedFoods.slice(0, 5),
-        evitate: prev.avoidFoods.slice(0, 5),
+        date: prev.generatedAt,
+        recommended: prev.recommendedFoods.slice(0, 5),
+        avoid: prev.avoidFoods.slice(0, 5),
       }));
     }
   }
 
   if (previousMealExamples && previousMealExamples.length > 0) {
-    lines.push('RETETE_ANTERIOARE (EVITA sa repeti aceste retete - genereaza altele complet diferite):');
+    lines.push(lang === 'ro'
+      ? 'RETETE_ANTERIOARE (EVITA sa repeti aceste retete - genereaza altele complet diferite):'
+      : 'PREVIOUS_RECIPES (AVOID repeating these recipes - generate completely different ones):');
     for (const meal of previousMealExamples.slice(0, 20)) {
-      lines.push(JSON.stringify({ nume: meal.name, ingrediente: meal.ingredients }));
+      lines.push(JSON.stringify({ name: meal.name, ingredients: meal.ingredients }));
     }
   }
 
   lines.push(lang === 'ro'
-    ? 'DIVERSITATE_OBLIGATORIE: Genereaza 7 idei de mese (una pe zi, Luni-Duminica) complet diferite de cele anterioare. Variaza: tipul de bucatarie (mediteraneana, romaneasca, asiatica, orientala, mexicana, balcanica, greceasca), momentul zilei (mic dejun consistent, pranz usor, cina calda, etc.) si categoria de baza a mesei (supa/ciorba, salata, mancare la cuptor, mancare la tigaie, la gratar). Nu repeta nicio idee de masa. Nu lista ingrediente - descrie ideea in "notes". Obiectiv pe termen lung: 100+ idei de mese unice generate cumulativ.'
-    : 'MANDATORY DIVERSITY: Generate 7 meal ideas (one per day, Monday-Sunday) completely different from previous ones. Vary: cuisine type (Mediterranean, Romanian, Asian, Middle Eastern, Mexican, Balkan, Greek), meal time context (hearty breakfast, light lunch, warm dinner, etc.), and base category (soup/stew, salad, oven dish, pan dish, grilled). Do not repeat any meal idea. Do not list ingredients — describe the idea in "notes". Long-term goal: 100+ unique meal ideas generated cumulatively.');
+    ? 'DIVERSITATE_OBLIGATORIE: Genereaza 21 idei de mese (3 pe zi — mic dejun, pranz, cina — pentru fiecare din cele 7 zile, Luni-Duminica) complet diferite de cele anterioare. Variaza: tipul de bucatarie (mediteraneana, romaneasca, asiatica, orientala, mexicana, balcanica, greceasca), si categoria de baza a mesei (supa/ciorba, salata, mancare la cuptor, mancare la tigaie, la gratar). Mic dejunul trebuie sa fie potrivit dimineata, pranzul o masa de mijlocul zilei, cina o masa de seara. Nu repeta nicio idee de masa. Nu lista ingrediente - descrie ideea in "notes". Obiectiv pe termen lung: 100+ idei de mese unice generate cumulativ.'
+    : 'MANDATORY DIVERSITY: Generate 21 meal ideas (3 per day — breakfast, lunch, dinner — for each of the 7 days, Monday-Sunday) completely different from previous ones. Vary: cuisine type (Mediterranean, Romanian, Asian, Middle Eastern, Mexican, Balkan, Greek) and base category (soup/stew, salad, oven dish, pan dish, grilled). Breakfast must suit the morning, lunch a midday meal, dinner an evening meal. Do not repeat any meal idea. Do not list ingredients — describe the idea in "notes". Long-term goal: 100+ unique meal ideas generated cumulatively.');
 
   if (intolerances.length > 0) {
     lines.push(lang === 'ro'
@@ -335,23 +349,23 @@ function buildUserPrompt(params: {
 
   if (dietaryPreferences && dietaryPreferences.length > 0 && !(dietaryPreferences.length === 1 && dietaryPreferences[0] === 'normal')) {
     lines.push(lang === 'ro'
-      ? `REGULA_DIETA_MESE: Preferintele alimentare ale utilizatorului sunt: ${dietaryPreferences.join(', ')}. Toate cele 7 retete generate in "mealExamples" trebuie sa respecte aceste preferinte. Nu include ingrediente incompatibile cu dieta selectata.`
-      : `DIET_MEAL_RULE: User dietary preferences are: ${dietaryPreferences.join(', ')}. All 7 recipes generated in "mealExamples" must comply with these preferences. Do not include ingredients incompatible with the selected diet.`);
+      ? `REGULA_DIETA_MESE: Preferintele alimentare ale utilizatorului sunt: ${dietaryPreferences.join(', ')}. Toate cele 21 de retete generate in "mealExamples" trebuie sa respecte aceste preferinte. Nu include ingrediente incompatibile cu dieta selectata.`
+      : `DIET_MEAL_RULE: User dietary preferences are: ${dietaryPreferences.join(', ')}. All 21 recipes generated in "mealExamples" must comply with these preferences. Do not include ingredients incompatible with the selected diet.`);
   }
 
   // Volume requirements — concrete minimums so the AI knows how much to produce.
   if (detailLevel === 'comprehensive') {
     lines.push(lang === 'ro'
-      ? 'VOLUM_COMPLET: minimum 20 alimente recomandate unice variate GEO-adaptate, minimum 12 alimente de evitat unice, EXACT 7 idei de mese (Luni pana Duminica) cu descriere culturala in "notes", minimum 7 sfaturi de confort si rutina detaliate. Nu repeta niciun element. Raspunsuri bogate si detaliate in fiecare sectiune.'
-      : 'VOLUME_COMPREHENSIVE: minimum 20 unique GEO-adapted recommended foods, minimum 12 unique foods to avoid, EXACTLY 7 meal ideas (Monday through Sunday) with cultural description in "notes", minimum 7 detailed comfort and routine tips. No element repetition. Rich, detailed responses in every section.');
+      ? 'VOLUM_COMPLET: minimum 20 alimente recomandate unice variate GEO-adaptate, minimum 12 alimente de evitat unice, EXACT 21 idei de mese (7 zile x 3 mese: mic dejun, pranz, cina) cu descriere culturala in "notes", minimum 7 sfaturi de confort si rutina detaliate. Nu repeta niciun element. Raspunsuri bogate si detaliate in fiecare sectiune.'
+      : 'VOLUME_COMPREHENSIVE: minimum 20 unique GEO-adapted recommended foods, minimum 12 unique foods to avoid, EXACTLY 21 meal ideas (7 days x 3 meals: breakfast, lunch, dinner) with cultural description in "notes", minimum 7 detailed comfort and routine tips. No element repetition. Rich, detailed responses in every section.');
   } else if (detailLevel === 'detailed') {
     lines.push(lang === 'ro'
-      ? 'VOLUM_DETALIAT: minimum 15 alimente recomandate unice, minimum 8 alimente de evitat unice, EXACT 7 idei de mese (Luni pana Duminica) cu "notes" descriptiv, minimum 5 sfaturi de confort. Nu repeta elemente.'
-      : 'VOLUME_DETAILED: minimum 15 unique recommended foods, minimum 8 unique foods to avoid, EXACTLY 7 meal ideas (Monday through Sunday) with descriptive "notes", minimum 5 comfort tips. No repeated elements.');
+      ? 'VOLUM_DETALIAT: minimum 15 alimente recomandate unice, minimum 8 alimente de evitat unice, EXACT 21 idei de mese (7 zile x 3 mese: mic dejun, pranz, cina) cu "notes" descriptiv, minimum 5 sfaturi de confort. Nu repeta elemente.'
+      : 'VOLUME_DETAILED: minimum 15 unique recommended foods, minimum 8 unique foods to avoid, EXACTLY 21 meal ideas (7 days x 3 meals: breakfast, lunch, dinner) with descriptive "notes", minimum 5 comfort tips. No repeated elements.');
   } else {
     lines.push(lang === 'ro'
-      ? 'VOLUM_BAZA: minimum 8 alimente recomandate unice, minimum 5 alimente de evitat, EXACT 7 idei simple de mese (Luni pana Duminica) cu "notes" scurt, minimum 3 sfaturi de confort.'
-      : 'VOLUME_BASIC: minimum 8 unique recommended foods, minimum 5 foods to avoid, EXACTLY 7 simple meal ideas (Monday through Sunday) with short "notes", minimum 3 comfort tips.');
+      ? 'VOLUM_BAZA: minimum 8 alimente recomandate unice, minimum 5 alimente de evitat, EXACT 21 idei simple de mese (7 zile x 3 mese: mic dejun, pranz, cina) cu "notes" scurt, minimum 3 sfaturi de confort.'
+      : 'VOLUME_BASIC: minimum 8 unique recommended foods, minimum 5 foods to avoid, EXACTLY 21 simple meal ideas (7 days x 3 meals: breakfast, lunch, dinner) with short "notes", minimum 3 comfort tips.');
   }
 
   return lines.join('\n');
@@ -429,6 +443,8 @@ function parseGuidanceJson(raw: string): GuidanceResult {
         name: typeof item.name === 'string' && item.name.trim() ? item.name : `Meal ${idx + 1}`,
         ingredients: Array.isArray(item.ingredients) ? toStringArray(item.ingredients) : [],
         notes: typeof item.notes === 'string' ? item.notes : undefined,
+        day: MEAL_DAY_KEYS.includes(item.day as MealDayKey) ? (item.day as MealDayKey) : undefined,
+        mealType: MEAL_TYPE_KEYS.includes(item.mealType as MealTypeKey) ? (item.mealType as MealTypeKey) : undefined,
       }))
       .filter((meal) => meal.name.length > 0);
   }
@@ -525,8 +541,9 @@ export async function POST(request: NextRequest) {
   const dbSystemPrompt = aiBrain?.systemPrompt?.trim();
   // Admin custom prompt is SUPPLEMENTARY — nutrition core + JSON format are always
   // included so the AI knows how to analyze and what schema to return.
+  const adminInstructionsLabel = lang === 'ro' ? 'INSTRUCTIUNI SUPLIMENTARE ADMINISTRATOR:' : 'ADDITIONAL ADMIN INSTRUCTIONS:';
   const systemPrompt = dbSystemPrompt && dbSystemPrompt.length > 20
-    ? `${buildNutritionCore(lang)}\n\nINSTRUCTIUNI SUPLIMENTARE ADMINISTRATOR:\n${dbSystemPrompt}\n\n${buildJsonFormatBlock(lang)}`
+    ? `${buildNutritionCore(lang)}\n\n${adminInstructionsLabel}\n${dbSystemPrompt}\n\n${buildJsonFormatBlock(lang)}`
     : buildSystemPrompt(lang);
   const userPrompt = buildUserPrompt({ lang, userMessage, intolerances, dietaryPreference, dietaryPreferences, detailLevel, subscriptionTier, entries, physicalProfile, previousGuidance, previousMealExamples, geoContext });
 

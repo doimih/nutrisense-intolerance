@@ -7,8 +7,10 @@ import StructuredData from "@/components/StructuredData";
 import { LanguageProvider } from "@/components/LanguageProvider";
 import CookieSystem from "@/components/CookieSystem";
 import PWAInstallPrompt from "@/components/PWAInstallPrompt";
+import GoogleAnalytics from "@/components/GoogleAnalytics";
 import { getServerLanguage } from "@/lib/i18n/server";
 import { getRuntimeSettings } from "@/lib/server/runtimeSettings";
+import EarlyAdopterBanner from "@/components/EarlyAdopterBanner";
 
 const siteTitle = "NutriAID Intolerances";
 const THEME_STORAGE_KEY = "ns_theme";
@@ -17,6 +19,16 @@ const siteDescription =
 
 export async function generateMetadata(): Promise<Metadata> {
   const { siteUrl } = await getRuntimeSettings();
+  const lang = getServerLanguage();
+  const isRo = lang === "ro";
+
+  const description = isRo
+    ? "Un loc sigur pentru a intelege mai bine intolerantele alimentare si reactiile tale. Jurnal de monitorizare si recomandari generale."
+    : "A safe place to better understand your food intolerances and reactions. Monitoring journal and general recommendations.";
+
+  const keywords = isRo
+    ? ["intolerante alimentare", "lactoza", "gluten", "jurnal alimentar", "nutritie", "sanatate"]
+    : ["food intolerance", "lactose", "gluten", "food journal", "nutrition", "health"];
 
   return {
     metadataBase: new URL(siteUrl),
@@ -24,26 +36,27 @@ export async function generateMetadata(): Promise<Metadata> {
       default: siteTitle,
       template: "%s | NutriAID Intolerances",
     },
-    description: siteDescription,
-    keywords: [
-      "intolerante alimentare",
-      "lactoza",
-      "gluten",
-      "jurnal alimentar",
-      "nutritie",
-      "sanatate",
-    ],
+    description,
+    keywords,
     authors: [{ name: "NutriAID Team" }],
+    alternates: {
+      canonical: siteUrl,
+      languages: {
+        ro: siteUrl,
+        en: siteUrl,
+        "x-default": siteUrl,
+      },
+    },
     openGraph: {
       type: "website",
-      locale: "ro_RO",
+      locale: isRo ? "ro_RO" : "en_US",
       url: siteUrl,
       title: siteTitle,
-      description: siteDescription,
+      description,
       siteName: siteTitle,
       images: [
         {
-          url: "/og-image.png",
+          url: "/opengraph-image",
           width: 1200,
           height: 630,
           alt: "NutriAID Intolerances",
@@ -53,10 +66,27 @@ export async function generateMetadata(): Promise<Metadata> {
     twitter: {
       card: "summary_large_image",
       title: siteTitle,
-      description: siteDescription,
-      images: ["/og-image.png"],
+      description,
+      images: ["/opengraph-image"],
     },
-    robots: "index, follow",
+    icons: {
+      icon: [
+        { url: "/favicon.ico", sizes: "any" },
+        { url: "/icon.png", type: "image/png", sizes: "192x192" },
+      ],
+      apple: [{ url: "/apple-touch-icon.png", sizes: "192x192" }],
+    },
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        "max-snippet": -1,
+        "max-image-preview": "large",
+        "max-video-preview": -1,
+      },
+    },
   };
 }
 
@@ -75,14 +105,14 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   const lang = getServerLanguage();
-  const { siteUrl } = await getRuntimeSettings();
+  const { siteUrl, analytics } = await getRuntimeSettings();
 
   const organizationSchema = {
     "@context": "https://schema.org",
     "@type": "Organization",
     name: siteTitle,
     url: siteUrl,
-    logo: `${siteUrl}/favicon.ico`,
+    logo: `${siteUrl}/icon-512.png`,
   };
 
   const websiteSchema = {
@@ -90,7 +120,7 @@ export default async function RootLayout({
     "@type": "WebSite",
     name: siteTitle,
     url: siteUrl,
-    inLanguage: "ro-RO",
+    inLanguage: lang === "ro" ? "ro-RO" : "en-US",
   };
 
   const softwareSchema = {
@@ -138,6 +168,7 @@ export default async function RootLayout({
         </Script>
         <LanguageProvider initialLang={lang}>
           <CookieSystem>
+            <GoogleAnalytics enabled={analytics.enabled} measurementId={analytics.measurementId} />
             <StructuredData data={organizationSchema} />
             <StructuredData data={websiteSchema} />
             <StructuredData data={softwareSchema} />
@@ -145,6 +176,7 @@ export default async function RootLayout({
             <main className="flex-1">{children}</main>
             <Footer />
             <PWAInstallPrompt />
+            <EarlyAdopterBanner lang={lang as "ro" | "en"} />
           </CookieSystem>
         </LanguageProvider>
       </body>

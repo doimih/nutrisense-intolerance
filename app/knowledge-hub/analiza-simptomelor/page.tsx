@@ -12,7 +12,7 @@ export function generateMetadata(): Metadata {
     description: isRo
       ? "Cum analizează AI-ul NutriAID simptomele tale digestive, migrenele și oboseala pentru a identifica alimentele declanșatoare."
       : "How NutriAID AI analyzes your digestive symptoms, migraines, and fatigue to identify trigger foods.",
-    alternates: { canonical: "/knowledge-hub/analiza-simptomelor" },
+    alternates: { canonical: "/knowledge-hub/analiza-simptomelor", languages: { ro: "/knowledge-hub/analiza-simptomelor", en: "/knowledge-hub/analiza-simptomelor", "x-default": "/knowledge-hub/analiza-simptomelor" } },
     openGraph: {
       title: isRo ? "Analiza simptomelor cu AI — NutriAID" : "AI Symptom Analysis — NutriAID",
       description: isRo

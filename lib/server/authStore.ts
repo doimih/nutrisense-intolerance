@@ -1,6 +1,6 @@
 import "server-only";
 import { randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
-import { eq } from "drizzle-orm";
+import { eq, and, ne, count } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { users, verificationTokens, passwordResetTokens } from "@/lib/db/schema";
 import type { User } from "@/types/user";
@@ -11,6 +11,10 @@ export type AuthPlanCode = "basic" | "pro" | "pro_plus";
 const VERIFY_TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
 const RESET_TOKEN_TTL_MS = 60 * 60 * 1000; // 1 hour
 const TRIAL_DURATION_MS = 7 * 24 * 60 * 60 * 1000;
+
+export const EARLY_ADOPTER_LIMIT = 50;
+// Pre-seed offset — testimonials on homepage represent existing users
+const EARLY_ADOPTER_SEED = 12;
 
 const FRONTEND_SUPERADMIN_EMAIL = (
   process.env.FRONTEND_SUPERADMIN_EMAIL || "design@doimih.net"
@@ -108,12 +112,20 @@ export async function createUser(input: {
   name: string;
   email: string;
   password: string;
-}): Promise<{ user: User; verificationToken: string; verificationExpiresAt: string }> {
+}): Promise<{ user: User; verificationToken: string; verificationExpiresAt: string; earlyAdopter: boolean }> {
   await ensureSeededSuperadmin();
   const email = normalizeEmail(input.email);
 
   const existing = await db.query.users.findFirst({ where: eq(users.email, email) });
   if (existing) throw new Error("An account with this email already exists.");
+
+  // Count existing real users (excludes superadmin role and visitor demo account)
+  const [{ value: realUserCount }] = await db
+    .select({ value: count() })
+    .from(users)
+    .where(and(eq(users.role, "user"), ne(users.id, FRONTEND_VISITOR_ID)));
+
+  const isEarlyAdopter = (realUserCount + EARLY_ADOPTER_SEED) < EARLY_ADOPTER_LIMIT;
 
   const nowIso = new Date().toISOString();
   const salt = randomBytes(16).toString("hex");
@@ -128,7 +140,8 @@ export async function createUser(input: {
     salt,
     isVerified: false,
     verifiedAt: null,
-    plan: null,
+    plan: isEarlyAdopter ? "pro" : null,
+    earlyAdopter: isEarlyAdopter ? true : null,
     createdAt: nowIso,
     updatedAt: nowIso,
   });
@@ -148,7 +161,7 @@ export async function createUser(input: {
   });
 
   const user: User = { id, name: input.name.trim(), email, role: "user", isVerified: false, createdAt: nowIso, updatedAt: nowIso };
-  return { user, verificationToken: token, verificationExpiresAt: expiresAt };
+  return { user, verificationToken: token, verificationExpiresAt: expiresAt, earlyAdopter: isEarlyAdopter };
 }
 
 export async function authenticateUser(
@@ -473,4 +486,71 @@ export async function deleteUserById(
   await db.delete(verificationTokens).where(eq(verificationTokens.email, row.email));
   await db.delete(users).where(eq(users.id, id));
   return { status: "deleted", email: row.email };
+}
+
+// ─── Early adopter ──────────────────────────────────────────────────────────
+
+export async function getRemainingEarlyAdopterSlots(): Promise<number> {
+  const [{ value: adoptedCount }] = await db
+    .select({ value: count() })
+    .from(users)
+    .where(eq(users.earlyAdopter, true));
+  return Math.max(0, EARLY_ADOPTER_LIMIT - (Number(adoptedCount) + EARLY_ADOPTER_SEED));
+}
+
+export async function getUserEarlyAdopterStatus(email: string): Promise<boolean> {
+  const normalized = normalizeEmail(email);
+  const row = await db.query.users.findFirst({ where: eq(users.email, normalized) });
+  return row?.earlyAdopter === true;
+}
+
+// ─── Newsletter consent ──────────────────────────────────────────────────────
+
+export type NewsletterConsentSource = "signup_popup" | "footer_form";
+
+export async function getNewsletterStatus(email: string): Promise<{
+  newsletterOptIn: boolean | null;
+  language: string | null;
+  name: string;
+}> {
+  const normalized = normalizeEmail(email);
+  const row = await db.query.users.findFirst({ where: eq(users.email, normalized) });
+  return {
+    newsletterOptIn: row?.newsletterOptIn ?? null,
+    language: row?.language ?? null,
+    name: row?.name ?? "",
+  };
+}
+
+export async function setNewsletterOptIn(
+  email: string,
+  optIn: boolean,
+  source: NewsletterConsentSource,
+): Promise<void> {
+  const normalized = normalizeEmail(email);
+  await db
+    .update(users)
+    .set({
+      newsletterOptIn: optIn,
+      newsletterConsentAt: optIn ? new Date().toISOString() : null,
+      newsletterConsentSource: optIn ? source : null,
+      updatedAt: new Date().toISOString(),
+    })
+    .where(eq(users.email, normalized));
+}
+
+export async function setNewsletterOptOut(email: string): Promise<void> {
+  const normalized = normalizeEmail(email);
+  await db
+    .update(users)
+    .set({ newsletterOptIn: false, updatedAt: new Date().toISOString() })
+    .where(eq(users.email, normalized));
+}
+
+export async function setUserLanguage(email: string, language: "ro" | "en"): Promise<void> {
+  const normalized = normalizeEmail(email);
+  await db
+    .update(users)
+    .set({ language, updatedAt: new Date().toISOString() })
+    .where(eq(users.email, normalized));
 }
