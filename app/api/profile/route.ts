@@ -3,6 +3,7 @@ import { AUTH_COOKIE_NAME } from "@/lib/auth/session";
 import { readSessionToken } from "@/lib/auth/sessionToken";
 import { getProfileForUser, updateProfileForUser } from "@/lib/server/profileStore";
 import type { ActivityLevel, DietaryPreference, Intolerance, UpdateProfileRequest } from "@/types/profile";
+import { brevoEvents } from "@/lib/server/brevoEventService";
 
 export const runtime = "nodejs";
 
@@ -129,6 +130,18 @@ export async function PATCH(request: NextRequest) {
     return badRequest("Invalid onboardingCompleted field.");
   }
 
+  const email = session.user.email;
   const profile = await updateProfileForUser(session.user, body);
+
+  // Fire weight_logged when weight is explicitly updated
+  if (typeof body.weightKg === "number") {
+    void brevoEvents.weightLogged(email, { weightKg: body.weightKg, unit: 'kg' }).catch(() => {});
+  }
+
+  // Fire onboarding_step_completed when onboarding is marked complete
+  if (body.onboardingCompleted === true) {
+    void brevoEvents.onboardingStepCompleted(email, { step: 'profile_complete' }).catch(() => {});
+  }
+
   return NextResponse.json({ profile });
 }

@@ -29,41 +29,41 @@ type SettingsPayload = {
   };
 };
 
-const DEFAULT_SYSTEM_PROMPT = `1. ROLUL TAU
-Esti AI Brain-ul platformei NutriAID, un sistem inteligent care proceseaza date despre:
-mese, ingrediente, simptome, ore, intensitate, istoricul utilizatorului
-si genereaza: analize, corelatii, recomandari, planuri alimentare, liste de ingrediente problematice, mesaje pentru UI.
-Nu esti medic. Nu pui diagnostice. Nu recomanzi tratamente.
+const DEFAULT_SYSTEM_PROMPT = `1. YOUR ROLE
+You are the AI Brain of the NutriAID platform, an intelligent system that processes data about:
+meals, ingredients, symptoms, times, intensity, the user's history
+and generates: analyses, correlations, recommendations, meal plans, lists of problematic ingredients, UI messages.
+You are not a doctor. You do not make diagnoses. You do not recommend treatments.
 
-2. REGULI FUNDAMENTALE
+2. CORE RULES
 
-ZERO HALUCINATII
-Nu inventa ingrediente, simptome sau date care nu exista in input.
+ZERO HALLUCINATIONS
+Do not invent ingredients, symptoms, or data that does not exist in the input.
 
-NU PUI DIAGNOSTICE
-Nu folosi termeni medicali precum "intoleranta", "alergie", "diagnostic".
-Foloseste doar: "posibila sensibilitate", "corelatie probabila", "pattern observat".
+NO DIAGNOSES
+Do not use medical terms such as "intolerance", "allergy", "diagnosis".
+Use only: "possible sensitivity", "probable correlation", "observed pattern".
 
-NU RECOMANZI MEDICAMENTE SAU SUPLIMENTE
+NO MEDICATION OR SUPPLEMENT RECOMMENDATIONS
 
-OUTPUT STRICT JSON VALID
-Fara text in afara JSON-ului. Fara explicatii. Fara markdown. Fara comentarii.
+STRICT VALID JSON OUTPUT
+No text outside the JSON. No explanations. No markdown. No comments.
 
-RESPECTA SCHEMA WORKER-ULUI
-Daca schema cere un camp, il incluzi. Daca nu ai date pui array gol.
+RESPECT THE WORKER SCHEMA
+If the schema requires a field, include it. If you have no data, use an empty array.
 
-3. STRUCTURA GENERALA A RASPUNSULUI
+3. GENERAL RESPONSE STRUCTURE
 {
-  "worker": "numele-workerului",
+  "worker": "worker-name",
   "status": "success | warning | error",
   "data": { ... },
   "notes": []
 }
 
-4. WORKERS DISPONIBILI
+4. AVAILABLE WORKERS
 
 Worker: intolerance-checker
-Analizeaza mese + simptome si detecteaza corelatii.
+Analyzes meals + symptoms and detects correlations.
 Output:
 {
   "worker": "intolerance-checker",
@@ -71,10 +71,10 @@ Output:
   "data": { "flaggedIngredients": [], "correlations": [], "confidence": 0 },
   "notes": []
 }
-Reguli: flaggedIngredients OBLIGATORIU (array), confidence intre 0 si 1.
+Rules: flaggedIngredients REQUIRED (array), confidence between 0 and 1.
 
 Worker: meal-plan-generator
-Genereaza un plan alimentar sigur.
+Generates a safe meal plan.
 Output:
 {
   "worker": "meal-plan-generator",
@@ -82,10 +82,10 @@ Output:
   "data": { "meals": [], "totalKcal": 0, "disclaimer": "", "flaggedIngredients": [] },
   "notes": []
 }
-Reguli: flaggedIngredients OBLIGATORIU, disclaimer OBLIGATORIU, nu inventa ingrediente.
+Rules: flaggedIngredients REQUIRED, disclaimer REQUIRED, do not invent ingredients.
 
 Worker: symptom-analyzer
-Analizeaza evolutia simptomelor.
+Analyzes symptom evolution over time.
 Output:
 {
   "worker": "symptom-analyzer",
@@ -95,7 +95,7 @@ Output:
 }
 
 Worker: summary-generator
-Genereaza un rezumat pentru UI.
+Generates a summary for the UI.
 Output:
 {
   "worker": "summary-generator",
@@ -104,15 +104,15 @@ Output:
   "notes": []
 }
 
-5. REGULI DE SIGURANTA
-Nu folosi termeni medicali. Nu recomanda suplimente sau medicamente.
-Nu recomanda diete extreme. Nu folosi limbaj alarmist.
+5. SAFETY RULES
+Do not use medical terms. Do not recommend supplements or medication.
+Do not recommend extreme diets. Do not use alarmist language.
 
-6. REGULI DE CALITATE
-Fii clar, concis, logic, consistent. Nu repeta informatii. Nu inventa date.
+6. QUALITY RULES
+Be clear, concise, logical, consistent. Do not repeat information. Do not invent data.
 
-7. DACA SCHEMA NU POATE FI RESPECTATA
-Seteaza "status": "error" si incluzi in notes motivul.`;
+7. IF THE SCHEMA CANNOT BE SATISFIED
+Set "status": "error" and include the reason in notes.`;
 
 const DEFAULT_CONFIG: AIBrainConfig = {
   defaultModel: 'gpt-4o',
@@ -136,9 +136,9 @@ const DEFAULT_WORKERS: WorkerDefinition[] = [
   {
     id: 'intolerance-checker',
     name: 'Intolerance Checker Worker',
-    description: 'Analizeaza mese + simptome si detecteaza corelatii si ingrediente problematice.',
+    description: 'Analyzes meals + symptoms and detects correlations and problematic ingredients.',
     prompt:
-      'Analizeaza mesele si simptomele din input. Identifica corelatii intre ingrediente si simptome. Returneaza flaggedIngredients (array), correlations (array de obiecte) si confidence (0-1). Nu folosi termeni de diagnostic. Foloseste "posibila sensibilitate" sau "corelatie probabila".',
+      'Analyze the meals and symptoms in the input. Identify correlations between ingredients and symptoms. Return flaggedIngredients (array), correlations (array of objects) and confidence (0-1). Do not use diagnostic terms. Use "possible sensitivity" or "probable correlation".',
     inputSchema: `{
   "meals": [
     {
@@ -166,7 +166,7 @@ const DEFAULT_WORKERS: WorkerDefinition[] = [
         "ingredient": "string",
         "symptom": "string",
         "frequency": "number",
-        "label": "posibila sensibilitate | corelatie probabila | pattern observat"
+        "label": "possible sensitivity | probable correlation | observed pattern"
       }
     ],
     "confidence": 0.0
@@ -178,9 +178,9 @@ const DEFAULT_WORKERS: WorkerDefinition[] = [
   {
     id: 'meal-plan-generator',
     name: 'Meal Plan Generator Worker',
-    description: 'Genereaza un plan alimentar sigur, evitand ingredientele problematice.',
+    description: 'Generates a safe meal plan, avoiding problematic ingredients.',
     prompt:
-      'Genereaza un plan alimentar pentru perioada solicitata. Evita ingredientele din flaggedIngredients. Include totalKcal estimat, disclaimer obligatoriu si flaggedIngredients lista. Nu inventa ingrediente inexistente. Nu recomanda suplimente sau medicamente.',
+      'Generate a meal plan for the requested period. Avoid the ingredients in flaggedIngredients. Include an estimated totalKcal, a required disclaimer, and a flaggedIngredients list. Do not invent nonexistent ingredients. Do not recommend supplements or medication.',
     inputSchema: `{
   "timeframe": "daily | weekly",
   "flaggedIngredients": ["string"],
@@ -200,7 +200,7 @@ const DEFAULT_WORKERS: WorkerDefinition[] = [
       }
     ],
     "totalKcal": 0,
-    "disclaimer": "string (obligatoriu)",
+    "disclaimer": "string (required)",
     "flaggedIngredients": ["string"]
   },
   "notes": []
@@ -210,9 +210,9 @@ const DEFAULT_WORKERS: WorkerDefinition[] = [
   {
     id: 'symptom-analyzer',
     name: 'Symptom Analyzer Worker',
-    description: 'Analizeaza evolutia simptomelor in timp si identifica trenduri.',
+    description: 'Analyzes symptom evolution over time and identifies trends.',
     prompt:
-      'Analizeaza istoricul simptomelor din input. Identifica trendul (improving/stable/worsening), calculeaza severityScore (0-10) si sugereaza focus areas. Nu pune diagnostice. Nu folosi termeni medicali. Foloseste "pattern observat" sau "tendinta".',
+      'Analyze the symptom history in the input. Identify the trend (improving/stable/worsening), calculate severityScore (0-10), and suggest focus areas. Do not make diagnoses. Do not use medical terms. Use "observed pattern" or "tendency".',
     inputSchema: `{
   "symptoms": [
     {
@@ -237,9 +237,9 @@ const DEFAULT_WORKERS: WorkerDefinition[] = [
   {
     id: 'summary-generator',
     name: 'Summary Generator Worker',
-    description: 'Genereaza un rezumat clar si concis pentru afisare in UI.',
+    description: 'Generates a clear, concise summary for display in the UI.',
     prompt:
-      'Pe baza datelor din input, genereaza un summary scurt (1-3 propozitii) si keyFindings (lista de observatii importante). Foloseste limbaj simplu, fara termeni medicali. Nu pune diagnostice. Fii constructiv si pozitiv.',
+      'Based on the input data, generate a short summary (1-3 sentences) and keyFindings (a list of important observations). Use simple language, no medical terms. Do not make diagnoses. Be constructive and positive.',
     inputSchema: `{
   "analysisData": {},
   "lang": "ro | en"
@@ -258,9 +258,9 @@ const DEFAULT_WORKERS: WorkerDefinition[] = [
   {
     id: 'profile-analyzer',
     name: 'Profile Analyzer Worker',
-    description: 'Extrage si normalizeaza datele profilului utilizatorului.',
+    description: 'Extracts and normalizes the user profile data.',
     prompt:
-      'Extrage campurile profilului (varsta, sex, inaltime, greutate, obiective, tip dieta, nivel activitate), detecteaza campuri lipsa si normalizeaza unitatile.',
+      'Extract the profile fields (age, sex, height, weight, goals, diet type, activity level), detect missing fields, and normalize units.',
     inputSchema: `{
   "profile": {
     "age": "number?",
@@ -276,24 +276,11 @@ const DEFAULT_WORKERS: WorkerDefinition[] = [
     enabled: true,
   },
   {
-    id: 'nutrition-calculator',
-    name: 'Nutrition Calculator Worker',
-    description: 'Calculeaza calorii, macronutrienti si valideaza echilibrul nutritional.',
-    prompt:
-      'Calculeaza calorii, proteine, carbohidrati, grasimi si evalueaza echilibrul meselor fata de obiectivele utilizatorului.',
-    inputSchema: `{
-  "userTargets": { "kcal": "number", "protein": "number", "carbs": "number", "fat": "number" },
-  "meals": [{ "name": "string", "foods": [{ "name": "string", "amount": "string" }] }]
-}`,
-    outputSchema: workerOutputSchema,
-    enabled: true,
-  },
-  {
     id: 'data-validator',
     name: 'Data Validator Worker',
-    description: 'Valideaza ca toate payload-urile worker-ilor respecta schemele si respinge raspunsurile malformate.',
+    description: 'Validates that all worker payloads comply with the schemas and rejects malformed responses.',
     prompt:
-      'Valideaza fiecare output de worker fata de constrangerile schemei. Respinge payload-urile malformate si returneaza note de validare.',
+      'Validate each worker output against the schema constraints. Reject malformed payloads and return validation notes.',
     inputSchema: `{
   "workerOutputs": [
     { "worker": "string", "status": "string", "data": {}, "notes": [] }
@@ -474,15 +461,15 @@ export default function AIBrainSettings() {
               />
             </div>
             <div className="col-span-2">
-              <label className="label-text">Orchestrator URL (extern, opțional)</label>
+              <label className="label-text">Orchestrator URL (external, optional)</label>
               <input
                 className="input-field font-mono text-xs"
                 value={config.orchestratorUrl}
                 onChange={(e) => setConfig({ ...config, orchestratorUrl: e.target.value })}
-                placeholder="https://... (lasă gol pentru LLM direct)"
+                placeholder="https://... (leave empty to call the LLM directly)"
               />
               <p className="helper-text">
-                Lasă gol pentru a folosi LLM direct. Completează doar dacă ai un orchestrator extern.
+                Leave empty to use the LLM directly. Only fill in if you have an external orchestrator.
               </p>
             </div>
             <div className="col-span-2">
@@ -493,7 +480,7 @@ export default function AIBrainSettings() {
                   onClick={handleResetPrompt}
                   className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors"
                 >
-                  Reset la default
+                  Reset to default
                 </button>
               </div>
               <textarea
@@ -504,7 +491,7 @@ export default function AIBrainSettings() {
                 value={config.systemPrompt}
                 onChange={(e) => setConfig({ ...config, systemPrompt: e.target.value })}
               />
-              <p className="helper-text">Instructiuni trimise modelului AI la fiecare cerere. Se salveaza in DB si se foloseste de orchestrator.</p>
+              <p className="helper-text">Instructions sent to the AI model on every request. Saved in the DB and used by the orchestrator.</p>
             </div>
           </div>
           <div className="flex items-center gap-6">

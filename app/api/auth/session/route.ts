@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { AUTH_COOKIE_NAME } from "@/lib/auth/session";
 import { readSessionToken } from "@/lib/auth/sessionToken";
-import { getUserPlan, getUserTrialEndsAt } from "@/lib/server/authStore";
+import { getUserPlan, getUserTrialEndsAt, getUserEarlyAdopterStatus } from "@/lib/server/authStore";
 
 export const runtime = "nodejs";
 
@@ -24,7 +24,10 @@ export async function GET(request: NextRequest) {
     return response;
   }
 
-  const plan = await getUserPlan(session.user.email);
-  const trialEndsAt = await getUserTrialEndsAt(session.user.email);
-  return NextResponse.json({ user: { ...session.user, plan, trialEndsAt, sessionExpiresAt: session.exp } });
+  const [plan, trialEndsAt, earlyAdopter] = await Promise.all([
+    getUserPlan(session.user.email),
+    getUserTrialEndsAt(session.user.email),
+    getUserEarlyAdopterStatus(session.user.email),
+  ]);
+  return NextResponse.json({ user: { ...session.user, plan, trialEndsAt, earlyAdopter, sessionExpiresAt: session.exp } });
 }

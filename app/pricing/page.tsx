@@ -319,6 +319,7 @@ export function generateMetadata(): Metadata {
     description: t.metaDescription,
     alternates: {
       canonical: "/pricing",
+      languages: { ro: "/pricing", en: "/pricing", "x-default": "/pricing" },
     },
     openGraph: {
       title: isRo ? "Planuri și prețuri — NutriAID Intolerances" : "Plans & Pricing — NutriAID Intolerances",
@@ -351,18 +352,46 @@ export default async function PricingPage() {
 
   const dynamicPlans = t.section2.plans.map((plan) => {
     const adminPlan = pricing[plan.code as 'basic' | 'pro' | 'pro_plus'];
+    const adminContent = adminPlan[lang];
     return {
       ...plan,
+      name: adminContent?.name || plan.name,
       price: adminPlan.amount
         ? formatPrice(adminPlan.amount, adminPlan.currency || 'eur', adminPlan.interval || 'month', lang)
         : plan.price,
-      features: lang === 'ro' && adminPlan.features?.length ? adminPlan.features : plan.features,
-      subtitle: lang === 'ro' && adminPlan.description ? adminPlan.description : plan.subtitle,
+      features: adminContent?.features?.length ? adminContent.features : plan.features,
+      subtitle: adminContent?.description || plan.subtitle,
     };
   });
 
+  const pricingSchema = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: isRo ? "Planuri NutriAID Intolerances" : "NutriAID Intolerances Plans",
+    itemListElement: dynamicPlans.map((plan, i) => {
+      const adminPlan = pricing[plan.code as "basic" | "pro" | "pro_plus"];
+      return {
+        "@type": "ListItem",
+        position: i + 1,
+        item: {
+          "@type": "Product",
+          name: plan.name,
+          description: plan.subtitle,
+          offers: {
+            "@type": "Offer",
+            price: adminPlan.amount ?? "0",
+            priceCurrency: (adminPlan.currency ?? "EUR").toUpperCase(),
+            availability: "https://schema.org/InStock",
+            url: "/pricing",
+          },
+        },
+      };
+    }),
+  };
+
   return (
     <div className="pb-20 bg-slate-50 dark:bg-slate-950">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(pricingSchema) }} />
       <BillingCancelledNotice lang={lang} />
       <section className="relative overflow-hidden border-y border-emerald-100 dark:border-emerald-900/40 bg-gradient-to-b from-emerald-100 via-white to-slate-50 dark:from-emerald-950/30 dark:via-slate-950 dark:to-slate-950">
         <div className="absolute inset-0 pointer-events-none">

@@ -17,10 +17,10 @@ interface User {
 type ModalSection = 'details' | 'password' | 'plan' | 'subscription';
 
 const SECTION_LABELS: Record<ModalSection, string> = {
-  details: 'Detalii',
-  password: 'Parola',
+  details: 'Details',
+  password: 'Password',
   plan: 'Plan',
-  subscription: 'Abonament',
+  subscription: 'Subscription',
 };
 
 export default function UsersSettings() {
@@ -103,12 +103,12 @@ export default function UsersSettings() {
         }),
       });
       const payload = (await res.json()) as { error?: string };
-      if (!res.ok) throw new Error(payload.error || 'Operatiunea a esuat.');
-      setModalSuccess('Salvat cu succes.');
+      if (!res.ok) throw new Error(payload.error || 'Operation failed.');
+      setModalSuccess('Saved successfully.');
       // Refresh user list and update editUser with new plan if applicable
       await loadUsers();
     } catch (err) {
-      setModalError(err instanceof Error ? err.message : 'Operatiunea a esuat.');
+      setModalError(err instanceof Error ? err.message : 'Operation failed.');
     } finally {
       setModalSaving(false);
     }
@@ -116,7 +116,7 @@ export default function UsersSettings() {
 
   const handleSaveDetails = () => {
     if (!editName.trim() || !editEmail.trim()) {
-      setModalError('Numele si emailul sunt obligatorii.');
+      setModalError('Name and email are required.');
       return;
     }
     void mutate('edit', { name: editName.trim(), email: editEmail.trim().toLowerCase() });
@@ -124,7 +124,7 @@ export default function UsersSettings() {
 
   const handleSavePassword = () => {
     if (editPassword.length < 10) {
-      setModalError('Parola trebuie sa aiba minim 10 caractere.');
+      setModalError('Password must be at least 10 characters.');
       return;
     }
     void mutate('set-password', { newPassword: editPassword });
@@ -139,7 +139,7 @@ export default function UsersSettings() {
   };
 
   const handleDelete = async (user: User) => {
-    if (!window.confirm(`Sterge userul ${user.email}? Actiunea este ireversibila.`)) return;
+    if (!window.confirm(`Delete user ${user.email}? This action cannot be undone.`)) return;
     setError(null);
     try {
       const res = await fetch('/api/superadmin/users', {
@@ -148,10 +148,10 @@ export default function UsersSettings() {
         body: JSON.stringify({ userId: user.id, source: user.source }),
       });
       const payload = (await res.json()) as { error?: string };
-      if (!res.ok) throw new Error(payload.error || 'Nu s-a putut sterge userul.');
+      if (!res.ok) throw new Error(payload.error || 'Could not delete the user.');
       await loadUsers();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Nu s-a putut sterge userul.');
+      setError(err instanceof Error ? err.message : 'Could not delete the user.');
     }
   };
 
@@ -160,17 +160,17 @@ export default function UsersSettings() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="section-header">Gestionare Useri</h2>
+          <h2 className="section-header">User Management</h2>
           <p className="text-sm text-muted-foreground mt-1">
             {users.length} total &middot; {users.filter((u) => u.source === 'platform').length} platform &middot; {users.filter((u) => u.source !== 'platform').length} admin
           </p>
         </div>
         <div className="flex items-center gap-2">
           <span className="badge badge-green">
-            {users.filter((u) => u.status === 'active' || u.isVerified).length} activi
+            {users.filter((u) => u.status === 'active' || u.isVerified).length} active
           </span>
           <span className="badge badge-red">
-            {users.filter((u) => u.status === 'suspended').length} suspendati
+            {users.filter((u) => u.status === 'suspended').length} suspended
           </span>
         </div>
       </div>
@@ -178,7 +178,7 @@ export default function UsersSettings() {
       {/* Search + filter */}
       <input
         className="input-field"
-        placeholder="Cauta dupa nume sau email…"
+        placeholder="Search by name or email…"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         onKeyDown={(e) => e.key === 'Enter' && void loadUsers()}
@@ -186,19 +186,19 @@ export default function UsersSettings() {
       <div className="flex items-center gap-2">
         <select
           className="input-field max-w-[220px]"
-          aria-label="Filtreaza dupa plan"
-          title="Filtreaza dupa plan"
+          aria-label="Filter by plan"
+          title="Filter by plan"
           value={planFilter}
           onChange={(e) => setPlanFilter(e.target.value as typeof planFilter)}
         >
-          <option value="all">Toate planurile</option>
+          <option value="all">All plans</option>
           <option value="free">Free</option>
           <option value="basic">Basic</option>
           <option value="pro">Pro</option>
           <option value="pro_plus">Pro+</option>
         </select>
         <button onClick={() => void loadUsers()} className="btn-primary">
-          {loading ? 'Se incarca…' : 'Reincarca'}
+          {loading ? 'Loading…' : 'Reload'}
         </button>
       </div>
 
@@ -232,10 +232,10 @@ export default function UsersSettings() {
                     )}
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    {u.email} &middot; Joined {new Date(u.createdAt).toLocaleDateString('ro-RO')}
+                    {u.email} &middot; Joined {new Date(u.createdAt).toLocaleDateString('en-GB')}
                     {isPlatform && (
                       <span className={`ml-2 ${u.isVerified ? 'text-green-600 dark:text-green-400' : 'text-amber-600 dark:text-amber-400'}`}>
-                        &middot; {u.isVerified ? '✓ Verificat' : '⚠ Neverificat'}
+                        &middot; {u.isVerified ? '✓ Verified' : '⚠ Unverified'}
                       </span>
                     )}
                   </p>
@@ -247,8 +247,8 @@ export default function UsersSettings() {
                 <button
                   onClick={() => openEdit(u)}
                   className="p-1.5 rounded-md text-muted-foreground hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/40 transition-colors"
-                  title="Editeaza userul"
-                  aria-label="Editeaza userul"
+                  title="Edit user"
+                  aria-label="Edit user"
                 >
                   <Pencil size={15} />
                 </button>
@@ -256,8 +256,8 @@ export default function UsersSettings() {
                   disabled={u.role === 'superadmin'}
                   onClick={() => void handleDelete(u)}
                   className="p-1.5 rounded-md text-muted-foreground hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                  title={u.role === 'superadmin' ? 'Superadminul nu poate fi sters' : 'Sterge userul'}
-                  aria-label="Sterge userul"
+                  title={u.role === 'superadmin' ? 'The superadmin cannot be deleted' : 'Delete user'}
+                  aria-label="Delete user"
                 >
                   <Trash2 size={15} />
                 </button>
@@ -266,7 +266,7 @@ export default function UsersSettings() {
           );
         })}
         {filtered.length === 0 && !loading && (
-          <p className="text-center text-sm text-muted-foreground py-8">Nu exista useri</p>
+          <p className="text-center text-sm text-muted-foreground py-8">No users found</p>
         )}
       </div>
 
@@ -286,7 +286,7 @@ export default function UsersSettings() {
               <button
                 onClick={closeModal}
                 className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors"
-                aria-label="Inchide"
+                aria-label="Close"
               >
                 <X size={16} />
               </button>
@@ -322,26 +322,26 @@ export default function UsersSettings() {
                 </p>
               )}
 
-              {/* ── Detalii ── */}
+              {/* ── Details ── */}
               {section === 'details' && (
                 <div className="space-y-3">
                   <div>
-                    <label className="label-text">Nume complet</label>
+                    <label className="label-text">Full name</label>
                     <input
                       className="input-field"
                       value={editName}
                       onChange={(e) => setEditName(e.target.value)}
-                      placeholder="Nume complet"
+                      placeholder="Full name"
                     />
                   </div>
                   <div>
-                    <label className="label-text">Adresa de email</label>
+                    <label className="label-text">Email address</label>
                     <input
                       className="input-field"
                       type="email"
                       value={editEmail}
                       onChange={(e) => setEditEmail(e.target.value)}
-                      placeholder="email@exemplu.ro"
+                      placeholder="email@example.com"
                     />
                   </div>
                   <button
@@ -349,32 +349,32 @@ export default function UsersSettings() {
                     disabled={modalSaving}
                     className="btn-primary w-full"
                   >
-                    {modalSaving ? 'Se salveaza…' : 'Salveaza detaliile'}
+                    {modalSaving ? 'Saving…' : 'Save details'}
                   </button>
                 </div>
               )}
 
-              {/* ── Parola ── */}
+              {/* ── Password ── */}
               {section === 'password' && (
                 <div className="space-y-3">
                   <div>
-                    <label className="label-text">Parola noua</label>
+                    <label className="label-text">New password</label>
                     <input
                       className="input-field"
                       type="password"
                       value={editPassword}
                       onChange={(e) => setEditPassword(e.target.value)}
-                      placeholder="Minim 10 caractere"
+                      placeholder="Minimum 10 characters"
                       autoComplete="new-password"
                     />
-                    <p className="helper-text">Minim 10 caractere. Toate sesiunile active vor fi invalidate.</p>
+                    <p className="helper-text">Minimum 10 characters. All active sessions will be invalidated.</p>
                   </div>
                   <button
                     onClick={handleSavePassword}
                     disabled={modalSaving}
                     className="btn-primary w-full"
                   >
-                    {modalSaving ? 'Se salveaza…' : 'Schimba parola'}
+                    {modalSaving ? 'Saving…' : 'Change password'}
                   </button>
                 </div>
               )}
@@ -383,11 +383,11 @@ export default function UsersSettings() {
               {section === 'plan' && (
                 <div className="space-y-3">
                   <div>
-                    <label className="label-text">Plan ales</label>
+                    <label className="label-text">Selected plan</label>
                     <select
                       className="input-field"
-                      aria-label="Plan ales"
-                      title="Plan ales"
+                      aria-label="Selected plan"
+                      title="Selected plan"
                       value={editPlan}
                       onChange={(e) => setEditPlan(e.target.value as typeof editPlan)}
                     >
@@ -397,7 +397,7 @@ export default function UsersSettings() {
                       <option value="pro_plus">Pro+</option>
                     </select>
                     <p className="helper-text">
-                      Plan curent: <strong>{editUser.plan ?? 'free'}</strong>
+                      Current plan: <strong>{editUser.plan ?? 'free'}</strong>
                     </p>
                   </div>
                   <button
@@ -405,18 +405,18 @@ export default function UsersSettings() {
                     disabled={modalSaving || editPlan === (editUser.plan ?? 'free')}
                     className="btn-primary w-full"
                   >
-                    {modalSaving ? 'Se salveaza…' : 'Schimba planul'}
+                    {modalSaving ? 'Saving…' : 'Change plan'}
                   </button>
                 </div>
               )}
 
-              {/* ── Abonament ── */}
+              {/* ── Subscription ── */}
               {section === 'subscription' && (
                 <div className="space-y-4">
                   <div className="rounded-xl border border-amber-200 bg-amber-50 dark:border-amber-800/40 dark:bg-amber-900/20 p-4">
-                    <p className="text-sm font-semibold text-amber-800 dark:text-amber-300 mb-1">Reset abonament</p>
+                    <p className="text-sm font-semibold text-amber-800 dark:text-amber-300 mb-1">Reset subscription</p>
                     <p className="text-xs text-amber-700 dark:text-amber-400 leading-relaxed">
-                      Aceasta actiune va seta planul la <strong>free</strong> si va marca abonamentul ca expirat. Nu poate fi anulata.
+                      This action will set the plan to <strong>free</strong> and mark the subscription as expired. It cannot be undone.
                     </p>
                   </div>
                   <button
@@ -424,7 +424,7 @@ export default function UsersSettings() {
                     disabled={modalSaving}
                     className="w-full rounded-lg border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 py-2.5 text-sm font-medium hover:bg-amber-100 dark:hover:bg-amber-900/50 transition-colors disabled:opacity-50"
                   >
-                    {modalSaving ? 'Se proceseaza…' : 'Reseteaza abonamentul'}
+                    {modalSaving ? 'Processing…' : 'Reset subscription'}
                   </button>
                 </div>
               )}

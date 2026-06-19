@@ -19,12 +19,12 @@ const VISITOR_PASSWORD = 'NutriDemo@2025!';
 
 function StatusBadge({ status, blockRemainingMinutes }: { status: VisitorSession['status']; blockRemainingMinutes: number }) {
   if (status === 'active') {
-    return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-200">Activa</span>;
+    return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-200">Active</span>;
   }
   if (status === 'blocked') {
-    return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-50 text-orange-700 border border-orange-200">Blocat ({blockRemainingMinutes} min)</span>;
+    return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-50 text-orange-700 border border-orange-200">Blocked ({blockRemainingMinutes} min)</span>;
   }
-  return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-500 border border-slate-200">Expirat/Blocat</span>;
+  return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-500 border border-slate-200">Expired/Blocked</span>;
 }
 
 export default function VisitorSettings() {
@@ -45,7 +45,7 @@ export default function VisitorSettings() {
         setLoading(false);
       })
       .catch(() => {
-        setError('Nu s-au putut incarca sesiunile.');
+        setError('Could not load sessions.');
         setLoading(false);
       });
   }, []);
@@ -62,11 +62,11 @@ export default function VisitorSettings() {
     }).catch(() => null);
     setResetting(null);
     if (!res) {
-      setResetResult({ ok: false, message: 'Cererea a esuat.' });
+      setResetResult({ ok: false, message: 'Request failed.' });
       return;
     }
     const data = (await res.json().catch(() => ({}))) as { ok?: boolean; message?: string };
-    setResetResult({ ok: res.ok && data.ok !== false, message: data.message || 'Eroare.' });
+    setResetResult({ ok: res.ok && data.ok !== false, message: data.message || 'Error.' });
     if (res.ok && data.ok !== false) setTimeout(loadSessions, 200);
     setTimeout(() => setResetResult(null), 5000);
   };
@@ -91,8 +91,8 @@ export default function VisitorSettings() {
             </svg>
           </div>
           <div>
-            <h2 className="section-header">Credentiale Vizitator</h2>
-            <p className="text-sm text-muted-foreground mt-0.5">Contul de demo pentru acces temporar pe platforma</p>
+            <h2 className="section-header">Visitor Credentials</h2>
+            <p className="text-sm text-muted-foreground mt-0.5">The demo account for temporary access to the platform</p>
           </div>
         </div>
 
@@ -105,40 +105,40 @@ export default function VisitorSettings() {
                 onClick={() => void handleCopy(VISITOR_EMAIL, 'email')}
                 className="text-xs px-2 py-0.5 rounded bg-primary text-primary-foreground hover:opacity-80 transition-opacity flex-shrink-0"
               >
-                {copied === 'email' ? '✓' : 'Copiaza'}
+                {copied === 'email' ? '✓' : 'Copy'}
               </button>
             </div>
           </div>
           <div className="rounded-lg border border-border bg-muted/30 p-3">
-            <p className="text-xs font-medium text-muted-foreground mb-1">Parola</p>
+            <p className="text-xs font-medium text-muted-foreground mb-1">Password</p>
             <div className="flex items-center gap-2">
               <code className="text-sm text-foreground flex-1">{VISITOR_PASSWORD}</code>
               <button
                 onClick={() => void handleCopy(VISITOR_PASSWORD, 'pass')}
                 className="text-xs px-2 py-0.5 rounded bg-primary text-primary-foreground hover:opacity-80 transition-opacity flex-shrink-0"
               >
-                {copied === 'pass' ? '✓' : 'Copiaza'}
+                {copied === 'pass' ? '✓' : 'Copy'}
               </button>
             </div>
           </div>
         </div>
 
         <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700 space-y-2">
-          <p className="font-medium">Restrictii acces vizitator</p>
+          <p className="font-medium">Visitor access restrictions</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1">
             <div className="space-y-1">
               <p className="font-medium text-slate-600 text-xs uppercase tracking-wide">Backend (Admin Console)</p>
-              <p>• Acces vizualizare — <strong>10 minute</strong></p>
-              <p>• O singura intrare per IP</p>
-              <p>• Blocat <strong>24 ore</strong> dupa expirare</p>
-              <p>• Deblocare manuala de catre superadmin</p>
+              <p>• View access — <strong>10 minutes</strong></p>
+              <p>• One login per IP</p>
+              <p>• Blocked for <strong>24 hours</strong> after expiry</p>
+              <p>• Manual unlock by the superadmin</p>
             </div>
             <div className="space-y-1">
-              <p className="font-medium text-slate-600 text-xs uppercase tracking-wide">Frontend (Platforma)</p>
+              <p className="font-medium text-slate-600 text-xs uppercase tracking-wide">Frontend (Platform)</p>
               <p>• Plan <strong>Pro Plus (Enterprise)</strong></p>
-              <p>• Sesiune <strong>15 minute</strong></p>
-              <p>• O singura intrare per IP</p>
-              <p>• Blocat <strong>24 ore</strong> dupa expirare</p>
+              <p>• Session <strong>15 minutes</strong></p>
+              <p>• One login per IP</p>
+              <p>• Blocked for <strong>24 hours</strong> after expiry</p>
             </div>
           </div>
         </div>
@@ -152,7 +152,7 @@ export default function VisitorSettings() {
 
       {/* Backend sessions */}
       <SessionTable
-        title="Sesiuni Backend (Admin Console)"
+        title="Backend Sessions (Admin Console)"
         system="backend"
         sessions={backendSessions}
         loading={loading}
@@ -164,7 +164,7 @@ export default function VisitorSettings() {
 
       {/* Frontend sessions */}
       <SessionTable
-        title="Sesiuni Frontend (Platforma)"
+        title="Frontend Sessions (Platform)"
         system="frontend"
         sessions={frontendSessions}
         loading={loading}
@@ -203,17 +203,17 @@ function SessionTable({
           onClick={onReload}
           className="text-xs text-muted-foreground hover:text-foreground transition-colors"
         >
-          ↻ Reincarca
+          ↻ Reload
         </button>
       </div>
 
       {loading ? (
-        <p className="text-sm text-muted-foreground text-center py-6">Se incarca…</p>
+        <p className="text-sm text-muted-foreground text-center py-6">Loading…</p>
       ) : error ? (
         <p className="text-sm text-negative text-center py-6">{error}</p>
       ) : sessions.length === 0 ? (
         <p className="text-sm text-muted-foreground text-center py-6">
-          Nu exista sesiuni inregistrate inca.
+          No sessions recorded yet.
         </p>
       ) : (
         <div className="overflow-x-auto">
@@ -221,11 +221,11 @@ function SessionTable({
             <thead>
               <tr className="border-b border-border text-left">
                 <th className="pb-2 pr-4 font-medium text-muted-foreground">IP</th>
-                <th className="pb-2 pr-4 font-medium text-muted-foreground">Inceput</th>
-                <th className="pb-2 pr-4 font-medium text-muted-foreground">Expira sesiune</th>
-                <th className="pb-2 pr-4 font-medium text-muted-foreground">Blocat pana la</th>
+                <th className="pb-2 pr-4 font-medium text-muted-foreground">Started</th>
+                <th className="pb-2 pr-4 font-medium text-muted-foreground">Session expires</th>
+                <th className="pb-2 pr-4 font-medium text-muted-foreground">Blocked until</th>
                 <th className="pb-2 pr-4 font-medium text-muted-foreground">Status</th>
-                <th className="pb-2 font-medium text-muted-foreground">Actiuni</th>
+                <th className="pb-2 font-medium text-muted-foreground">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -250,7 +250,7 @@ function SessionTable({
                       disabled={resetting === s.id}
                       className="text-xs px-2 py-1 rounded border border-border text-foreground hover:bg-muted transition-colors disabled:opacity-50"
                     >
-                      {resetting === s.id ? 'Se reseteaza…' : 'Reseteaza acces'}
+                      {resetting === s.id ? 'Resetting…' : 'Reset access'}
                     </button>
                   </td>
                 </tr>
@@ -264,7 +264,7 @@ function SessionTable({
 }
 
 function fmt(iso: string): string {
-  return new Date(iso).toLocaleString('ro-RO', {
+  return new Date(iso).toLocaleString('en-GB', {
     day: '2-digit', month: '2-digit', year: 'numeric',
     hour: '2-digit', minute: '2-digit',
   });

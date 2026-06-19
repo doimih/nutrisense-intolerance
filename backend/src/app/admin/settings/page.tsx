@@ -1,7 +1,7 @@
 'use client';
-import React, { useState } from 'react';
+import React, { Suspense, useState } from 'react';
 import AppLayout from '@/components/AppLayout';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import EmailSettings from './components/EmailSettings';
 import AIKeysSettings from './components/AIKeysSettings';
 import BackupSettings from './components/BackupSettings';
@@ -16,6 +16,8 @@ import SecuritySettings from './components/SecuritySettings';
 import ArchiveSettings from './components/ArchiveSettings';
 import VisitorSettings from './components/VisitorSettings';
 import AcquisitionSettings from './components/AcquisitionSettings';
+import AnalyticsSettings from './components/AnalyticsSettings';
+import BrevoSettings from './components/BrevoSettings';
 
 type SettingsSection =
   | 'email'
@@ -31,7 +33,9 @@ type SettingsSection =
   | 'security'
   | 'archive'
   | 'visitor'
-  | 'acquisition';
+  | 'acquisition'
+  | 'analytics'
+  | 'brevo';
 
 interface SectionItem {
   id: SettingsSection;
@@ -198,6 +202,24 @@ function AcquisitionIcon({ className }: { className?: string }) {
   );
 }
 
+function ChartBarIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+    </svg>
+  );
+}
+
+function NewsletterIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+        d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+    </svg>
+  );
+}
+
 const sections: SectionItem[] = [
   {
     id: 'email',
@@ -225,8 +247,8 @@ const sections: SectionItem[] = [
   },
   {
     id: 'pricing',
-    label: 'Preturi',
-    description: 'Pachete & preturi planuri',
+    label: 'Pricing',
+    description: 'Plan packages & pricing',
     icon: <TagIcon className="w-5 h-5" />,
   },
   {
@@ -261,20 +283,20 @@ const sections: SectionItem[] = [
   },
   {
     id: 'security',
-    label: 'Securitate',
-    description: 'Sync parola frontend',
+    label: 'Security',
+    description: 'Frontend password sync',
     icon: <ShieldCheckIcon className="w-5 h-5" />,
   },
   {
     id: 'archive',
-    label: 'Arhiva',
-    description: 'Descarcare arhiva platforma',
+    label: 'Archive',
+    description: 'Platform archive download',
     icon: <ArchiveIcon className="w-5 h-5" />,
   },
   {
     id: 'visitor',
-    label: 'Vizitator',
-    description: 'Acces demo temporar',
+    label: 'Visitor',
+    description: 'Temporary demo access',
     icon: <VisitorIcon className="w-5 h-5" />,
   },
   {
@@ -282,6 +304,18 @@ const sections: SectionItem[] = [
     label: 'Acquisition',
     description: 'Download tracking & analytics',
     icon: <AcquisitionIcon className="w-5 h-5" />,
+  },
+  {
+    id: 'analytics',
+    label: 'Analytics',
+    description: 'Google Analytics tracking',
+    icon: <ChartBarIcon className="w-5 h-5" />,
+  },
+  {
+    id: 'brevo',
+    label: 'Brevo',
+    description: 'Newsletter & email marketing',
+    icon: <NewsletterIcon className="w-5 h-5" />,
   },
 ];
 
@@ -300,11 +334,21 @@ const sectionComponents: Record<SettingsSection, React.ReactNode> = {
   archive: <ArchiveSettings />,
   visitor: <VisitorSettings />,
   acquisition: <AcquisitionSettings />,
+  analytics: <AnalyticsSettings />,
+  brevo: <BrevoSettings />,
 };
 
-export default function AdminSettingsPage() {
+function isSettingsSection(value: string | null): value is SettingsSection {
+  return !!value && sections.some((s) => s.id === value);
+}
+
+function AdminSettingsContent() {
   const pathname = usePathname();
-  const [activeSection, setActiveSection] = useState<SettingsSection>('email');
+  const searchParams = useSearchParams();
+  const requestedSection = searchParams.get('section');
+  const [activeSection, setActiveSection] = useState<SettingsSection>(
+    isSettingsSection(requestedSection) ? requestedSection : 'email'
+  );
 
   return (
     <AppLayout currentPath={pathname}>
@@ -341,5 +385,13 @@ export default function AdminSettingsPage() {
         <div className="flex-1 min-w-0">{sectionComponents[activeSection]}</div>
       </div>
     </AppLayout>
+  );
+}
+
+export default function AdminSettingsPage() {
+  return (
+    <Suspense fallback={null}>
+      <AdminSettingsContent />
+    </Suspense>
   );
 }

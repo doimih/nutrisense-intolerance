@@ -102,8 +102,8 @@ export default function AIKeysSettings() {
       )}
 
       <div className="p-3 rounded-lg bg-info-bg border border-info/20 text-xs text-info">
-        Doar cheia OpenAI (primul provider) este salvată în DB și folosită de orchestrator.
-        Ceilalți provideri sunt disponibili prin env vars pe server.
+        Only the OpenAI key (the primary provider) is saved in the DB and used by the orchestrator.
+        Other providers are available via env vars on the server.
       </div>
 
       <div className="space-y-4">

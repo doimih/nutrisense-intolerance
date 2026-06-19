@@ -12,6 +12,7 @@ export interface User {
   createdAt: string;
   updatedAt: string;
   sessionExpiresAt?: number; // Unix timestamp seconds
+  earlyAdopter?: boolean;
 }
 
 export interface AuthTokens {

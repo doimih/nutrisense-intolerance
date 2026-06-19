@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import AppLayout from '@/components/AppLayout';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 
 type AILogLevel = 'info' | 'warning' | 'error';
 type AILogSource = 'frontend' | 'orchestrator' | 'worker' | 'ai' | 'system';
@@ -67,9 +67,16 @@ function toIsoOrEmpty(value: string): string {
   return date.toISOString();
 }
 
-export default function AdminAILogsPage() {
+const VALID_LEVELS: AILogLevel[] = ['info', 'warning', 'error'];
+
+function AdminAILogsContent() {
   const pathname = usePathname();
-  const [filters, setFilters] = useState<Filters>(INITIAL_FILTERS);
+  const searchParams = useSearchParams();
+  const requestedLevel = searchParams.get('level');
+  const [filters, setFilters] = useState<Filters>(() => ({
+    ...INITIAL_FILTERS,
+    level: VALID_LEVELS.includes(requestedLevel as AILogLevel) ? (requestedLevel as string) : '',
+  }));
   const [logs, setLogs] = useState<AILogRecord[]>([]);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
@@ -429,5 +436,13 @@ export default function AdminAILogsPage() {
         </div>
       ) : null}
     </AppLayout>
+  );
+}
+
+export default function AdminAILogsPage() {
+  return (
+    <Suspense fallback={null}>
+      <AdminAILogsContent />
+    </Suspense>
   );
 }

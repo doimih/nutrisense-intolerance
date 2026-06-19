@@ -440,6 +440,7 @@ export function generateMetadata(): Metadata {
       : "Find answers to all your questions about NutriAID Intolerances: how the AI works, which symptoms it analyzes, safety, and privacy.",
     alternates: {
       canonical: "/faq",
+      languages: { ro: "/faq", en: "/faq", "x-default": "/faq" },
     },
     openGraph: {
       title: isRo ? "Întrebări Frecvente — NutriAID Intolerances" : "FAQ — NutriAID Intolerances",

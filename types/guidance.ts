@@ -23,10 +23,17 @@ export interface GuidanceRequest {
   forceRegenerate?: boolean;
 }
 
+export type MealDay = "monday" | "tuesday" | "wednesday" | "thursday" | "friday" | "saturday" | "sunday";
+export type MealType = "breakfast" | "lunch" | "dinner";
+
 export interface MealExample {
   name: string;
   ingredients?: string[];
   notes?: string;
+  /** Which day of the week this meal belongs to (English key, locale-independent). */
+  day?: MealDay;
+  /** Which meal slot of the day this is. */
+  mealType?: MealType;
 }
 
 export interface GuidanceResult {

@@ -83,33 +83,6 @@ export const WORKER_SCHEMAS: Record<string, WorkerSchema> = {
     requiresDisclaimer: false,
   },
 
-  'medical-safety': {
-    workerName: 'Medical Safety Worker',
-    required: [...BASE_REQUIRED, 'data.safetyApproved'],
-    fields: {
-      ...BASE_FIELDS,
-      'data.safetyApproved': { type: 'boolean' },
-      'data.disclaimer': { type: 'string', optional: true },
-      'data.risks': { type: 'array', optional: true },
-    },
-    requiresDisclaimer: true,
-  },
-
-  'nutrition-calculator': {
-    workerName: 'Recommended Foods Generator Worker',
-    required: [...BASE_REQUIRED],
-    fields: {
-      ...BASE_FIELDS,
-      'data.recommendedFoods': { type: 'array', optional: true },
-      'data.kcal': { type: 'number', optional: true },
-      'data.proteinG': { type: 'number', optional: true },
-      'data.carbsG': { type: 'number', optional: true },
-      'data.fatG': { type: 'number', optional: true },
-      'data.disclaimer': { type: 'string', optional: true },
-    },
-    requiresDisclaimer: false,
-  },
-
   'meal-plan-generator': {
     workerName: 'Meal Plan Generator Worker',
     required: [...BASE_REQUIRED],

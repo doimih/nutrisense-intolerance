@@ -11,6 +11,7 @@ export function generateMetadata(): Metadata {
       : "Contact NutriAID Intolerances support team: email, Monday to Friday, response within 24 hours.",
     alternates: {
       canonical: "/contact",
+      languages: { ro: "/contact", en: "/contact", "x-default": "/contact" },
     },
     openGraph: {
       title: isRo ? "Contact — NutriAID Intolerances" : "Contact — NutriAID Intolerances",

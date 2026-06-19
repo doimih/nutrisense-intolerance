@@ -369,6 +369,7 @@ export function generateMetadata(): Metadata {
     description: t.metaDescription,
     alternates: {
       canonical: "/about",
+      languages: { ro: "/about", en: "/about", "x-default": "/about" },
     },
     openGraph: {
       title: isRo ? "Ghidul tău în 7 zile cu NutriAID" : "Your 7-Day Guide with NutriAID",

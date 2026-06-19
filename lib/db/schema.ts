@@ -12,6 +12,13 @@ export const users = pgTable("users", {
   plan: text("plan"),
   createdAt: text("created_at").notNull(),
   updatedAt: text("updated_at").notNull(),
+  // Newsletter consent (null = never asked, true = opted in, false = opted out)
+  newsletterOptIn: boolean("newsletter_opt_in"),
+  newsletterConsentAt: text("newsletter_consent_at"),
+  newsletterConsentSource: text("newsletter_consent_source"), // "signup_popup" | "footer_form"
+  language: text("language"), // "ro" | "en"
+  // Early adopter promotion: first 50 real users get free PRO access
+  earlyAdopter: boolean("early_adopter"),
 });
 
 export const verificationTokens = pgTable("verification_tokens", {

@@ -12,6 +12,7 @@ import { listMonitoringEntries } from "@/lib/api/monitoring";
 import { getDietaryLabel, getIntoleranceLabel, getSymptomLabel } from "@/lib/i18n/labels";
 import type { GuidanceHistoryEntry, GuidanceResult } from "@/types/guidance";
 import type { MonitoringEntry, Symptom } from "@/types/monitoring";
+import { groupMealExamplesByDay } from "@/lib/guidance/mealGrouping";
 
 type PlanTier = "none" | "basic" | "pro" | "pro_plus" | "enterprise";
 
@@ -509,21 +510,56 @@ export default function HistoryPage() {
                                   {isRo ? "Exemple de mese" : "Meal examples"}
                                 </p>
                               </div>
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                {detail.mealExamples.map((meal, i) => (
-                                  <div key={i} className="rounded-lg bg-white dark:bg-slate-800 border border-teal-100 dark:border-teal-900/40 p-3">
-                                    <p className="text-xs font-semibold text-teal-700 dark:text-teal-300 mb-1">{meal.name}</p>
-                                    {(meal.ingredients ?? []).length > 0 && (
-                                      <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                                        {(meal.ingredients ?? []).join(", ")}
-                                      </p>
-                                    )}
-                                    {meal.notes && (
-                                      <p className="text-xs text-slate-400 dark:text-slate-500 mt-1 italic">{meal.notes}</p>
-                                    )}
+                              {(() => {
+                                const grouped = groupMealExamplesByDay(detail.mealExamples, isRo ? "ro" : "en");
+                                if (grouped) {
+                                  return (
+                                    <div className="space-y-3">
+                                      {grouped.map((dayGroup) => (
+                                        <div key={dayGroup.day}>
+                                          <p className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                                            {dayGroup.label}
+                                          </p>
+                                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                            {dayGroup.meals.map(({ mealType, label, meal }) => (
+                                              <div key={mealType} className="rounded-lg bg-white dark:bg-slate-800 border border-teal-100 dark:border-teal-900/40 p-3">
+                                                <p className="text-[10px] font-semibold uppercase tracking-wider text-teal-500 dark:text-teal-400 mb-1">{label}</p>
+                                                <p className="text-xs font-semibold text-teal-700 dark:text-teal-300 mb-1">{meal.name}</p>
+                                                {(meal.ingredients ?? []).length > 0 && (
+                                                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                                                    {(meal.ingredients ?? []).join(", ")}
+                                                  </p>
+                                                )}
+                                                {meal.notes && (
+                                                  <p className="text-xs text-slate-400 dark:text-slate-500 mt-1 italic">{meal.notes}</p>
+                                                )}
+                                              </div>
+                                            ))}
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  );
+                                }
+
+                                return (
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                    {detail.mealExamples.map((meal, i) => (
+                                      <div key={i} className="rounded-lg bg-white dark:bg-slate-800 border border-teal-100 dark:border-teal-900/40 p-3">
+                                        <p className="text-xs font-semibold text-teal-700 dark:text-teal-300 mb-1">{meal.name}</p>
+                                        {(meal.ingredients ?? []).length > 0 && (
+                                          <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                                            {(meal.ingredients ?? []).join(", ")}
+                                          </p>
+                                        )}
+                                        {meal.notes && (
+                                          <p className="text-xs text-slate-400 dark:text-slate-500 mt-1 italic">{meal.notes}</p>
+                                        )}
+                                      </div>
+                                    ))}
                                   </div>
-                                ))}
-                              </div>
+                                );
+                              })()}
                             </div>
                           )}
 

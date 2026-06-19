@@ -164,7 +164,7 @@ export function validateLogic(
   }
 
   // Nutritional consistency for workers that produce calorie data
-  const nutritionWorkers = ['nutrition-calculator', 'meal-plan-generator', 'recipe-builder'];
+  const nutritionWorkers = ['meal-plan-generator', 'recipe-builder'];
   const isNutritionWorker = nutritionWorkers.some((id) =>
     worker.toLowerCase().replace(/\s+/g, '-').includes(id),
   );
@@ -260,7 +260,7 @@ export function validateSafety(
 
   // Check for disclaimer presence on final output workers
   const workerOutputStr = JSON.stringify(output);
-  const disclaimerRequired = ['medical-safety', 'nutrition-calculator', 'meal-plan-generator', 'supplement-advisor'];
+  const disclaimerRequired = ['meal-plan-generator', 'supplement-advisor'];
   const isDisclaimerWorker = disclaimerRequired.some((id) =>
     output['worker'] && String(output['worker']).toLowerCase().replace(/\s+/g, '-').includes(id),
   );
@@ -334,29 +334,59 @@ export function autoCorrect(
 
   const workerKey = worker.toLowerCase().replace(/\s+/g, '-');
 
-  // nutrition-calculator: AI often returns totalKcal and nested macros — flatten
-  if (workerKey.includes('nutrition-calculator') && isObject(corrected['data'])) {
+  // recipe-builder: inject required fields from available meal data when missing
+  if (workerKey.includes('recipe-builder') && isObject(corrected['data'])) {
     const d = corrected['data'] as JsonObject;
-    if (!d['kcal']) {
-      if (typeof d['totalKcal'] === 'number') d['kcal'] = d['totalKcal'] as JsonValue;
-      else if (typeof d['kcalTotal'] === 'number') d['kcal'] = d['kcalTotal'] as JsonValue;
-      else if (typeof d['calories'] === 'number') d['kcal'] = d['calories'] as JsonValue;
+    if (d['recipeName'] === undefined || d['recipeName'] === null) {
+      const meals = Array.isArray(d['meals']) ? d['meals'] : Array.isArray(d['breakfast']) ? d['breakfast'] : [];
+      const firstName = meals.length > 0 && isObject(meals[0]) ? String((meals[0] as JsonObject)['name'] ?? '') : '';
+      d['recipeName'] = (firstName || 'Recipe') as JsonValue;
     }
-    if (isObject(d['macros'])) {
-      const m = d['macros'] as JsonObject;
-      if (!d['proteinG'] && m['proteinG']) d['proteinG'] = m['proteinG'] as JsonValue;
-      if (!d['carbsG'] && m['carbsG']) d['carbsG'] = m['carbsG'] as JsonValue;
-      if (!d['fatG'] && m['fatG']) d['fatG'] = m['fatG'] as JsonValue;
+    if (d['ingredients'] === undefined || d['ingredients'] === null) {
+      const meals = Array.isArray(d['meals']) ? d['meals'] : [];
+      const allIngredients: string[] = [];
+      for (const meal of meals) {
+        if (isObject(meal) && Array.isArray((meal as JsonObject)['ingredients'])) {
+          for (const ing of (meal as JsonObject)['ingredients'] as JsonValue[]) {
+            if (typeof ing === 'string') allIngredients.push(ing);
+          }
+        }
+      }
+      d['ingredients'] = allIngredients as JsonValue;
+    }
+    if (d['steps'] === undefined || d['steps'] === null) {
+      d['steps'] = [] as JsonValue;
     }
   }
 
-  // medical-safety: when AI fails, default safetyApproved based on current status
-  if (workerKey.includes('medical-safety') && isObject(corrected['data'])) {
+  // shopping-list: build items array from meal ingredients when missing
+  if (workerKey.includes('shopping-list') && isObject(corrected['data'])) {
     const d = corrected['data'] as JsonObject;
-    if (d['safetyApproved'] === undefined || d['safetyApproved'] === null) {
-      // Approve with warning when the AI failed but upstream data looks valid;
-      // reject only when the status is already hard error.
-      d['safetyApproved'] = (corrected['status'] !== 'error') as JsonValue;
+    if (d['items'] === undefined || d['items'] === null) {
+      const meals = Array.isArray(d['meals']) ? d['meals'] : Array.isArray(d['breakfast']) ? d['breakfast'] : [];
+      const collected: string[] = [];
+      for (const meal of meals) {
+        if (isObject(meal)) {
+          const m = meal as JsonObject;
+          if (Array.isArray(m['ingredients'])) {
+            for (const ing of m['ingredients'] as JsonValue[]) {
+              if (typeof ing === 'string' && !collected.includes(ing)) collected.push(ing);
+            }
+          }
+        }
+      }
+      d['items'] = collected as JsonValue;
+    }
+  }
+
+  // progress-tracking: generate minimal summary when missing
+  if (workerKey.includes('progress-tracking') && isObject(corrected['data'])) {
+    const d = corrected['data'] as JsonObject;
+    if (d['summary'] === undefined || d['summary'] === null || d['summary'] === '') {
+      const mealCount = Array.isArray(d['meals']) ? (d['meals'] as JsonValue[]).length : 0;
+      d['summary'] = (mealCount > 0
+        ? `Tracked ${mealCount} meal(s). Consistency and variety patterns noted.`
+        : 'No meal data available for progress analysis.') as JsonValue;
     }
   }
 
@@ -393,7 +423,7 @@ export function autoCorrect(
   }
 
   // Append disclaimer if missing on safety-critical workers
-  const disclaimerRequired = ['medical-safety', 'nutrition-calculator', 'meal-plan-generator', 'supplement-advisor'];
+  const disclaimerRequired = ['meal-plan-generator', 'supplement-advisor'];
   const isDisclaimerWorker = disclaimerRequired.some((id) =>
     worker.toLowerCase().replace(/\s+/g, '-').includes(id),
   );

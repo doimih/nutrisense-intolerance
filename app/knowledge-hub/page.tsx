@@ -10,7 +10,7 @@ export function generateMetadata(): Metadata {
     description: isRo
       ? "Resurse educaționale despre intoleranțele alimentare, analiza AI a simptomelor, planuri alimentare personalizate și confidențialitatea datelor tale."
       : "Educational resources about food intolerances, AI symptom analysis, personalized food plans, and your data privacy.",
-    alternates: { canonical: "/knowledge-hub" },
+    alternates: { canonical: "/knowledge-hub", languages: { ro: "/knowledge-hub", en: "/knowledge-hub", "x-default": "/knowledge-hub" } },
     openGraph: {
       title: isRo ? "Knowledge Hub — NutriAID Intolerances" : "Knowledge Hub — NutriAID Intolerances",
       description: isRo

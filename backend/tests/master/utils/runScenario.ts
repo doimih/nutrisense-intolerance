@@ -4,8 +4,8 @@
  * result object for assertion in tests.
  */
 
-import type { OrchestratorContext, OrchestratorResult, WorkerExecutor } from '../../src/ai/orchestrator';
-import { runOrchestrator } from '../../src/ai/orchestrator';
+import type { OrchestratorContext, OrchestratorResult, WorkerExecutor } from '../../../src/ai/orchestrator';
+import { runOrchestrator } from '../../../src/ai/orchestrator';
 import type { MockLogEntry } from './mockLogger';
 import { getMockLogs, resetMockLogs } from './mockLogger';
 

@@ -15,8 +15,6 @@ const WORKER_IDS = [
   'profile-analyzer',
   'intolerance-checker',
   'allergy-checker',
-  'medical-safety',
-  'nutrition-calculator',
   'meal-plan-generator',
   'recipe-builder',
   'shopping-list',

@@ -103,16 +103,12 @@ const INTENT_WORKER_ROUTES: Record<DetectedIntent, readonly string[]> = {
     'intolerance-checker',
     'allergy-checker',
     'meal-plan-generator',
-    'nutrition-calculator',
-    'medical-safety',
   ],
   recipe: [
     'profile-analyzer',
     'intolerance-checker',
     'allergy-checker',
     'recipe-builder',
-    'nutrition-calculator',
-    'medical-safety',
   ],
   'shopping-list': [
     'profile-analyzer',
@@ -125,13 +121,10 @@ const INTENT_WORKER_ROUTES: Record<DetectedIntent, readonly string[]> = {
     'intolerance-checker',
     'allergy-checker',
     'supplement-advisor',
-    'medical-safety',
   ],
   'nutritional-analysis': [
     'profile-analyzer',
     'intolerance-checker',
-    'nutrition-calculator',
-    'medical-safety',
   ],
   'progress-tracking': [
     'profile-analyzer',
@@ -141,11 +134,9 @@ const INTENT_WORKER_ROUTES: Record<DetectedIntent, readonly string[]> = {
     'profile-analyzer',
     'intolerance-checker',
     'allergy-checker',
-    'medical-safety',
   ],
   unknown: [
     'profile-analyzer',
-    'medical-safety',
   ],
 };
 
@@ -285,19 +276,6 @@ function buildFinalResponse(
     if (Array.isArray(recipeData.steps)) agg.steps = recipeData.steps;
   }
 
-  // ── Recommended foods / GEO-adapted foods (from nutrition-calculator worker) ──
-  const nutritionData = getWorkerData(workerResults, 'nutrition-calculator');
-  if (nutritionData) {
-    agg.nutrition = nutritionData;
-    // Primary output is now recommendedFoods (behavioral/GEO-adapted)
-    if (Array.isArray(nutritionData.recommendedFoods)) agg.recommendedFoods = nutritionData.recommendedFoods;
-    // Legacy numeric fields kept for backward compatibility if AI still returns them
-    if (typeof nutritionData.kcal === 'number') agg.kcal = nutritionData.kcal;
-    if (typeof nutritionData.proteinG === 'number') agg.proteinG = nutritionData.proteinG;
-    if (typeof nutritionData.carbsG === 'number') agg.carbsG = nutritionData.carbsG;
-    if (typeof nutritionData.fatG === 'number') agg.fatG = nutritionData.fatG;
-  }
-
   // ── Lifestyle tips (formerly supplement-advisor) ───────────────────────────
   const suppData = getWorkerData(workerResults, 'supplement-advisor');
   if (suppData) {
@@ -322,17 +300,7 @@ function buildFinalResponse(
     if (shopData.groupedByCategory) agg.groupedByCategory = shopData.groupedByCategory;
   }
 
-  // ── Medical safety (disclaimer + risks — always last) ─────────────────────
-  const safetyData = getWorkerData(workerResults, 'medical-safety');
-  if (safetyData) {
-    agg.safetyApproved = safetyData.safetyApproved ?? true;
-    if (typeof safetyData.disclaimer === 'string') agg.disclaimer = safetyData.disclaimer;
-    if (Array.isArray(safetyData.risks) && (safetyData.risks as unknown[]).length > 0) {
-      agg.warnings = safetyData.risks;
-    }
-  }
-
-  // Fallback disclaimer
+  // Fallback disclaimer (no medical-safety worker — always applied)
   if (!agg.disclaimer) {
     agg.disclaimer = lang === 'ro'
       ? 'Aceste informatii sunt orientative si nu reprezinta sfat medical.'

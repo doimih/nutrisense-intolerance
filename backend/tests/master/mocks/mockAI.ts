@@ -5,8 +5,8 @@
  * (valid, invalid schema, invalid logic, unsafe, etc.) for the given worker id.
  */
 
-import type { JsonObject } from '../../src/lib/server/superadmin/workerDiagnosticTypes';
-import type { WorkerExecutor, OrchestratorContext } from '../../src/ai/orchestrator';
+import type { JsonObject } from '../../../src/lib/server/superadmin/workerDiagnosticTypes';
+import type { WorkerExecutor, OrchestratorContext } from '../../../src/ai/orchestrator';
 
 export type WorkerOutputOverride = JsonObject | ((workerId: string) => JsonObject);
 

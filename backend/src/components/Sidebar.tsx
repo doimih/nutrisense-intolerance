@@ -2,6 +2,7 @@
 import React from 'react';
 import Link from 'next/link';
 import AppLogo from './ui/AppLogo';
+import PWAInstallButton from './PWAInstallButton';
 
 interface NavItem {
   label: string;
@@ -235,6 +236,7 @@ export default function Sidebar({
           </div>
         )}
 
+        <PWAInstallButton collapsed={collapsed} />
         <Link
           href="/"
           className="nav-item w-full"

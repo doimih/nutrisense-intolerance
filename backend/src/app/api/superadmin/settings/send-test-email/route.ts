@@ -13,14 +13,14 @@ export async function POST(request: NextRequest) {
 
   if (!emailSettings?.smtpHost) {
     return NextResponse.json(
-      { ok: false, message: 'SMTP Host nu este configurat. Salveaza setarile de email mai intai.' },
+      { ok: false, message: 'SMTP Host is not configured. Save the email settings first.' },
       { status: 400 },
     );
   }
 
   if (!emailSettings.smtpPass) {
     return NextResponse.json(
-      { ok: false, message: 'SMTP Password nu este setat. Salveaza parola mai intai.' },
+      { ok: false, message: 'SMTP Password is not set. Save the password first.' },
       { status: 400 },
     );
   }
@@ -45,29 +45,29 @@ export async function POST(request: NextRequest) {
     await transport.sendMail({
       from,
       to,
-      subject: '✅ NutriAID — Email de test',
-      text: `Configurarea SMTP functioneaza corect.\n\nAcest email a fost trimis din panoul de administrare NutriAID pentru a verifica setarile SMTP.\n\nServer: ${emailSettings.smtpHost}:${emailSettings.smtpPort ?? 587}`,
+      subject: '✅ NutriAID — Test email',
+      text: `The SMTP configuration is working correctly.\n\nThis email was sent from the NutriAID admin panel to verify the SMTP settings.\n\nServer: ${emailSettings.smtpHost}:${emailSettings.smtpPort ?? 587}`,
       html: `<div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;background:#f9fafb;border-radius:12px;">
-  <h2 style="color:#16a34a;margin:0 0 12px;">✅ Configurare SMTP reusita</h2>
-  <p style="color:#374151;margin:0 0 16px;">Acest email confirma ca setarile SMTP sunt corecte si emailurile pot fi trimise.</p>
+  <h2 style="color:#16a34a;margin:0 0 12px;">✅ SMTP configuration successful</h2>
+  <p style="color:#374151;margin:0 0 16px;">This email confirms that the SMTP settings are correct and emails can be sent.</p>
   <table style="width:100%;border-collapse:collapse;font-size:13px;color:#6b7280;">
     <tr><td style="padding:4px 8px 4px 0;font-weight:600;color:#374151;">Server</td><td>${emailSettings.smtpHost}:${emailSettings.smtpPort ?? 587}</td></tr>
-    <tr><td style="padding:4px 8px 4px 0;font-weight:600;color:#374151;">Utilizator</td><td>${emailSettings.smtpUser || '—'}</td></tr>
-    <tr><td style="padding:4px 8px 4px 0;font-weight:600;color:#374151;">Criptare</td><td>${emailSettings.encryption?.toUpperCase() ?? 'TLS'}</td></tr>
+    <tr><td style="padding:4px 8px 4px 0;font-weight:600;color:#374151;">User</td><td>${emailSettings.smtpUser || '—'}</td></tr>
+    <tr><td style="padding:4px 8px 4px 0;font-weight:600;color:#374151;">Encryption</td><td>${emailSettings.encryption?.toUpperCase() ?? 'TLS'}</td></tr>
   </table>
-  <p style="margin:20px 0 0;font-size:12px;color:#9ca3af;">NutriAID Admin · ${new Date().toLocaleString('ro-RO')}</p>
+  <p style="margin:20px 0 0;font-size:12px;color:#9ca3af;">NutriAID Admin · ${new Date().toLocaleString('en-GB')}</p>
 </div>`,
     });
 
     return NextResponse.json({
       ok: true,
-      message: `Email de test trimis catre ${to}.`,
+      message: `Test email sent to ${to}.`,
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     return NextResponse.json({
       ok: false,
-      message: `Trimitere esuata: ${message.slice(0, 200)}`,
+      message: `Sending failed: ${message.slice(0, 200)}`,
     });
   }
 }

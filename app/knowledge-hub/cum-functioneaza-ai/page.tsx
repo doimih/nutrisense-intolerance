@@ -12,7 +12,7 @@ export function generateMetadata(): Metadata {
     description: isRo
       ? "Explicație detaliată despre cum AI-ul NutriAID analizează mesele, detectează tipare, calculează corelații și generează recomandări personalizate."
       : "Detailed explanation of how NutriAID AI analyzes meals, detects patterns, calculates correlations, and generates personalized recommendations.",
-    alternates: { canonical: "/knowledge-hub/cum-functioneaza-ai" },
+    alternates: { canonical: "/knowledge-hub/cum-functioneaza-ai", languages: { ro: "/knowledge-hub/cum-functioneaza-ai", en: "/knowledge-hub/cum-functioneaza-ai", "x-default": "/knowledge-hub/cum-functioneaza-ai" } },
     openGraph: {
       title: isRo ? "Cum funcționează AI-ul NutriAID?" : "How does NutriAID AI work?",
       description: isRo

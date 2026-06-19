@@ -4,6 +4,7 @@ import { readSessionToken } from "@/lib/auth/sessionToken";
 import { addMonitoringEntryForUser, listMonitoringEntriesByUser } from "@/lib/server/monitoringStore";
 import { getEffectivePlanTier, tierAllows } from "@/lib/billing/features";
 import type { CreateMonitoringEntryRequest, Symptom, WellbeingLevel } from "@/types/monitoring";
+import { brevoEvents } from "@/lib/server/brevoEventService";
 
 export const runtime = "nodejs";
 
@@ -113,6 +114,9 @@ export async function POST(request: NextRequest) {
     consumedFoods: body.consumedFoods.map((item) => item.trim()).filter(Boolean),
     notes: body.notes.trim(),
   });
+
+  void brevoEvents.dailyCheckin(session.user.email).catch(() => {});
+  void brevoEvents.foodScanned(session.user.email, { foodName: entry.consumedFoods[0] ?? '' }).catch(() => {});
 
   return NextResponse.json({ entry }, { status: 201 });
 }

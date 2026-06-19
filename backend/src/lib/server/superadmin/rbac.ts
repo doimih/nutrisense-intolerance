@@ -41,7 +41,7 @@ export async function requireSuperadmin(request: NextRequest) {
     if (method !== 'GET') {
       return {
         error: NextResponse.json(
-          { error: 'Acces vizualizare. Operatiile de modificare nu sunt permise pentru vizitator.' },
+          { error: 'View-only access. Modification operations are not allowed for the visitor.' },
           { status: 403 },
         ),
       };

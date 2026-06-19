@@ -11,6 +11,7 @@ export function generateMetadata(): Metadata {
       : "NutriAID daily plan: a simple 5-minute routine for monitoring and clarity.",
     alternates: {
       canonical: "/daily-plan",
+      languages: { ro: "/daily-plan", en: "/daily-plan", "x-default": "/daily-plan" },
     },
   };
 }

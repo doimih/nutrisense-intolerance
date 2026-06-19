@@ -25,7 +25,7 @@ export async function generateMetadata(): Promise<Metadata> {
     description: isRo
       ? "Explicăm de ce AI-ul identifică intoleranțe alimentare pe care niciun om nu le poate detecta manual: reacții întârziate, combinații, tipare complexe."
       : "We explain why AI identifies food intolerances that no human can detect manually: delayed reactions, combinations, complex patterns.",
-    alternates: { canonical: "/why-ai" },
+    alternates: { canonical: "/why-ai", languages: { ro: "/why-ai", en: "/why-ai", "x-default": "/why-ai" } },
     openGraph: {
       title: isRo ? "De ce AI? — NutriAID Intolerances" : "Why AI? — NutriAID Intolerances",
       description: isRo

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireSuperadmin } from '@/lib/server/superadmin/rbac';
 import { runDiagnostic } from '@/lib/server/superadmin/workerDiagnostic';
 import { logWorkerValidation, logWorkerCorrection } from '@/logging/aiLogger';
-import type { DiagnosticRequest } from '@/lib/server/superadmin/workerDiagnosticTypes';
+import type { DiagnosticRequest, JsonObject } from '@/lib/server/superadmin/workerDiagnosticTypes';
 import { getWorkerSchema } from '@/ai/schemas/workerSchemas';
 
 export const runtime = 'nodejs';
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
   }
 
   const schema = getWorkerSchema(workerId);
-  const expectedSchema: Record<string, unknown> = {};
+  const expectedSchema: JsonObject = {};
   if (schema) {
     for (const field of schema.required) expectedSchema[field] = 'required';
   }
