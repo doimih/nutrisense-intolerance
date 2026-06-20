@@ -343,7 +343,8 @@ export default function RecaptchaSettings() {
           </div>
           {testResult.ok && (
             <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
-              {testResult.score !== undefined && <div><span className="font-medium">Score:</span> {testResult.score.toFixed(2)}</div>}
+              {testResult.score != null && <div><span className="font-medium">Score:</span> {testResult.score.toFixed(2)}</div>}
+              {testResult.score == null && <div className="col-span-2 text-xs text-muted-foreground italic">Score available only with real browser tokens</div>}
               {testResult.hostname && <div><span className="font-medium">Hostname:</span> {testResult.hostname}</div>}
               {testResult.action && <div><span className="font-medium">Action:</span> {testResult.action}</div>}
             </div>

@@ -30,9 +30,10 @@ function isStandaloneMode(): boolean {
   );
 }
 
-function isSafariBrowser(): boolean {
-  const ua = navigator.userAgent;
-  return /Safari/.test(ua) && !/CriOS|FxiOS|OPiOS|EdgiOS/.test(ua);
+// On iOS, ALL browsers use Safari's WebKit engine and support
+// "Add to Home Screen" via the Share sheet — not just Safari itself.
+function isIosBrowser(): boolean {
+  return /iPhone|iPad|iPod/.test(navigator.userAgent);
 }
 
 export default function PWAInstallPrompt() {
@@ -43,7 +44,9 @@ export default function PWAInstallPrompt() {
 
   useEffect(() => {
     if (isStandaloneMode()) return;
-    if (sessionStorage.getItem('pwa_dismissed') === '1') return;
+    // Don't show if dismissed within the last 30 days
+    const dismissedAt = localStorage.getItem('pwa_dismissed_at');
+    if (dismissedAt && Date.now() - parseInt(dismissedAt, 10) < 30 * 24 * 60 * 60 * 1000) return;
 
     const p = detectPlatform();
     if (!p) return;
@@ -54,7 +57,7 @@ export default function PWAInstallPrompt() {
         promptRef.current = window.__pwaInstallEvent;
         window.__pwaInstallEvent = null;
         setPlatform('android');
-        const t = window.setTimeout(() => setShow(true), 10000);
+        const t = window.setTimeout(() => setShow(true), 5000);
         return () => window.clearTimeout(t);
       }
 
@@ -63,15 +66,15 @@ export default function PWAInstallPrompt() {
         e.preventDefault();
         promptRef.current = e as unknown as BeforeInstallPromptEvent;
         setPlatform('android');
-        window.setTimeout(() => setShow(true), 10000);
+        window.setTimeout(() => setShow(true), 5000);
       };
       window.addEventListener('beforeinstallprompt', handler);
       return () => window.removeEventListener('beforeinstallprompt', handler);
     }
 
-    if (p === 'ios' && isSafariBrowser()) {
+    if (p === 'ios' && isIosBrowser()) {
       setPlatform('ios');
-      const t = window.setTimeout(() => setShow(true), 10000);
+      const t = window.setTimeout(() => setShow(true), 3000);
       return () => window.clearTimeout(t);
     }
   }, []);
@@ -88,7 +91,7 @@ export default function PWAInstallPrompt() {
   };
 
   const handleDismiss = () => {
-    sessionStorage.setItem('pwa_dismissed', '1');
+    localStorage.setItem('pwa_dismissed_at', String(Date.now()));
     setShow(false);
   };
 

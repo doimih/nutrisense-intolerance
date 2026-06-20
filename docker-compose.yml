@@ -95,6 +95,7 @@ services:
       INTERNAL_SYNC_SECRET: ${INTERNAL_SYNC_SECRET:-change-me-sync-secret-min32chars!!}
     volumes:
       - backend_data:/app/data
+      - /opt/projects/nutrisense-i:/app/source:ro
     labels:
       traefik.enable: "true"
       traefik.docker.network: ${TRAEFIK_NETWORK:-traefik_public}

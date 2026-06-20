@@ -27,6 +27,7 @@ export default function ProfilePage() {
   const isRo = lang === "ro";
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [trialEndsAt, setTrialEndsAt] = useState<string | null>(null);
+  const [isEarlyAdopter, setIsEarlyAdopter] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -54,6 +55,7 @@ export default function ProfilePage() {
         activityLevel: (p.activityLevel as ActivityLevel | null) ?? "",
       });
       if (user?.trialEndsAt) setTrialEndsAt(user.trialEndsAt);
+      if (user?.earlyAdopter) setIsEarlyAdopter(true);
       setLoading(false);
     });
   }, []);
@@ -319,7 +321,7 @@ export default function ProfilePage() {
         </Button>
       </form>
 
-      <BillingSection trialEndsAt={trialEndsAt} lang={lang as "ro" | "en"} />
+      <BillingSection trialEndsAt={trialEndsAt} earlyAdopter={isEarlyAdopter} lang={lang as "ro" | "en"} />
     </div>
   );
 }

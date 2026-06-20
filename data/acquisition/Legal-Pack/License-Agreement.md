@@ -28,7 +28,7 @@ Address: ___________________________________
 
 ## 1. Definitions
 
-**"Software"** means the NutriAID platform in its entirety, including all source code, compiled code, AI worker definitions, database schemas, configuration files, frontend applications, backend admin console, documentation, and associated materials.
+**"Software"** means the NutriAID platform in its entirety as of the Effective Date, including all source code, compiled code, AI orchestrator and worker definitions (10 specialised AI workers), self-healing validation pipeline, database schemas (11 tables), configuration files, Docker/Traefik infrastructure code, frontend application (Next.js 14) with all features (onboarding, dashboard, recipes, cooking mode, AI guidance, journal, history, PDF export, billing, PWA, TikTok Pixel integration, newsletter), backend admin console (Next.js 15) with all admin settings and AI Test Lab, Brevo newsletter system, documentation, and associated materials.
 
 **"Permitted Use"** means operating the Software as a commercial SaaS product, white-label product, or internal tool in accordance with this Agreement.
 
@@ -81,7 +81,7 @@ payable within 14 calendar days of the Effective Date.
 
 - Delivery of all software updates and bug fixes
 - Up to 20 hours per year of technical support
-- Access to new AI worker definitions and schema updates
+- Access to new AI worker definitions, schema updates, and new feature modules
 
 ### 3.3 Revenue Share (Optional)
 
@@ -99,7 +99,7 @@ b) Remove or alter any copyright notices, trademarks, or proprietary notices fro
 
 c) Reverse-engineer, decompile, or disassemble any compiled portions of the Software, except to the extent permitted by applicable law;
 
-d) Use the Software in a manner that violates applicable law, including EU data protection law (GDPR) or the EU AI Act;
+d) Use the Software in a manner that violates applicable law, including EU data protection law (GDPR), the EU AI Act, or the terms of service of any third-party integrations included in the Software (Stripe, Brevo, Google reCAPTCHA, TikTok Pixel);
 
 e) Represent the Software as the Licensee's own independently developed product without the Licensor's prior written consent.
 

@@ -10,6 +10,7 @@ import ErrorAlert from '@/components/ErrorAlert';
 import { register } from '@/lib/api/auth';
 import { useLanguage } from '@/components/LanguageProvider';
 import { getUiCopy } from '@/lib/i18n/ui';
+import { trackTikTokCompleteRegistration } from '@/components/TikTokPixel';
 
 function PasswordStrength({ password }: { password: string }) {
   const { lang } = useLanguage();
@@ -82,6 +83,7 @@ export default function RegisterPage() {
     setLoading(true);
     try {
       const result = await register(form);
+      trackTikTokCompleteRegistration();
       setRegisteredEmail(result.email);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : isRo ? 'Inregistrare esuata.' : 'Registration failed.');

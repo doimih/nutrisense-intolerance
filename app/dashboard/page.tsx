@@ -16,6 +16,7 @@ import Card from "@/components/Card";
 import Badge from "@/components/Badge";
 import { PageLoader } from "@/components/LoadingOverlay";
 import ErrorAlert from "@/components/ErrorAlert";
+import OnboardingModal from "@/components/OnboardingModal";
 import { me } from "@/lib/api/auth";
 import { getProfile } from "@/lib/api/profile";
 import { getHistory } from "@/lib/api/guidance";
@@ -26,6 +27,7 @@ import type { GuidanceHistoryEntry } from "@/types/guidance";
 import type { MonitoringEntry } from "@/types/monitoring";
 import { useLanguage } from "@/components/LanguageProvider";
 import { getIntoleranceLabel, getSymptomLabel } from "@/lib/i18n/labels";
+import { identifyTikTokUser, trackTikTokPurchase, trackTikTokSubscribe } from "@/components/TikTokPixel";
 
 function formatDate(iso: string, locale: string) {
   return new Date(iso).toLocaleDateString(locale, {
@@ -73,7 +75,11 @@ export default function DashboardPage() {
       .then((results) => {
         const [uRes, pRes, hRes, mRes] = results;
 
-        if (uRes.status === "fulfilled") setUser(uRes.value);
+        if (uRes.status === "fulfilled") {
+          setUser(uRes.value);
+          // Identify user for TikTok (hashes email client-side)
+          void identifyTikTokUser(uRes.value.email, uRes.value.id);
+        }
         if (pRes.status === "fulfilled") setProfile(pRes.value);
         if (hRes.status === "fulfilled") setLastGuidance(hRes.value[0] ?? null);
         if (mRes.status === "fulfilled") setLastEntry(mRes.value[0] ?? null);
@@ -89,6 +95,17 @@ export default function DashboardPage() {
       })
       .finally(() => setLoading(false));
   }, [isRo]);
+
+  // Fire Purchase + Subscribe once when Stripe redirects back with billing=success
+  useEffect(() => {
+    if (billingStatus !== "success" || !user) return;
+    const plan = user.plan ?? "pro";
+    const planNames: Record<string, string> = { basic: "NutriAID Basic", pro: "NutriAID Pro", pro_plus: "NutriAID Pro+" };
+    const planValues: Record<string, number> = { basic: 9, pro: 19, pro_plus: 29 };
+    const content = { planCode: plan, planName: planNames[plan] ?? plan, value: planValues[plan] ?? 0 };
+    trackTikTokPurchase(content);
+    trackTikTokSubscribe(content);
+  }, [billingStatus, user]);
 
   if (loading) return <PageLoader />;
 
@@ -281,6 +298,12 @@ export default function DashboardPage() {
           ))}
         </div>
       </div>
+
+      <OnboardingModal
+        profile={profile}
+        hasGuidance={lastGuidance !== null}
+        lang={lang as "ro" | "en"}
+      />
     </div>
   );
 }

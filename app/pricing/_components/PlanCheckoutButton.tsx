@@ -3,6 +3,14 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { BillingPlanCode } from "@/lib/billing/plans";
+import { trackTikTokInitiateCheckout, trackTikTokAddPaymentInfo } from "@/components/TikTokPixel";
+
+const PLAN_NAMES: Record<string, string> = {
+  basic: "NutriAID Basic",
+  pro: "NutriAID Pro",
+  pro_plus: "NutriAID Pro+",
+};
+const PLAN_VALUES: Record<string, number> = { basic: 9, pro: 19, pro_plus: 29 };
 
 type PlanCheckoutButtonProps = {
   planCode: BillingPlanCode;
@@ -24,6 +32,13 @@ export default function PlanCheckoutButton({
   const startCheckout = async () => {
     setLoading(true);
     setError("");
+
+    const planContent = {
+      planCode,
+      planName: PLAN_NAMES[planCode] ?? planCode,
+      value: PLAN_VALUES[planCode] ?? 0,
+    };
+    trackTikTokInitiateCheckout(planContent);
 
     try {
       const response = await fetch("/api/billing/checkout", {
@@ -51,6 +66,7 @@ export default function PlanCheckoutButton({
         throw new Error("Stripe checkout URL is missing.");
       }
 
+      trackTikTokAddPaymentInfo(planContent);
       window.location.href = payload.url;
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : loginRequiredLabel);

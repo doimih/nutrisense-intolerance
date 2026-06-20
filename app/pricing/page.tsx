@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { ArrowRight, BadgeCheck, ShieldCheck, Sparkles } from "lucide-react";
 import { getServerLanguage } from "@/lib/i18n/server";
 import BillingCancelledNotice from "./_components/BillingCancelledNotice";
+import PricingPageTracker from "./_components/PricingPageTracker";
 import PlanCheckoutButton from "./_components/PlanCheckoutButton";
 import { getRuntimeSettings } from "@/lib/server/runtimeSettings";
 import type { BillingPlanCode } from "@/lib/billing/plans";
@@ -392,6 +393,7 @@ export default async function PricingPage() {
   return (
     <div className="pb-20 bg-slate-50 dark:bg-slate-950">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(pricingSchema) }} />
+      <PricingPageTracker />
       <BillingCancelledNotice lang={lang} />
       <section className="relative overflow-hidden border-y border-emerald-100 dark:border-emerald-900/40 bg-gradient-to-b from-emerald-100 via-white to-slate-50 dark:from-emerald-950/30 dark:via-slate-950 dark:to-slate-950">
         <div className="absolute inset-0 pointer-events-none">

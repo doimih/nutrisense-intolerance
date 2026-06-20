@@ -46,6 +46,11 @@ export async function GET() {
           en: settings.pricing?.pro_plus?.en ?? { name: 'Pro+', description: '', features: [] },
         },
       },
+      tiktok: {
+        enabled: settings.tiktok?.enabled ?? false,
+        pixelId: settings.tiktok?.pixelId ?? '',
+        testEventCode: settings.tiktok?.testEventCode ?? '',
+      },
       pwa: {
         enabled: settings.pwa?.enabled ?? false,
         appName: settings.pwa?.appName ?? 'NutriAID',

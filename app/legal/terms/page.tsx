@@ -15,8 +15,8 @@ export default function TermsPage() {
     <LegalLayout
       titleRo="Termeni și Condiții de Utilizare"
       titleEn="Terms and Conditions of Use"
-      lastUpdatedRo="10 iunie 2025"
-      lastUpdatedEn="10 June 2025"
+      lastUpdatedRo="20 iunie 2026"
+      lastUpdatedEn="20 June 2026"
     >
       {isRo ? (
         <>
@@ -24,14 +24,17 @@ export default function TermsPage() {
             Acești Termeni și Condiții (&quot;Termenii&quot;) guvernează utilizarea aplicației web NutriAID Intolerances (&quot;Aplicația&quot;, &quot;Serviciul&quot;). Prin crearea unui cont sau utilizarea Aplicației, accepți integral acești Termeni. Dacă nu ești de acord, nu utiliza Aplicația.
           </p>
           <h2>1. Descrierea serviciului</h2>
-          <p>NutriAID Intolerances este o aplicație web gratuită destinată persoanelor cu intoleranțe alimentare, care permite:</p>
+          <p>NutriAID Intolerances este o aplicație web destinată persoanelor cu intoleranțe alimentare, disponibilă atât în variantă gratuită (cu funcționalități de bază), cât și în planuri de abonament plătite (Basic, Pro, Pro+). Aplicația permite:</p>
           <ul>
-            <li>Gestionarea unui profil personal cu intoleranțe și preferințe alimentare.</li>
-            <li>Generarea de recomandări generale cu caracter informativ.</li>
-            <li>Menținerea unui jurnal personal de monitorizare a simptomelor.</li>
-            <li>Vizualizarea istoricului de recomandări generate.</li>
+            <li>Gestionarea unui profil personal cu intoleranțe, alergii și preferințe alimentare.</li>
+            <li>Generarea de recomandări nutriționale, planuri de masă și rețete personalizate cu caracter informativ, via AI.</li>
+            <li>Menținerea unui jurnal personal de monitorizare a alimentației și simptomelor.</li>
+            <li>Vizualizarea istoricului de recomandări generate, cu posibilitate de export PDF.</li>
+            <li>Generarea listelor de cumpărături și utilizarea modului de gătit (Cooking Mode).</li>
+            <li>Urmărirea progresului nutrițional.</li>
+            <li>Instalarea aplicației ca aplicație nativă pe dispozitiv (PWA — Progressive Web App).</li>
           </ul>
-          <p>Serviciul are caracter exclusiv informativ și nu constituie consultanță medicală, nutrițională sau de sănătate.</p>
+          <p>Funcționalitățile disponibile variază în funcție de planul de abonament activ. Serviciul are caracter exclusiv informativ și nu constituie consultanță medicală, nutrițională sau de sănătate.</p>
           <h2>2. Eligibilitate</h2>
           <p>Pentru a utiliza Aplicația trebuie:</p>
           <ul>
@@ -67,9 +70,15 @@ export default function TermsPage() {
             <strong>NutriAID Intolerances nu este o aplicație medicală și nu furnizează sfaturi medicale.</strong>{" "}
             Orice recomandare generată are caracter general și informativ. Nu înlocuiește, sub nicio formă, consultul unui medic, alergolog, nutriționist sau alt specialist în sănătate.
           </p>
-          <h2>7. Dreptul de retragere — conținut digital (OUG nr. 34/2014)</h2>
+          <h2>7. Abonamente plătite și facturare</h2>
           <p>
-            <strong>Prin activarea unui abonament plătit, utilizatorul consimte în mod expres la livrarea imediată a conținutului digital și, în consecință, își pierde dreptul de retragere de 14 zile, în conformitate cu art. 16 lit. m) din OUG nr. 34/2014.</strong>
+            Platforma oferă planuri de abonament lunar plătit (Basic, Pro, Pro+), procesate prin Stripe. Prețurile sunt afișate pe pagina de prețuri și pot fi modificate cu notificare prealabilă de 30 de zile. Primii 100 de utilizatori înregistrați beneficiază de acces Pro gratuit ca parte a programului Early Adopter.
+          </p>
+          <p>
+            <strong>Dreptul de retragere — conținut digital (OUG nr. 34/2014):</strong> Prin activarea unui abonament plătit, utilizatorul consimte în mod expres la livrarea imediată a conținutului digital și, în consecință, își pierde dreptul de retragere de 14 zile, în conformitate cu art. 16 lit. m) din OUG nr. 34/2014.
+          </p>
+          <p>
+            Anularea abonamentului se poate efectua oricând din secțiunea Profil &gt; Facturare. Accesul la funcționalitățile plătite rămâne activ până la sfârșitul perioadei de facturare curente.
           </p>
           <h2>8. Proprietate intelectuală</h2>
           <p>Toate drepturile de proprietate intelectuală asupra Aplicației aparțin NutriAID Intolerances sau licențiatorilor săi. Datele pe care le introduci în aplicație rămân proprietatea ta.</p>
@@ -86,14 +95,17 @@ export default function TermsPage() {
             These Terms and Conditions (&quot;Terms&quot;) govern the use of the NutriAID Intolerances web application (&quot;the Application&quot;, &quot;the Service&quot;). By creating an account or using the Application, you fully accept these Terms. If you do not agree, do not use the Application.
           </p>
           <h2>1. Description of the service</h2>
-          <p>NutriAID Intolerances is a free web application for people with food intolerances, which allows:</p>
+          <p>NutriAID Intolerances is a web application for people with food intolerances, available both as a free plan (with basic features) and as paid subscription plans (Basic, Pro, Pro+). The application allows:</p>
           <ul>
-            <li>Managing a personal profile with intolerances and dietary preferences.</li>
-            <li>Generating general informational recommendations.</li>
-            <li>Maintaining a personal symptom monitoring journal.</li>
-            <li>Viewing the history of generated recommendations.</li>
+            <li>Managing a personal profile with intolerances, allergies and dietary preferences.</li>
+            <li>Generating AI-powered personalised nutritional recommendations, meal plans, and recipes for informational purposes.</li>
+            <li>Maintaining a personal journal for monitoring food intake and symptoms.</li>
+            <li>Viewing the history of generated recommendations, with PDF export capability.</li>
+            <li>Generating shopping lists and using the step-by-step Cooking Mode.</li>
+            <li>Tracking nutritional progress.</li>
+            <li>Installing the application as a native app on your device (PWA — Progressive Web App).</li>
           </ul>
-          <p>The Service is exclusively informational and does not constitute medical, nutritional or health advice.</p>
+          <p>Features available vary depending on your active subscription plan. The Service is exclusively informational and does not constitute medical, nutritional or health advice.</p>
           <h2>2. Eligibility</h2>
           <p>To use the Application you must:</p>
           <ul>
@@ -129,9 +141,15 @@ export default function TermsPage() {
             <strong>NutriAID Intolerances is not a medical application and does not provide medical advice.</strong>{" "}
             Any generated recommendation is general and informational in nature. It does not replace, in any way, consultation with a doctor, allergist, dietitian or other health specialist.
           </p>
-          <h2>7. Right of withdrawal — digital content</h2>
+          <h2>7. Paid subscriptions and billing</h2>
           <p>
-            <strong>By activating a paid subscription, the user expressly consents to the immediate delivery of digital content and consequently waives the 14-day right of withdrawal.</strong>
+            The platform offers paid monthly subscription plans (Basic, Pro, Pro+), processed through Stripe. Prices are displayed on the pricing page and may be modified with 30 days&apos; prior notice. The first 100 registered users receive free Pro access as part of the Early Adopter programme.
+          </p>
+          <p>
+            <strong>Right of withdrawal — digital content:</strong> By activating a paid subscription, the user expressly consents to the immediate delivery of digital content and consequently waives the 14-day right of withdrawal.
+          </p>
+          <p>
+            Subscription cancellation can be carried out at any time from Profile &gt; Billing. Access to paid features remains active until the end of the current billing period.
           </p>
           <h2>8. Intellectual property</h2>
           <p>All intellectual property rights over the Application belong to NutriAID Intolerances or its licensors. Data you enter in the application remains your property.</p>

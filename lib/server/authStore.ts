@@ -2,7 +2,7 @@ import "server-only";
 import { randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
 import { eq, and, ne, count } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { users, verificationTokens, passwordResetTokens } from "@/lib/db/schema";
+import { users, verificationTokens, passwordResetTokens, subscriptions, recipeUsage } from "@/lib/db/schema";
 import type { User } from "@/types/user";
 import type { UserRole } from "@/types/user";
 
@@ -12,7 +12,7 @@ const VERIFY_TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
 const RESET_TOKEN_TTL_MS = 60 * 60 * 1000; // 1 hour
 const TRIAL_DURATION_MS = 7 * 24 * 60 * 60 * 1000;
 
-export const EARLY_ADOPTER_LIMIT = 50;
+export const EARLY_ADOPTER_LIMIT = 100;
 // Pre-seed offset — testimonials on homepage represent existing users
 const EARLY_ADOPTER_SEED = 12;
 
@@ -183,6 +183,7 @@ export async function authenticateUser(
     return { status: "invalid_credentials" };
   }
   if (!row.isVerified) return { status: "email_not_verified", user: toPublicUser(row) };
+  if ((row.status ?? "active") === "suspended") return { status: "email_not_verified", user: toPublicUser(row) };
   return { status: "ok", user: toPublicUser(row) };
 }
 
@@ -290,6 +291,8 @@ export async function getUserTrialEndsAt(email: string): Promise<string | null> 
   const normalized = normalizeEmail(email);
   const row = await db.query.users.findFirst({ where: eq(users.email, normalized) });
   if (!row) return null;
+  // Early adopters have permanent free access — no trial countdown
+  if (row.earlyAdopter) return null;
   return new Date(new Date(row.createdAt).getTime() + TRIAL_DURATION_MS).toISOString();
 }
 
@@ -308,73 +311,68 @@ export type AdminUser = {
   role: string;
   isVerified: boolean;
   verifiedAt: string | null;
+  status: string;
   createdAt: string;
   updatedAt: string;
   plan: AuthPlanCode | null;
 };
 
-export async function listAllUsers(): Promise<AdminUser[]> {
-  await ensureSeededSuperadmin();
-  const rows = await db.query.users.findMany();
-  return rows.map((row) => ({
+function toAdminUser(row: typeof users.$inferSelect): AdminUser {
+  return {
     id: row.id,
     name: row.name,
     email: row.email,
     role: row.role,
     isVerified: row.isVerified,
     verifiedAt: row.verifiedAt ?? null,
+    status: (row.status ?? "active") as string,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
     plan: (row.plan as AuthPlanCode | null | undefined) ?? null,
-  }));
+  };
+}
+
+export async function listAllUsers(): Promise<AdminUser[]> {
+  await ensureSeededSuperadmin();
+  const rows = await db.query.users.findMany();
+  return rows.map(toAdminUser);
 }
 
 export async function getUserById(id: string): Promise<AdminUser | null> {
   await ensureSeededSuperadmin();
   const row = await db.query.users.findFirst({ where: eq(users.id, id) });
-  if (!row) return null;
-  return {
-    id: row.id,
-    name: row.name,
-    email: row.email,
-    role: row.role,
-    isVerified: row.isVerified,
-    verifiedAt: row.verifiedAt ?? null,
-    createdAt: row.createdAt,
-    updatedAt: row.updatedAt,
-    plan: (row.plan as AuthPlanCode | null | undefined) ?? null,
-  };
+  return row ? toAdminUser(row) : null;
 }
 
 export async function getUserByEmail(email: string): Promise<AdminUser | null> {
   const normalized = normalizeEmail(email);
   const row = await db.query.users.findFirst({ where: eq(users.email, normalized) });
-  if (!row) return null;
-  return {
-    id: row.id,
-    name: row.name,
-    email: row.email,
-    role: row.role,
-    isVerified: row.isVerified,
-    verifiedAt: row.verifiedAt ?? null,
-    createdAt: row.createdAt,
-    updatedAt: row.updatedAt,
-    plan: (row.plan as AuthPlanCode | null | undefined) ?? null,
-  };
+  return row ? toAdminUser(row) : null;
 }
 
+// Activate: unsuspend account — does NOT touch email verification
 export async function activateUserById(id: string): Promise<boolean> {
   const nowIso = new Date().toISOString();
   const result = await db.update(users)
-    .set({ isVerified: true, verifiedAt: nowIso, updatedAt: nowIso })
+    .set({ status: "active", updatedAt: nowIso })
     .where(eq(users.id, id));
   return result.count > 0;
 }
 
+// Deactivate: suspend account — does NOT touch email verification
 export async function deactivateUserById(id: string): Promise<boolean> {
   const nowIso = new Date().toISOString();
   const result = await db.update(users)
-    .set({ isVerified: false, verifiedAt: null, updatedAt: nowIso })
+    .set({ status: "suspended", updatedAt: nowIso })
+    .where(eq(users.id, id));
+  return result.count > 0;
+}
+
+// Admin manually verifies a user's email (skip the email link flow)
+export async function manuallyVerifyUserById(id: string): Promise<boolean> {
+  const nowIso = new Date().toISOString();
+  const result = await db.update(users)
+    .set({ isVerified: true, verifiedAt: nowIso, updatedAt: nowIso })
     .where(eq(users.id, id));
   return result.count > 0;
 }
@@ -483,9 +481,17 @@ export async function deleteUserById(
   if (!row) return { status: "not_found" };
   if (row.role === "superadmin") return { status: "forbidden" };
 
-  await db.delete(verificationTokens).where(eq(verificationTokens.email, row.email));
+  const email = row.email;
+  // Full cascade: remove all traces of this user from every table they own data in
+  await Promise.all([
+    db.delete(verificationTokens).where(eq(verificationTokens.email, email)),
+    db.delete(passwordResetTokens).where(eq(passwordResetTokens.email, email)),
+    db.delete(subscriptions).where(eq(subscriptions.email, email)),
+    db.delete(recipeUsage).where(eq(recipeUsage.userId, id)),
+  ]);
+  // recipes and recipeBatches are system-wide AI resources, not per-user — not deleted
   await db.delete(users).where(eq(users.id, id));
-  return { status: "deleted", email: row.email };
+  return { status: "deleted", email };
 }
 
 // ─── Early adopter ──────────────────────────────────────────────────────────

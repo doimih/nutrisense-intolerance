@@ -28,6 +28,12 @@ type AnalyticsSettings = {
   measurementId: string;
 };
 
+type TikTokSettings = {
+  enabled: boolean;
+  pixelId: string;
+  testEventCode: string;
+};
+
 type RuntimeSettings = {
   siteUrl: string;
   backendUrl: string;
@@ -39,6 +45,7 @@ type RuntimeSettings = {
     scoreThreshold: string;
   };
   analytics: AnalyticsSettings;
+  tiktok: TikTokSettings;
   pricing: {
     basic: PlanPricing;
     pro: PlanPricing;
@@ -67,6 +74,7 @@ const FALLBACK_SETTINGS: RuntimeSettings = {
   internalEmailToken: null,
   recaptcha: { enabled: false, siteKey: '', scoreThreshold: '0.5' },
   analytics: { enabled: false, measurementId: '' },
+  tiktok: { enabled: false, pixelId: '', testEventCode: '' },
   pricing: {
     basic: { ...DEFAULT_PLAN, amount: '9.99' },
     pro: { ...DEFAULT_PLAN, amount: '14.99' },
@@ -100,6 +108,7 @@ export async function getRuntimeSettings(): Promise<RuntimeSettings> {
         internalEmailToken?: string | null;
         recaptcha?: { enabled?: boolean; siteKey?: string; scoreThreshold?: string };
         analytics?: Partial<AnalyticsSettings>;
+        tiktok?: { enabled?: boolean; pixelId?: string; testEventCode?: string };
         pricing?: {
           basic?: Partial<PlanPricing>;
           pro?: Partial<PlanPricing>;
@@ -112,6 +121,7 @@ export async function getRuntimeSettings(): Promise<RuntimeSettings> {
     const appSettings = payload?.settings?.app;
     const rc = payload?.settings?.recaptcha;
     const an = payload?.settings?.analytics;
+    const tt = payload?.settings?.tiktok;
     const p = payload?.settings?.pricing;
     const pw = payload?.settings?.pwa;
     return {
@@ -127,6 +137,11 @@ export async function getRuntimeSettings(): Promise<RuntimeSettings> {
       analytics: {
         enabled: an?.enabled ?? false,
         measurementId: an?.measurementId ?? '',
+      },
+      tiktok: {
+        enabled: tt?.enabled ?? false,
+        pixelId: tt?.pixelId ?? '',
+        testEventCode: tt?.testEventCode ?? '',
       },
       pricing: {
         basic: { ...FALLBACK_SETTINGS.pricing.basic, ...p?.basic },
