@@ -1,5 +1,5 @@
 import "server-only";
-import { getUserPlan, getUserRole, getUserTrialEndsAt } from "@/lib/server/authStore";
+import { getUserPlan, getUserRole, getUserTrialEndsAt, getUserEarlyAdopterStatus } from "@/lib/server/authStore";
 import { getSubscriptionSnapshot } from "@/lib/server/subscriptionStore";
 
 export type PlanTier = "none" | "basic" | "pro" | "pro_plus" | "enterprise";
@@ -32,6 +32,9 @@ export async function getEffectivePlanTier(email: string): Promise<PlanTier> {
   }
   const authPlan = await getUserPlan(email);
   if (authPlan) return authPlan as PlanTier;
+  // Early adopters (first 100 users) get free pro access without Stripe
+  const isEarlyAdopter = await getUserEarlyAdopterStatus(email);
+  if (isEarlyAdopter) return "pro";
   const trialEndsAt = await getUserTrialEndsAt(email);
   if (trialEndsAt && new Date(trialEndsAt).getTime() > Date.now()) {
     return "pro_plus";

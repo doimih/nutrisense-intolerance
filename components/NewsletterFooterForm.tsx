@@ -11,7 +11,7 @@ const copy = {
     sending: "Se trimite...",
     success: "Te-ai abonat! Verifică email-ul.",
     error: "Adresă invalidă sau eroare. Încearcă din nou.",
-    gdpr: "Te poți dezabona oricând. Vezinoastră",
+    gdpr: "Te poți dezabona oricând. Vezi",
     privacy: "Politica de Confidențialitate",
   },
   en: {

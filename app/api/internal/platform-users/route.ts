@@ -6,6 +6,7 @@ import {
   getUserByEmail,
   activateUserById,
   deactivateUserById,
+  manuallyVerifyUserById,
   editUserById,
   setPasswordById,
   setUserPlanById,
@@ -53,7 +54,7 @@ export async function PATCH(request: NextRequest) {
 
   const body = (await request.json().catch(() => ({}))) as {
     userId?: string;
-    action?: "activate" | "deactivate" | "edit" | "set-password" | "set-plan";
+    action?: "activate" | "deactivate" | "manual-verify" | "edit" | "set-password" | "set-plan";
     name?: string;
     email?: string;
     newPassword?: string;
@@ -82,6 +83,10 @@ export async function PATCH(request: NextRequest) {
 
   if (body.action === "deactivate") {
     await deactivateUserById(body.userId);
+  }
+
+  if (body.action === "manual-verify") {
+    await manuallyVerifyUserById(body.userId);
   }
 
   if (body.action === "edit") {

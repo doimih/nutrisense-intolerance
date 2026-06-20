@@ -217,6 +217,7 @@ export async function PATCH(request: NextRequest) {
     action?:
       | 'deactivate'
       | 'activate'
+      | 'manual-verify'
       | 'reset-subscription'
       | 'upgrade'
       | 'downgrade'
@@ -243,6 +244,7 @@ export async function PATCH(request: NextRequest) {
     const frontendAction =
       body.action === 'activate' ? 'activate' :
       body.action === 'deactivate' ? 'deactivate' :
+      body.action === 'manual-verify' ? 'manual-verify' :
       body.action === 'edit' ? 'edit' :
       body.action === 'set-password' ? 'set-password' :
       null;

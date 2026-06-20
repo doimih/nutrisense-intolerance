@@ -7,6 +7,7 @@ import {
 } from '@/lib/billing/plans';
 import { readSessionToken } from '@/lib/auth/sessionToken';
 import { getStripeServerClient } from '@/lib/server/stripe';
+import { getRuntimeSettings } from '@/lib/server/runtimeSettings';
 
 type CheckoutBody = {
   planCode?: string;
@@ -63,7 +64,9 @@ export async function POST(request: NextRequest) {
   }
 
   const customerEmail = authSession.user.email.trim().toLowerCase();
-  const origin = request.nextUrl.origin;
+  const settings = await getRuntimeSettings();
+  const siteUrl = (settings.siteUrl || process.env.NEXT_PUBLIC_SITE_URL || '').replace(/\/$/, '');
+  const origin = siteUrl || request.nextUrl.origin;
 
   const checkoutSession = await stripe.checkout.sessions.create({
     mode: 'subscription',

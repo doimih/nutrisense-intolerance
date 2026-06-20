@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useMemo } from "react";
-import { History, Sparkles, ChevronRight, ChevronDown, Inbox, TrendingUp, Lock, BarChart2, CheckCircle2, XCircle, UtensilsCrossed, Lightbulb, Loader2, AlertTriangle } from "lucide-react";
+import { History, Sparkles, ChevronRight, ChevronDown, Inbox, TrendingUp, Lock, BarChart2, CheckCircle2, XCircle, UtensilsCrossed, Lightbulb, Loader2, AlertTriangle, FileDown } from "lucide-react";
 import Link from "next/link";
 import Card from "@/components/Card";
 import Badge from "@/components/Badge";
@@ -439,14 +439,25 @@ export default function HistoryPage() {
                           </Badge>
                         </div>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => handleToggleDetails(entry.id)}
-                        className="flex-shrink-0 flex items-center gap-1 text-xs text-slate-400 hover:text-green-600 dark:hover:text-green-400 transition-colors"
-                      >
-                        <span className="hidden sm:block">{isRo ? "Vezi detalii" : "View details"}</span>
-                        {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-                      </button>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <a
+                          href={`/api/guidance/history/${entry.id}/pdf`}
+                          download
+                          title={isRo ? "Descarcă PDF" : "Download PDF"}
+                          className="flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-100 hover:bg-green-100 dark:bg-slate-700 dark:hover:bg-green-900/30 text-slate-500 hover:text-green-700 dark:text-slate-400 dark:hover:text-green-400 transition-colors text-[10px] font-bold uppercase tracking-wide"
+                        >
+                          <FileDown className="w-3 h-3" />
+                          PDF
+                        </a>
+                        <button
+                          type="button"
+                          onClick={() => handleToggleDetails(entry.id)}
+                          className="flex items-center gap-1 text-xs text-slate-400 hover:text-green-600 dark:hover:text-green-400 transition-colors"
+                        >
+                          <span className="hidden sm:block">{isRo ? "Vezi detalii" : "View details"}</span>
+                          {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                        </button>
+                      </div>
                     </div>
                   </div>
 

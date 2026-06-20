@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { CreditCard, Zap, Star, Crown, AlertTriangle, CheckCircle2, Clock } from "lucide-react";
+import { CreditCard, Zap, Star, Crown, AlertTriangle, CheckCircle2, Clock, Gift, ChevronDown, ChevronUp, ArrowUpCircle } from "lucide-react";
 import Card, { CardHeader, CardTitle, CardDescription } from "@/components/Card";
 
 type PlanTier = "none" | "basic" | "pro" | "pro_plus" | "enterprise";
@@ -20,8 +20,17 @@ type SubscriptionInfo = {
   };
 };
 
+type PlanOption = {
+  code: string;
+  label: { ro: string; en: string };
+  price: { ro: string; en: string };
+  highlight?: boolean;
+  features: { ro: string[]; en: string[] };
+};
+
 type Props = {
   trialEndsAt?: string | null;
+  earlyAdopter?: boolean;
   lang: "ro" | "en";
 };
 
@@ -41,7 +50,87 @@ function daysLeft(iso: string): number {
   return Math.max(0, Math.ceil((new Date(iso).getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
 }
 
-export default function BillingSection({ trialEndsAt, lang }: Props) {
+function PlanSelector({ currentPlan, isRo, onSelect, loadingPlan }: {
+  currentPlan: string | null;
+  isRo: boolean;
+  onSelect: (code: string) => void;
+  loadingPlan: string | null;
+}) {
+  const [plans, setPlans] = useState<PlanOption[]>([]);
+
+  useEffect(() => {
+    fetch("/api/billing/plans")
+      .then((r) => r.ok ? r.json() : null)
+      .then((data: { plans?: PlanOption[] } | null) => { if (data?.plans) setPlans(data.plans); });
+  }, []);
+
+  if (plans.length === 0) {
+    return (
+      <div className="flex justify-center py-4">
+        <div className="w-24 h-3 bg-slate-100 dark:bg-slate-700 rounded animate-pulse" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      {plans.map((plan) => {
+        const isCurrent = plan.code === currentPlan;
+        const isLoading = loadingPlan === plan.code;
+        const label = plan.label[isRo ? "ro" : "en"];
+        const price = plan.price[isRo ? "ro" : "en"];
+        const features = plan.features[isRo ? "ro" : "en"];
+
+        return (
+          <div
+            key={plan.code}
+            className={`rounded-xl border p-4 transition-all ${
+              plan.highlight
+                ? "border-blue-300 dark:border-blue-700 bg-blue-50/60 dark:bg-blue-950/20"
+                : "border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30"
+            } ${isCurrent ? "ring-2 ring-green-500 dark:ring-green-400" : ""}`}
+          >
+            <div className="flex items-center justify-between mb-1">
+              <p className="text-sm font-bold text-slate-900 dark:text-white">{label}</p>
+              {plan.highlight && (
+                <span className="text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
+                  Popular
+                </span>
+              )}
+            </div>
+            <p className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-3">{price}</p>
+            <ul className="space-y-1 mb-4">
+              {features.slice(0, 3).map((f) => (
+                <li key={f} className="flex items-start gap-1.5 text-xs text-slate-600 dark:text-slate-400">
+                  <CheckCircle2 className="w-3 h-3 text-green-500 flex-shrink-0 mt-0.5" />
+                  {f}
+                </li>
+              ))}
+            </ul>
+            {isCurrent ? (
+              <div className="w-full text-center py-1.5 rounded-lg bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-xs font-semibold">
+                {isRo ? "Plan curent" : "Current plan"}
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => onSelect(plan.code)}
+                disabled={!!loadingPlan}
+                className="w-full py-1.5 rounded-lg bg-slate-800 hover:bg-slate-900 dark:bg-slate-200 dark:hover:bg-white text-white dark:text-slate-900 text-xs font-semibold transition-colors disabled:opacity-50"
+              >
+                {isLoading
+                  ? (isRo ? "Se procesează..." : "Processing...")
+                  : (isRo ? "Selectează" : "Select")}
+              </button>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+export default function BillingSection({ trialEndsAt, earlyAdopter, lang }: Props) {
   const isRo = lang === "ro";
   const [info, setInfo] = useState<SubscriptionInfo | null>(null);
   const [loading, setLoading] = useState(true);
@@ -49,6 +138,9 @@ export default function BillingSection({ trialEndsAt, lang }: Props) {
   const [cancelDone, setCancelDone] = useState(false);
   const [cancelError, setCancelError] = useState("");
   const [openingPortal, setOpeningPortal] = useState(false);
+  const [showPlanSelector, setShowPlanSelector] = useState(false);
+  const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
+  const [checkoutError, setCheckoutError] = useState("");
 
   useEffect(() => {
     fetch("/api/billing/subscription")
@@ -79,6 +171,7 @@ export default function BillingSection({ trialEndsAt, lang }: Props) {
       const body = (await r.json()) as { ok?: boolean; error?: string };
       if (!r.ok) throw new Error(body.error ?? "Cancel failed.");
       setCancelDone(true);
+      setShowPlanSelector(false);
       setInfo((prev) => prev ? { ...prev, planTier: "none", subscription: { ...prev.subscription, status: "canceled" } } : prev);
     } catch (err) {
       setCancelError(err instanceof Error ? err.message : "Eroare la anulare.");
@@ -87,11 +180,31 @@ export default function BillingSection({ trialEndsAt, lang }: Props) {
     }
   };
 
+  const handleSelectPlan = async (planCode: string) => {
+    setCheckoutLoading(planCode);
+    setCheckoutError("");
+    try {
+      const r = await fetch("/api/billing/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ planCode }),
+      });
+      const body = (await r.json()) as { url?: string; error?: string };
+      if (!r.ok) throw new Error(body.error ?? "Could not start checkout.");
+      if (body.url) window.location.href = body.url;
+    } catch (err) {
+      setCheckoutError(err instanceof Error ? err.message : "Eroare la checkout.");
+    } finally {
+      setCheckoutLoading(null);
+    }
+  };
+
   const trialActive = trialEndsAt && new Date(trialEndsAt).getTime() > Date.now();
   const trialExpired = trialEndsAt && new Date(trialEndsAt).getTime() <= Date.now();
   const hasActivePlan = info?.planTier && info.planTier !== "none";
   const isCanceled = info?.subscription.status === "canceled";
   const isPastDue = info?.subscription.status === "past_due";
+  const hasStripeSub = !!info?.subscription.stripeSubscriptionId;
 
   const meta = PLAN_META[info?.planTier ?? "none"];
   const PlanIcon = meta.icon;
@@ -108,15 +221,70 @@ export default function BillingSection({ trialEndsAt, lang }: Props) {
         </CardDescription>
       </CardHeader>
 
-      {loading ? (
+      {/* Early adopter — permanent free plan, no Stripe */}
+      {earlyAdopter && (
+        <div className="space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-green-100 dark:bg-green-900/30">
+              <Gift className="w-5 h-5 text-green-600 dark:text-green-400" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                {isRo ? "Cont Early Adopter — Pro gratuit" : "Early Adopter Account — Free Pro"}
+              </p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                {isRo ? "Acces Pro gratuit — primii 100 utilizatori" : "Free Pro access — first 100 users"}
+              </p>
+            </div>
+            <span className="ml-auto text-[10px] font-bold uppercase tracking-wide px-2 py-1 rounded-full bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300 flex-shrink-0">
+              {isRo ? "Gratuit" : "Free"}
+            </span>
+          </div>
+          <div className="flex items-start gap-2.5 p-3 rounded-lg bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800">
+            <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
+            <p className="text-sm text-green-800 dark:text-green-300">
+              {isRo
+                ? "Faci parte din primii utilizatori NutriAID. Accesul tău Pro este gratuit și permanent."
+                : "You are among the first NutriAID users. Your Pro access is free and permanent."}
+            </p>
+          </div>
+
+          {/* Early adopters can still upgrade to Pro+ */}
+          <div className="pt-1 border-t border-slate-100 dark:border-slate-700">
+            <button
+              type="button"
+              onClick={() => setShowPlanSelector((v) => !v)}
+              className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+            >
+              <ArrowUpCircle className="w-3.5 h-3.5" />
+              {isRo ? "Upgrade la Pro+" : "Upgrade to Pro+"}
+              {showPlanSelector ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+            </button>
+            {showPlanSelector && (
+              <div className="mt-3">
+                <PlanSelector
+                  currentPlan="pro"
+                  isRo={isRo}
+                  onSelect={handleSelectPlan}
+                  loadingPlan={checkoutLoading}
+                />
+                {checkoutError && (
+                  <p className="text-xs text-red-600 dark:text-red-400 mt-2">{checkoutError}</p>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {!earlyAdopter && loading ? (
         <div className="h-16 flex items-center">
           <div className="w-32 h-4 bg-slate-100 dark:bg-slate-700 rounded animate-pulse" />
         </div>
-      ) : (
+      ) : !earlyAdopter && (
         <div className="space-y-4">
           {/* Current plan badge */}
           <div className="flex items-center justify-between gap-3">
-            {/* Left: icon + description */}
             <div className="flex items-center gap-3">
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
                 info?.planTier === "enterprise" ? "bg-amber-100 dark:bg-amber-900/30" :
@@ -143,7 +311,6 @@ export default function BillingSection({ trialEndsAt, lang }: Props) {
               </div>
             </div>
 
-            {/* Right: status indicators (only when something needs attention) */}
             <div className="flex items-center gap-2 flex-shrink-0">
               {isCanceled && (
                 <span className="text-xs text-amber-600 dark:text-amber-400">
@@ -195,20 +362,37 @@ export default function BillingSection({ trialEndsAt, lang }: Props) {
             <p className="text-sm text-red-600 dark:text-red-400">{cancelError}</p>
           )}
 
-          {/* Action buttons */}
-          <div className="flex flex-wrap gap-2 pt-1">
-            {(!hasActivePlan || isCanceled) && (
-              <Link
-                href="/pricing"
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-green-600 hover:bg-green-700 text-white text-sm font-semibold transition-colors"
-              >
-                <Zap className="w-4 h-4" />
-                {isRo ? "Alege un plan" : "Choose a plan"}
-              </Link>
-            )}
+          {/* Plan selector — always visible for changing plan */}
+          <div className="border-t border-slate-100 dark:border-slate-700 pt-4">
+            <button
+              type="button"
+              onClick={() => setShowPlanSelector((v) => !v)}
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors mb-3"
+            >
+              <ArrowUpCircle className="w-4 h-4" />
+              {hasActivePlan && !isCanceled
+                ? (isRo ? "Schimbă / Upgrade plan" : "Change / Upgrade plan")
+                : (isRo ? "Alege un plan" : "Choose a plan")}
+              {showPlanSelector ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            </button>
 
-            {hasActivePlan && !isCanceled && (
-              <>
+            {showPlanSelector && (
+              <PlanSelector
+                currentPlan={hasActivePlan && !isCanceled ? (info?.planTier ?? null) : null}
+                isRo={isRo}
+                onSelect={handleSelectPlan}
+                loadingPlan={checkoutLoading}
+              />
+            )}
+            {checkoutError && (
+              <p className="text-xs text-red-600 dark:text-red-400 mt-2">{checkoutError}</p>
+            )}
+          </div>
+
+          {/* Secondary actions */}
+          {hasActivePlan && !isCanceled && (
+            <div className="flex flex-wrap gap-2">
+              {hasStripeSub && (
                 <button
                   type="button"
                   onClick={() => void handlePortal()}
@@ -218,21 +402,21 @@ export default function BillingSection({ trialEndsAt, lang }: Props) {
                   <CreditCard className="w-4 h-4" />
                   {openingPortal
                     ? (isRo ? "Se deschide..." : "Opening...")
-                    : (isRo ? "Gestionează abonamentul" : "Manage subscription")}
+                    : (isRo ? "Portal facturare" : "Billing portal")}
                 </button>
-                <button
-                  type="button"
-                  onClick={() => void handleCancel()}
-                  disabled={cancelling}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 text-sm font-medium transition-colors disabled:opacity-50"
-                >
-                  {cancelling
-                    ? (isRo ? "Se anulează..." : "Cancelling...")
-                    : (isRo ? "Anulează abonamentul" : "Cancel subscription")}
-                </button>
-              </>
-            )}
-          </div>
+              )}
+              <button
+                type="button"
+                onClick={() => void handleCancel()}
+                disabled={cancelling}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 text-sm font-medium transition-colors disabled:opacity-50"
+              >
+                {cancelling
+                  ? (isRo ? "Se anulează..." : "Cancelling...")
+                  : (isRo ? "Anulează abonamentul" : "Cancel subscription")}
+              </button>
+            </div>
+          )}
         </div>
       )}
     </Card>

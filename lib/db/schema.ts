@@ -9,6 +9,7 @@ export const users = pgTable("users", {
   salt: text("salt").notNull(),
   isVerified: boolean("is_verified").notNull(),
   verifiedAt: text("verified_at"),
+  status: text("status").notNull().default("active"), // 'active' | 'suspended'
   plan: text("plan"),
   createdAt: text("created_at").notNull(),
   updatedAt: text("updated_at").notNull(),
@@ -17,7 +18,7 @@ export const users = pgTable("users", {
   newsletterConsentAt: text("newsletter_consent_at"),
   newsletterConsentSource: text("newsletter_consent_source"), // "signup_popup" | "footer_form"
   language: text("language"), // "ro" | "en"
-  // Early adopter promotion: first 50 real users get free PRO access
+  // Early adopter promotion: first 100 real users get free PRO access
   earlyAdopter: boolean("early_adopter"),
 });
 
@@ -107,4 +108,48 @@ export const guidanceHistory = pgTable("guidance_history", {
   prompt: text("prompt").notNull(),
   monitoringEntries: jsonb("monitoring_entries").notNull(),
   result: jsonb("result").notNull(),
+});
+
+export const recipes = pgTable("recipes", {
+  id: text("id").primaryKey(),
+  titleRo: text("title_ro").notNull(),
+  titleEn: text("title_en").notNull(),
+  category: text("category").notNull(), // breakfast | lunch | dinner | snack
+  ingredientsRo: jsonb("ingredients_ro").notNull(), // {name, quantity, unit}[]
+  ingredientsEn: jsonb("ingredients_en").notNull(),
+  instructionsRo: jsonb("instructions_ro").notNull(), // {step_index, text}[]
+  instructionsEn: jsonb("instructions_en").notNull(),
+  prepTimeMinutes: integer("prep_time_minutes").notNull(),
+  difficulty: text("difficulty").notNull(), // easy | medium | hard
+  calories: integer("calories"),
+  macros: jsonb("macros"), // {protein, carbs, fats}
+  cuisine: text("cuisine"),
+  tagsRo: jsonb("tags_ro"), // string[]
+  tagsEn: jsonb("tags_en"),
+  allergens: jsonb("allergens"), // string[]
+  substitutionsRo: jsonb("substitutions_ro"), // {for, substitute_with, note}[]
+  substitutionsEn: jsonb("substitutions_en"),
+  cookingTipsRo: jsonb("cooking_tips_ro"), // string[]
+  cookingTipsEn: jsonb("cooking_tips_en"),
+  imageUrl: text("image_url"),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+});
+
+export const recipeBatches = pgTable("recipe_batches", {
+  id: serial("id").primaryKey(),
+  batchNumber: integer("batch_number").notNull(),
+  targetCount: integer("target_count").notNull(),
+  generatedCount: integer("generated_count").notNull().default(0),
+  status: text("status").notNull().default("pending"), // pending | running | completed | failed
+  startedAt: text("started_at"),
+  finishedAt: text("finished_at"),
+});
+
+export const recipeUsage = pgTable("recipe_usage", {
+  id: serial("id").primaryKey(),
+  recipeId: text("recipe_id").notNull(),
+  userId: text("user_id").notNull(),
+  usedAt: text("used_at").notNull(),
+  context: text("context"), // "meal_plan" | "cooking_mode" | "browse"
 });

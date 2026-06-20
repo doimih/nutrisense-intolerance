@@ -253,6 +253,12 @@ export type PlatformSettings = {
     enabled: boolean;
     measurementId: string;
   };
+  tiktok?: {
+    enabled: boolean;
+    pixelId: string;
+    accessToken: string;
+    testEventCode: string;
+  };
   brevo?: {
     apiKey: string;
     listIdUsers: string;

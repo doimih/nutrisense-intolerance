@@ -85,8 +85,8 @@ export default function EarlyAdopterBanner({ lang }: { lang: "ro" | "en" }) {
           {/* Headline */}
           <h2 className="text-2xl font-bold text-white leading-snug">
             {isRo
-              ? "Primii 50 utilizatori primesc acces PRO Gratuit"
-              : "First 50 users get FREE PRO access"}
+              ? "Primii 100 utilizatori primesc acces PRO Gratuit"
+              : "First 100 users get FREE PRO access"}
           </h2>
           <p className="mt-2 text-sm text-emerald-100">
             {isRo

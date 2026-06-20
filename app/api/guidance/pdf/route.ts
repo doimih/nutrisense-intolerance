@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import PDFDocument from "pdfkit";
+import path from "path";
 import { AUTH_COOKIE_NAME } from "@/lib/auth/session";
 import { readSessionToken } from "@/lib/auth/sessionToken";
 import { listGuidanceByUser } from "@/lib/server/guidance/store";
@@ -8,14 +9,20 @@ import { groupMealExamplesByDay } from "@/lib/guidance/mealGrouping";
 
 export const runtime = "nodejs";
 
-// Strip characters outside printable Latin range (pdfkit built-in fonts)
 function safeText(value: string): string {
   return value
-    .replace(/'/g, "'")
+    // curly quotes / dashes
+    .replace(/'/g, "'").replace(/'/g, "'")
     .replace(/"|"/g, '"')
-    .replace(/—/g, "-")
-    .replace(/–/g, "-")
-    .replace(/[^\x20-\x7EÀ-ž]/g, "");
+    .replace(/—/g, "-").replace(/–/g, "-")
+    // Romanian diacritics → ASCII equivalents (both Unicode and legacy forms)
+    .replace(/[ăĂ]/g, (c) => c === c.toUpperCase() ? "A" : "a")
+    .replace(/[âÂ]/g, (c) => c === c.toUpperCase() ? "A" : "a")
+    .replace(/[îÎ]/g, (c) => c === c.toUpperCase() ? "I" : "i")
+    .replace(/[șȘşŞ]/g, (c) => c === c.toUpperCase() ? "S" : "s")
+    .replace(/[țȚţŢ]/g, (c) => c === c.toUpperCase() ? "T" : "t")
+    // strip anything remaining outside printable Latin-1
+    .replace(/[^\x20-\x7E\xC0-\xFF]/g, "");
 }
 
 const PDF_LABELS = {
@@ -98,9 +105,11 @@ export async function GET(request: NextRequest) {
   const MARGIN  = 40;
   const CONTENT = PAGE_W - MARGIN * 2;
 
+  const LOGO_PATH = path.join(process.cwd(), "public", "icon-192.png");
+
   const chunks: Buffer[] = [];
   await new Promise<void>((resolve, reject) => {
-    const doc = new PDFDocument({ margin: MARGIN, size: "A4", autoFirstPage: true });
+    const doc = new PDFDocument({ margin: MARGIN, size: "A4", autoFirstPage: true, bufferPages: true });
     doc.on("data", (chunk: Buffer) => chunks.push(chunk));
     doc.on("end", resolve);
     doc.on("error", reject);
@@ -164,17 +173,22 @@ export async function GET(request: NextRequest) {
     }
 
     // ── HEADER ─────────────────────────────────────────────────────────────────
-    doc.rect(0, 0, PAGE_W, 64).fill(GREEN);
-    doc
-      .font("Helvetica-Bold")
-      .fontSize(18)
-      .fillColor(WHITE)
-      .text("NutriAID", MARGIN, 14);
-    doc
-      .font("Helvetica")
-      .fontSize(9)
-      .fillColor("#bbf7d0")
-      .text(L.subtitle, MARGIN, 37);
+    doc.rect(0, 0, PAGE_W, 70).fill(GREEN);
+
+    // Logo PNG — fallback to text if missing
+    try {
+      doc.image(LOGO_PATH, MARGIN, 11, { width: 48, height: 48 });
+      doc.font("Helvetica-Bold").fontSize(18).fillColor(WHITE)
+        .text("NutriAID", MARGIN + 56, 14, { lineBreak: false });
+      doc.font("Helvetica").fontSize(9).fillColor("#bbf7d0")
+        .text(L.subtitle, MARGIN + 56, 37, { lineBreak: false });
+    } catch {
+      doc.font("Helvetica-Bold").fontSize(18).fillColor(WHITE)
+        .text("NutriAID", MARGIN, 14);
+      doc.font("Helvetica").fontSize(9).fillColor("#bbf7d0")
+        .text(L.subtitle, MARGIN, 37);
+    }
+
     doc
       .font("Helvetica")
       .fontSize(8)

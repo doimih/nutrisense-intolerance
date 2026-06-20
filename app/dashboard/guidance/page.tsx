@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Sparkles, CheckCircle2, XCircle, UtensilsCrossed, Lightbulb, AlertTriangle, Lock, Zap, FileDown, RefreshCw } from "lucide-react";
+import { Sparkles, CheckCircle2, XCircle, UtensilsCrossed, Lightbulb, AlertTriangle, Lock, Zap, FileDown, RefreshCw, ChefHat, Loader2 } from "lucide-react";
 import Card, { CardHeader, CardTitle } from "@/components/Card";
 import Button from "@/components/Button";
 import Badge from "@/components/Badge";
@@ -16,6 +16,8 @@ import type { GuidanceResult, DetailLevel } from "@/types/guidance";
 import type { Intolerance, DietaryPreference } from "@/types/profile";
 import { INTOLERANCE_LABELS, DIETARY_PREFERENCE_LABELS } from "@/types/profile";
 import { groupMealExamplesByDay } from "@/lib/guidance/mealGrouping";
+import RecipeModal from "@/components/RecipeModal";
+import type { RecipeLocalized } from "@/types/recipes";
 
 type PlanTier = "none" | "basic" | "pro" | "pro_plus" | "enterprise";
 
@@ -69,6 +71,9 @@ export default function GuidancePage() {
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState<GuidanceResult | null>(null);
+  const [cookRecipe, setCookRecipe] = useState<RecipeLocalized | null>(null);
+  const [cookingMealKey, setCookingMealKey] = useState<string | null>(null);
+  const [recipeError, setRecipeError] = useState<string | null>(null);
   const [planTier, setPlanTier] = useState<PlanTier>("none");
   const [form, setForm] = useState({
     intolerances: [] as Intolerance[],
@@ -136,6 +141,30 @@ export default function GuidancePage() {
       setError(err instanceof Error ? err.message : fallbackMessage);
     } finally {
       setGenerating(false);
+    }
+  };
+
+  const handleCook = async (mealName: string, ingredients: string[], mealKey: string) => {
+    setCookingMealKey(mealKey);
+    setRecipeError(null);
+    try {
+      const res = await fetch("/api/recipes/from-meal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: mealName, ingredients, lang }),
+      });
+      const data = await res.json() as { recipe?: RecipeLocalized; error?: string };
+      if (!res.ok || !data.recipe) {
+        setRecipeError(data.error ?? (isRo
+          ? "Nu am putut genera rețeta. Încearcă din nou."
+          : "Could not generate the recipe. Please try again."));
+        return;
+      }
+      setCookRecipe(data.recipe);
+    } catch {
+      setRecipeError(isRo ? "Eroare de rețea. Încearcă din nou." : "Network error. Please try again.");
+    } finally {
+      setCookingMealKey(null);
     }
   };
 
@@ -361,63 +390,101 @@ export default function GuidancePage() {
                         {dayGroup.label}
                       </p>
                       <div className="space-y-2">
-                        {dayGroup.meals.map(({ mealType, label, meal }) => (
-                          <div
-                            key={mealType}
-                            className="bg-slate-50 dark:bg-slate-700/50 rounded-xl p-4"
-                          >
-                            <p className="text-[11px] font-semibold uppercase tracking-wider text-teal-600 dark:text-teal-400 mb-1">
-                              {label}
-                            </p>
-                            <p className="font-semibold text-slate-900 dark:text-white text-sm mb-2">
-                              {meal.name}
-                            </p>
-                            {(meal.ingredients ?? []).length > 0 && (
-                              <div className="flex flex-wrap gap-1.5 mb-2">
-                                {(meal.ingredients ?? []).map((ing, j) => (
-                                  <Badge key={j} variant="teal" size="sm">
-                                    {ing}
-                                  </Badge>
-                                ))}
+                        {dayGroup.meals.map(({ mealType, label, meal }) => {
+                          const mealKey = `${dayGroup.day}_${mealType}`;
+                          const isCooking = cookingMealKey === mealKey;
+                          return (
+                            <div
+                              key={mealType}
+                              className="bg-slate-50 dark:bg-slate-700/50 rounded-xl p-4"
+                            >
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-[11px] font-semibold uppercase tracking-wider text-teal-600 dark:text-teal-400 mb-1">
+                                    {label}
+                                  </p>
+                                  <p className="font-semibold text-slate-900 dark:text-white text-sm mb-2">
+                                    {meal.name}
+                                  </p>
+                                  {(meal.ingredients ?? []).length > 0 && (
+                                    <div className="flex flex-wrap gap-1.5 mb-2">
+                                      {(meal.ingredients ?? []).map((ing, j) => (
+                                        <Badge key={j} variant="teal" size="sm">
+                                          {ing}
+                                        </Badge>
+                                      ))}
+                                    </div>
+                                  )}
+                                  {meal.notes && (
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 italic">
+                                      {meal.notes}
+                                    </p>
+                                  )}
+                                </div>
+                                <button
+                                  type="button"
+                                  disabled={isCooking}
+                                  onClick={() => handleCook(meal.name, meal.ingredients ?? [], mealKey)}
+                                  className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                                >
+                                  {isCooking
+                                    ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                    : <ChefHat className="w-3.5 h-3.5" />}
+                                  {isRo ? "Gătește" : "Cook"}
+                                </button>
                               </div>
-                            )}
-                            {meal.notes && (
-                              <p className="text-xs text-slate-500 dark:text-slate-400 italic">
-                                {meal.notes}
-                              </p>
-                            )}
-                          </div>
-                        ))}
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
                   ));
                 }
 
                 // Fallback for older results without day/mealType metadata.
-                return result.mealExamples.map((meal, i) => (
-                  <div
-                    key={i}
-                    className="bg-slate-50 dark:bg-slate-700/50 rounded-xl p-4"
-                  >
-                    <p className="font-semibold text-slate-900 dark:text-white text-sm mb-2">
-                      {meal.name}
-                    </p>
-                    {(meal.ingredients ?? []).length > 0 && (
-                      <div className="flex flex-wrap gap-1.5 mb-2">
-                        {(meal.ingredients ?? []).map((ing, j) => (
-                          <Badge key={j} variant="teal" size="sm">
-                            {ing}
-                          </Badge>
-                        ))}
+                return result.mealExamples.map((meal, i) => {
+                  const mealKey = `fallback_${i}`;
+                  const isCooking = cookingMealKey === mealKey;
+                  return (
+                    <div
+                      key={i}
+                      className="bg-slate-50 dark:bg-slate-700/50 rounded-xl p-4"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-slate-900 dark:text-white text-sm mb-2">
+                            {meal.name}
+                          </p>
+                          {(meal.ingredients ?? []).length > 0 && (
+                            <div className="flex flex-wrap gap-1.5 mb-2">
+                              {(meal.ingredients ?? []).map((ing, j) => (
+                                <Badge key={j} variant="teal" size="sm">
+                                  {ing}
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
+                          {meal.notes && (
+                            <p className="text-xs text-slate-500 dark:text-slate-400 italic">
+                              {meal.notes}
+                            </p>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          disabled={isCooking}
+                          onClick={() => handleCook(meal.name, meal.ingredients ?? [], mealKey)}
+                          className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                        >
+                          {isCooking
+                            ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            : <ChefHat className="w-3.5 h-3.5" />}
+                          {isRo ? "Gătește" : "Cook"}
+                        </button>
                       </div>
-                    )}
-                    {meal.notes && (
-                      <p className="text-xs text-slate-500 dark:text-slate-400 italic">
-                        {meal.notes}
-                      </p>
-                    )}
-                  </div>
-                ));
+                    </div>
+                  );
+                });
               })()}
             </div>
             <div className="pt-2 flex justify-center">
@@ -474,6 +541,24 @@ export default function GuidancePage() {
             </a>
           </div>
         </div>
+      )}
+
+      {recipeError && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 max-w-sm w-full px-4">
+          <div className="flex items-start gap-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3 shadow-lg">
+            <span className="text-red-500 mt-0.5 flex-shrink-0">⚠</span>
+            <p className="text-sm text-red-700 dark:text-red-300 flex-1">{recipeError}</p>
+            <button onClick={() => setRecipeError(null)} className="text-red-400 hover:text-red-600 dark:hover:text-red-200 ml-2 flex-shrink-0">✕</button>
+          </div>
+        </div>
+      )}
+
+      {cookRecipe && (
+        <RecipeModal
+          recipe={cookRecipe}
+          lang={lang as "ro" | "en"}
+          onClose={() => setCookRecipe(null)}
+        />
       )}
     </div>
   );

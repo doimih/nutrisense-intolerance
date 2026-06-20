@@ -17,6 +17,8 @@ const WORKER_IDS = [
   'allergy-checker',
   'meal-plan-generator',
   'recipe-builder',
+  'recipe-batch-generator',
+  'recipe-instruction',
   'shopping-list',
   'supplement-advisor',
   'progress-tracking',

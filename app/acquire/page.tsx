@@ -128,8 +128,8 @@ export default async function AcquisitionPortalPage() {
     { label: isRo ? "Preț de Achiziție" : "Asking Price", value: "€50k–€120k" },
     { label: isRo ? "Cost de Reconstrucție" : "Rebuild Cost", value: "€108,000+" },
     { label: isRo ? "Infrastructură/Lună" : "Monthly Infra", value: "<€200" },
-    { label: isRo ? "Agenți AI" : "AI Workers", value: "10 Specialists" },
-    { label: isRo ? "Planuri de Abonament" : "Subscription Plans", value: "3 Tiers" },
+    { label: isRo ? "Agenți AI" : "AI Workers", value: "10 Workers" },
+    { label: isRo ? "Planuri de Abonament" : "Subscription Plans", value: "3 Tiers + EA" },
     { label: isRo ? "Timp de Instalare" : "Deploy Time", value: "<1 Hour" },
   ];
 
@@ -191,6 +191,20 @@ export default async function AcquisitionPortalPage() {
         ? "Sistem de newsletter integrat cu Brevo (Sendinblue). Utilizatorii se pot abona printr-un popup inteligent post-înregistrare sau din formularul din footer. Consimțământul este înregistrat cu timestamp și sursă pentru conformitate GDPR completă. Segmentare separată pentru utilizatori înregistrați și abonați publici — totul gestionat din tab-ul Brevo din consola admin."
         : "Integrated Brevo (Sendinblue) newsletter system. Users can opt in via a smart post-signup popup or the site-wide footer form. Consent is recorded with timestamp and source for full GDPR compliance. Separate list segmentation for registered users vs. public subscribers — all managed from the Brevo Settings tab in the admin console.",
     },
+    {
+      icon: Rocket,
+      title: isRo ? "Modul Rețete & Cooking Mode" : "Recipes Module & Cooking Mode",
+      description: isRo
+        ? "Modul complet de rețete: generare AI cu RecipeModal, salvare rețete în cont, batches pentru regenerare multiplă, modul de gătit pas cu pas (CookingMode) optimizat pentru ecran complet, pagină dedicată în dashboard. Trei tabele DB noi: recipes, recipeBatches, recipeUsage — complet integrate în profilul de intoleranțe al utilizatorului."
+        : "Full recipes module: AI generation via RecipeModal, per-user saved recipes, batch regeneration, step-by-step full-screen Cooking Mode, dedicated dashboard page. Three new DB tables: recipes, recipeBatches, recipeUsage — fully integrated with the user's intolerance profile.",
+    },
+    {
+      icon: TrendingUp,
+      title: isRo ? "TikTok Pixel & Early Adopter" : "TikTok Pixel & Early Adopter",
+      description: isRo
+        ? "Integrare TikTok Pixel configurabilă din admin — activat doar cu consimțământ explicit GDPR. Program Early Adopter: primii 100 de utilizatori înregistrați primesc acces Pro gratuit cu banner dedicat în dashboard. Onboarding Modal ghidează noii utilizatori prin completarea profilului imediat după înregistrare."
+        : "Admin-configurable TikTok Pixel integration — fires only after explicit GDPR consent. Early Adopter programme: first 100 registered users receive free Pro access with a dedicated dashboard banner. Onboarding Modal guides new users through profile setup immediately after registration.",
+    },
   ];
 
   // ── Documentation sections ──────────────────────────────────────────────────
@@ -214,13 +228,13 @@ export default async function AcquisitionPortalPage() {
         {
           title: "Product Overview",
           description:
-            "Full product specification: every end-user feature, every admin capability, the billing tiers (Basic / Pro / Pro+), GDPR posture, i18n, PWA, 2FA, and the complete feature-to-plan mapping.",
+            "Full product specification: every end-user feature (guidance, journal, history, recipes, cooking mode, shopping list, progress, PDF export, PWA), every admin capability, billing tiers (Basic / Pro / Pro+ / Early Adopter), GDPR posture (TikTok Pixel consent, newsletter consent audit, data export/delete), i18n RO/EN, 2FA, and the complete feature-to-plan mapping.",
           file: "Product-Overview.pdf",
         },
         {
           title: "Unique Selling Points",
           description:
-            "A structured comparison of the 13 capabilities that no competing nutrition app ships: AI orchestration, self-healing output validation, advanced food comfort-pattern detection, GEO-localization engine, zero-code admin, multi-model support, Brevo newsletter system, and more.",
+            "A structured comparison of the 15+ capabilities that no competing nutrition app ships: AI orchestration, self-healing output validation, advanced food comfort-pattern detection, GEO-localisation engine, zero-code admin, multi-model support (OpenAI / Gemini / Claude / any OpenAI-compatible endpoint), Brevo newsletter system with GDPR consent audit trail, full recipes module with Cooking Mode, TikTok Pixel integration with consent gating, Early Adopter programme, and more.",
           file: "Unique-Selling-Points.pdf",
         },
         {
@@ -237,8 +251,8 @@ export default async function AcquisitionPortalPage() {
       label: isRo ? "Tehnic" : "Technical",
       title: isRo ? "Documentație Tehnică" : "Technical Documentation",
       description: isRo
-        ? "Nouă documente care acoperă întregul stack de inginerie — de la arhitectura sistemului la subsistemele AI individuale, suprafața API și schema bazei de date. Redactate pentru ingineri seniori care efectuează due diligence tehnic."
-        : "Nine documents covering the full engineering stack — from system architecture to individual AI subsystems, API surface, and database schema. Written for senior engineers conducting technical due diligence.",
+        ? "Nouă documente care acoperă întregul stack de inginerie — de la arhitectura sistemului la subsistemele AI individuale, modulul de rețete, suprafața API, schema bazei de date (11 tabele). Redactate pentru ingineri seniori care efectuează due diligence tehnic."
+        : "Nine documents covering the full engineering stack — from system architecture to individual AI subsystems, the recipes module, API surface, and database schema (11 tables). Written for senior engineers conducting technical due diligence.",
       docs: [
         {
           title: "Architecture Report",
@@ -274,7 +288,7 @@ export default async function AcquisitionPortalPage() {
         {
           title: "Worker Orchestration Documentation",
           description:
-            "Complete specification of all 10 AI workers: Profile Analyzer, Intolerance Checker, Allergy Checker, Meal Plan Generator, Recipe Builder, Nutrition Calculator, Medical Safety, Supplement Advisor, Progress Tracker, Shopping List — schemas, validation rules, and routing logic.",
+            "Complete specification of all 10 AI workers: Profile Analyzer, Intolerance Checker, Allergy Checker, Meal Plan Generator, Recipe Builder (powers the Recipes module), Nutrition Calculator, Medical Safety, Supplement Advisor, Progress Tracker, Shopping List — schemas, validation rules, and routing logic.",
           file: "Worker-Orchestration.pdf",
         },
         {
@@ -293,7 +307,7 @@ export default async function AcquisitionPortalPage() {
         {
           title: "Database Schema Report",
           description:
-            "PostgreSQL schema documentation: all 8 tables (users, userProfiles, monitoringEntries, userProblems, subscriptions, guidanceHistory, verificationTokens, passwordResetTokens) with column types, constraints, and index strategy. Includes 4 new newsletter columns on the users table: newsletter_opt_in, newsletter_consent_at, newsletter_consent_source, language.",
+            "PostgreSQL schema documentation: all 11 tables (users, userProfiles, monitoringEntries, userProblems, subscriptions, guidanceHistory, verificationTokens, passwordResetTokens, recipes, recipeBatches, recipeUsage) with column types, constraints, and index strategy. Includes newsletter columns on users table (newsletter_opt_in, newsletter_consent_at, newsletter_consent_source, language) and the complete recipes module schema.",
           file: "Database-Schema-Report.pdf",
         },
       ],
@@ -555,8 +569,8 @@ export default async function AcquisitionPortalPage() {
           </h2>
           <p className="mb-12 max-w-2xl text-base text-slate-600">
             {isRo
-              ? "Șase secțiuni, 30+ documente. Tot ce are nevoie un cumpărător calificat pentru due diligence tehnic, financiar și legal complet."
-              : "Six sections, 30+ documents. Everything a qualified buyer needs for complete technical, financial, and legal due diligence."}
+              ? "Șase secțiuni, 30+ documente. Tot ce are nevoie un cumpărător calificat pentru due diligence tehnic, financiar și legal complet — incluzând documentație actualizată pentru modulul de rețete, TikTok Pixel, programul Early Adopter și schema DB cu 11 tabele."
+              : "Six sections, 30+ documents. Everything a qualified buyer needs for complete technical, financial, and legal due diligence — including updated documentation for the recipes module, TikTok Pixel integration, Early Adopter programme, and 11-table database schema."}
           </p>
 
           {/* Section nav */}
@@ -626,10 +640,13 @@ export default async function AcquisitionPortalPage() {
               "Google reCAPTCHA v3",
               "Nodemailer SMTP",
               "Brevo Newsletter",
+              "TikTok Pixel",
               "S3-compatible Backup",
               "PWA (Web App Manifest)",
               "i18n RO / EN",
-              "PDF Export",
+              "PDF Export (Guidance + History)",
+              "Early Adopter Programme",
+              "Onboarding Modal",
               "GDPR Compliant",
             ].map((tech) => (
               <span

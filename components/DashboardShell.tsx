@@ -17,6 +17,7 @@ import {
   ShieldCheck,
   Shield,
   Briefcase,
+  UtensilsCrossed,
 } from "lucide-react";
 import clsx from "clsx";
 import { getSessionUser, logout } from "@/lib/api/auth";
@@ -146,6 +147,10 @@ export default function DashboardShell({ children }: { children: React.ReactNode
   }, []);
 
   const canSeeAcquisition = isSuperadmin || currentUser?.email === "visitor@nutriaid.eu";
+  const canSeeRecipes = isSuperadmin ||
+    currentUser?.plan === "pro_plus" ||
+    currentUser?.earlyAdopter ||
+    !currentUser?.plan;
 
   const navItems = [
     { href: "/dashboard", icon: LayoutDashboard, label: copy.nav.dashboard, exact: true },
@@ -153,6 +158,9 @@ export default function DashboardShell({ children }: { children: React.ReactNode
     { href: "/dashboard/guidance", icon: Sparkles, label: isRo ? "Recomandari" : "Guidance" },
     { href: "/dashboard/history", icon: History, label: isRo ? "Istoric" : "History" },
     { href: "/dashboard/monitoring", icon: BookOpen, label: isRo ? "Jurnal" : "Journal" },
+    ...(canSeeRecipes
+      ? [{ href: "/dashboard/recipes", icon: UtensilsCrossed, label: isRo ? "Rețete" : "Recipes" }]
+      : []),
     ...(canSeeAcquisition
       ? [{ href: "/acquire", icon: Briefcase, label: isRo ? "Achiziție" : "Acquisition" }]
       : []),

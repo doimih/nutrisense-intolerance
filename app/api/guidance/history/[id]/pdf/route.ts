@@ -1,0 +1,325 @@
+import { NextRequest, NextResponse } from "next/server";
+import PDFDocument from "pdfkit";
+import path from "path";
+import { AUTH_COOKIE_NAME } from "@/lib/auth/session";
+import { readSessionToken } from "@/lib/auth/sessionToken";
+import { getGuidanceByIdForUser } from "@/lib/server/guidance/store";
+import { isAppLanguage } from "@/lib/i18n/config";
+import { groupMealExamplesByDay } from "@/lib/guidance/mealGrouping";
+
+export const runtime = "nodejs";
+
+function safeText(value: string): string {
+  return value
+    .replace(/'/g, "'").replace(/'/g, "'")
+    .replace(/"|"/g, '"')
+    .replace(/—/g, "-").replace(/–/g, "-")
+    .replace(/[ăĂ]/g, (c) => c === c.toUpperCase() ? "A" : "a")
+    .replace(/[âÂ]/g, (c) => c === c.toUpperCase() ? "A" : "a")
+    .replace(/[îÎ]/g, (c) => c === c.toUpperCase() ? "I" : "i")
+    .replace(/[șȘşŞ]/g, (c) => c === c.toUpperCase() ? "S" : "s")
+    .replace(/[țȚţŢ]/g, (c) => c === c.toUpperCase() ? "T" : "t")
+    .replace(/[^\x20-\x7E\xC0-\xFF]/g, "");
+}
+
+const PDF_LABELS = {
+  ro: {
+    subtitle: "Raport personalizat de sensibilitati alimentare",
+    detailLevel: "Nivel detaliu",
+    source: "Sursa",
+    detailLabels: { basic: "De baza", detailed: "Detaliat", comprehensive: "Complet" },
+    fallbackSource: "Analiza deterministica (AI indisponibil)",
+    recommendedFoods: "Alimente recomandate",
+    avoidFoods: "Alimente de evitat",
+    mealExamples: "Exemple de mese",
+    tipsTitle: "Sfaturi si observatii",
+    warnings: "Avertismente",
+    disclaimerLabel: "DISCLAIMER MEDICAL",
+    defaultDisclaimer: "Acest raport descrie corelatii observate in jurnalul alimentar si nu reprezinta sfat medical. Nu inlocuieste consultatia unui medic sau nutritionist.",
+    filename: "nutriaid_raport",
+  },
+  en: {
+    subtitle: "Personalised food sensitivity report",
+    detailLevel: "Detail level",
+    source: "Source",
+    detailLabels: { basic: "Basic", detailed: "Detailed", comprehensive: "Comprehensive" },
+    fallbackSource: "Deterministic analysis (AI unavailable)",
+    recommendedFoods: "Recommended foods",
+    avoidFoods: "Foods to avoid",
+    mealExamples: "Meal examples",
+    tipsTitle: "Tips and observations",
+    warnings: "Warnings",
+    disclaimerLabel: "MEDICAL DISCLAIMER",
+    defaultDisclaimer: "This report describes correlations observed in the food journal and does not constitute medical advice. It does not replace consultation with a doctor or dietitian.",
+    filename: "nutriaid_report",
+  },
+} as const;
+
+const GREEN       = "#16a34a";
+const GREEN_LIGHT = "#dcfce7";
+const RED_DARK    = "#b91c1c";
+const RED_LIGHT   = "#fee2e2";
+const TEAL        = "#0d9488";
+const TEAL_LIGHT  = "#ccfbf1";
+const AMBER       = "#d97706";
+const AMBER_LIGHT = "#fef3c7";
+const SLATE       = "#334155";
+const SLATE_LIGHT = "#f8fafc";
+const BORDER      = "#e2e8f0";
+const WHITE       = "#ffffff";
+const GRAY        = "#64748b";
+
+export async function GET(
+  request: NextRequest,
+  context: { params: { id: string } }
+) {
+  const token = request.cookies.get(AUTH_COOKIE_NAME)?.value;
+  const session = token ? await readSessionToken(token) : null;
+  if (!session) {
+    return NextResponse.json({ error: "Authentication required." }, { status: 401 });
+  }
+
+  const item = await getGuidanceByIdForUser(session.user.email, context.params.id);
+  if (!item) {
+    return NextResponse.json({ error: "Guidance entry not found." }, { status: 404 });
+  }
+
+  const rawLang = request.cookies.get("ns_lang")?.value;
+  const lang = isAppLanguage(rawLang) ? rawLang : "ro";
+  const L = PDF_LABELS[lang];
+  const dateLocale = lang === "ro" ? "ro-RO" : "en-GB";
+
+  const email = session.user.email.trim().toLowerCase();
+  const userName = session.user.name?.trim() || "";
+  const latest = item.result;
+  const generatedAt = item.generatedAt;
+
+  const PAGE_W = 595.28;
+  const MARGIN  = 40;
+  const CONTENT = PAGE_W - MARGIN * 2;
+
+  const LOGO_PATH = path.join(process.cwd(), "public", "icon-192.png");
+
+  const chunks: Buffer[] = [];
+  await new Promise<void>((resolve, reject) => {
+    const doc = new PDFDocument({ margin: MARGIN, size: "A4", autoFirstPage: true, bufferPages: true });
+    doc.on("data", (chunk: Buffer) => chunks.push(chunk));
+    doc.on("end", resolve);
+    doc.on("error", reject);
+
+    function sectionBar(title: string, color: string, startY: number): number {
+      const BAR_H = 26;
+      doc.rect(MARGIN, startY, CONTENT, BAR_H).fill(color);
+      doc
+        .font("Helvetica-Bold")
+        .fontSize(11)
+        .fillColor(WHITE)
+        .text(safeText(title), MARGIN + 10, startY + 7, { width: CONTENT - 20, lineBreak: false });
+      return startY + BAR_H + 8;
+    }
+
+    function colBar(title: string, color: string, x: number, w: number, startY: number): number {
+      const BAR_H = 24;
+      doc.rect(x, startY, w, BAR_H).fill(color);
+      doc
+        .font("Helvetica-Bold")
+        .fontSize(10)
+        .fillColor(WHITE)
+        .text(safeText(title), x + 8, startY + 6, { width: w - 16, lineBreak: false });
+      return startY + BAR_H + 8;
+    }
+
+    function foodTags(
+      foods: string[],
+      x: number,
+      y: number,
+      colWidth: number,
+      bg: string,
+      fg: string
+    ): number {
+      let cx = x;
+      let cy = y;
+      for (const food of foods) {
+        const label = safeText(food);
+        const tw = Math.min(doc.font("Helvetica").fontSize(9).widthOfString(label) + 14, colWidth);
+        if (cx + tw > x + colWidth) {
+          cx = x;
+          cy += 22;
+        }
+        doc.rect(cx, cy, tw, 16).fill(bg);
+        doc.font("Helvetica").fontSize(9).fillColor(fg).text(label, cx + 7, cy + 3, {
+          width: tw - 14,
+          lineBreak: false,
+        });
+        cx += tw + 5;
+      }
+      return cy + 22;
+    }
+
+    // HEADER
+    doc.rect(0, 0, PAGE_W, 70).fill(GREEN);
+    try {
+      doc.image(LOGO_PATH, MARGIN, 11, { width: 48, height: 48 });
+      doc.font("Helvetica-Bold").fontSize(18).fillColor(WHITE)
+        .text("NutriAID", MARGIN + 56, 14, { lineBreak: false });
+      doc.font("Helvetica").fontSize(9).fillColor("#bbf7d0")
+        .text(L.subtitle, MARGIN + 56, 37, { lineBreak: false });
+    } catch {
+      doc.font("Helvetica-Bold").fontSize(18).fillColor(WHITE).text("NutriAID", MARGIN, 14);
+      doc.font("Helvetica").fontSize(9).fillColor("#bbf7d0").text(L.subtitle, MARGIN, 37);
+    }
+    doc
+      .font("Helvetica")
+      .fontSize(8)
+      .fillColor(WHITE)
+      .text(
+        new Date(generatedAt).toLocaleDateString(dateLocale, {
+          day: "2-digit",
+          month: "long",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+        MARGIN,
+        37,
+        { width: CONTENT, align: "right" }
+      );
+
+    // META BAR
+    const detailLabel = L.detailLabels[latest.detailLevel as keyof typeof L.detailLabels] ?? "";
+    const metaY = 72;
+    doc.rect(MARGIN, metaY, CONTENT, 36).fill(SLATE_LIGHT).stroke(BORDER);
+    doc.font("Helvetica-Bold").fontSize(9.5).fillColor(SLATE).text(safeText(userName), MARGIN + 10, metaY + 6, { lineBreak: false });
+    doc.font("Helvetica").fontSize(8).fillColor(GRAY).text(email, MARGIN + 10, metaY + 20, { lineBreak: false });
+    const srcLabel = latest.source === "fallback" ? L.fallbackSource : "AI — GPT-4o";
+    const srcColor = latest.source === "fallback" ? AMBER : GREEN;
+    doc.font("Helvetica-Oblique").fontSize(8).fillColor(srcColor).text(`${L.source}: ${srcLabel}`, MARGIN + 10, metaY + 6, { width: CONTENT - 20, align: "right" });
+    if (detailLabel) {
+      doc.font("Helvetica").fontSize(8).fillColor(GRAY).text(`${L.detailLevel}: ${detailLabel}`, MARGIN + 10, metaY + 20, { width: CONTENT - 20, align: "right" });
+    }
+
+    let curY = metaY + 52;
+
+    // 2-COLUMN FOODS
+    const COL_GAP = 12;
+    const COL_W   = (CONTENT - COL_GAP) / 2;
+    const leftX   = MARGIN;
+    const rightX  = MARGIN + COL_W + COL_GAP;
+
+    const colTagsStartY = colBar(L.recommendedFoods, GREEN,    leftX,  COL_W, curY);
+                          colBar(L.avoidFoods,        RED_DARK, rightX, COL_W, curY);
+    curY = colTagsStartY;
+
+    const recFoods   = latest.recommendedFoods ?? [];
+    const avoidFoods = latest.avoidFoods ?? [];
+
+    const recEndY   = foodTags(recFoods,   leftX,  curY, COL_W, GREEN_LIGHT, GREEN);
+    const avoidEndY = foodTags(avoidFoods, rightX, curY, COL_W, RED_LIGHT,   RED_DARK);
+
+    curY = Math.max(recEndY, avoidEndY) + 16;
+
+    // MEAL EXAMPLES
+    const mealExamples = latest.mealExamples ?? [];
+    if (mealExamples.length > 0) {
+      if (curY > doc.page.height - 180) { doc.addPage(); curY = MARGIN; }
+
+      curY = sectionBar(L.mealExamples, TEAL, curY);
+
+      const drawMealBox = (meal: { name: string; ingredients?: string[]; notes?: string }, mealTypeLabel?: string): void => {
+        const estimatedH = 14 + (mealTypeLabel ? 12 : 0) + 22 * Math.ceil((meal.ingredients ?? []).length / 4) + (meal.notes ? 14 : 0) + 24;
+        if (curY + estimatedH > doc.page.height - MARGIN - 60) { doc.addPage(); curY = MARGIN; }
+
+        doc.rect(MARGIN, curY, CONTENT, estimatedH).fill(SLATE_LIGHT).stroke(BORDER);
+
+        let titleY = curY + 9;
+        if (mealTypeLabel) {
+          doc.font("Helvetica-Bold").fontSize(7.5).fillColor(TEAL).text(safeText(mealTypeLabel.toUpperCase()), MARGIN + 12, titleY, { width: CONTENT - 24, lineBreak: false });
+          titleY += 11;
+        }
+        doc.font("Helvetica-Bold").fontSize(10).fillColor(SLATE).text(safeText(meal.name), MARGIN + 12, titleY, { width: CONTENT - 24, lineBreak: false });
+
+        let tx = MARGIN + 12;
+        let ty = titleY + 16;
+        for (const ing of meal.ingredients ?? []) {
+          const label = safeText(ing);
+          const tw = Math.min(doc.font("Helvetica").fontSize(8.5).widthOfString(label) + 12, COL_W);
+          if (tx + tw > MARGIN + CONTENT - 12) { tx = MARGIN + 12; ty += 20; }
+          doc.rect(tx, ty, tw, 15).fill(TEAL_LIGHT);
+          doc.font("Helvetica").fontSize(8.5).fillColor(TEAL).text(label, tx + 6, ty + 3, { width: tw - 12, lineBreak: false });
+          tx += tw + 5;
+        }
+
+        if (meal.notes) {
+          doc.font("Helvetica-Oblique").fontSize(8).fillColor(GRAY).text(safeText(meal.notes), MARGIN + 12, ty + 20, { width: CONTENT - 24 });
+        }
+
+        curY += estimatedH + 8;
+      };
+
+      const groupedMeals = groupMealExamplesByDay(mealExamples, lang);
+      if (groupedMeals) {
+        for (const dayGroup of groupedMeals) {
+          if (curY > doc.page.height - 100) { doc.addPage(); curY = MARGIN; }
+          doc.font("Helvetica-Bold").fontSize(10).fillColor(SLATE).text(safeText(dayGroup.label), MARGIN, curY, { width: CONTENT, lineBreak: false });
+          curY += 16;
+          for (const { label, meal } of dayGroup.meals) { drawMealBox(meal, label); }
+        }
+      } else {
+        for (const meal of mealExamples) { drawMealBox(meal); }
+      }
+
+      curY += 8;
+    }
+
+    // GENERAL TIPS
+    const tips = latest.generalTips ?? [];
+    if (tips.length > 0) {
+      if (curY > doc.page.height - 120) { doc.addPage(); curY = MARGIN; }
+      curY = sectionBar(L.tipsTitle, "#0f766e", curY);
+      for (const tip of tips) {
+        const text = `• ${safeText(tip)}`;
+        const lineH = doc.font("Helvetica").fontSize(9).heightOfString(text, { width: CONTENT - 24 });
+        if (curY + lineH + 8 > doc.page.height - MARGIN - 60) { doc.addPage(); curY = MARGIN; }
+        doc.font("Helvetica").fontSize(9).fillColor(SLATE).text(text, MARGIN + 12, curY, { width: CONTENT - 24 });
+        curY += lineH + 6;
+      }
+      curY += 8;
+    }
+
+    // WARNINGS
+    const warnings = latest.warnings ?? [];
+    if (warnings.length > 0) {
+      if (curY > doc.page.height - 100) { doc.addPage(); curY = MARGIN; }
+      curY = sectionBar(L.warnings, AMBER, curY);
+      for (const w of warnings) {
+        doc.font("Helvetica-Oblique").fontSize(9).fillColor(AMBER).text(`! ${safeText(w)}`, MARGIN + 12, curY, { width: CONTENT - 24 });
+        curY += 16;
+      }
+      curY += 8;
+    }
+
+    // DISCLAIMER
+    const disclaimer = safeText(latest.disclaimer || L.defaultDisclaimer);
+    const discH = doc.font("Helvetica").fontSize(8).heightOfString(disclaimer, { width: CONTENT - 24 }) + 28;
+    if (curY + discH > doc.page.height - MARGIN) { doc.addPage(); curY = MARGIN; }
+
+    doc.rect(MARGIN, curY, CONTENT, discH).fill(AMBER_LIGHT).stroke("#fcd34d");
+    doc.font("Helvetica-Bold").fontSize(8).fillColor("#92400e").text(L.disclaimerLabel, MARGIN + 12, curY + 8);
+    doc.font("Helvetica").fontSize(8).fillColor("#78350f").text(disclaimer, MARGIN + 12, curY + 20, { width: CONTENT - 24 });
+
+    doc.end();
+  });
+
+  const pdfBuffer = Buffer.concat(chunks);
+  const dateStr = new Date(generatedAt).toISOString().slice(0, 10);
+  const filename = `${L.filename}_${dateStr}.pdf`;
+
+  return new NextResponse(pdfBuffer, {
+    status: 200,
+    headers: {
+      "Content-Type": "application/pdf",
+      "Content-Disposition": `attachment; filename="${filename}"`,
+      "Content-Length": pdfBuffer.length.toString(),
+    },
+  });
+}

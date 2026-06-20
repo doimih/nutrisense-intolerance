@@ -289,6 +289,71 @@ const DEFAULT_WORKERS: WorkerDefinition[] = [
     outputSchema: workerOutputSchema,
     enabled: true,
   },
+  {
+    id: 'recipe-batch-generator',
+    name: 'Recipe Batch Generator Worker',
+    description: 'Generates batches of bilingual healthy recipes (RO+EN) for the NutriAID recipe library.',
+    prompt:
+      'Generate a batch of complete, healthy bilingual recipes. CRITICAL RULES: ingredients must match the title exactly, vegetables must be listed explicitly with realistic quantities, proteins must appear, prep time 10-60 min, calories 200-800. Return a JSON array with title_en, title_ro, category, ingredients_en, ingredients_ro, prep_time_minutes, difficulty, calories, macros, cuisine, tags_en, tags_ro, allergens, substitutions_en, substitutions_ro.',
+    inputSchema: `{
+  "batchSize": "number",
+  "existingTitles": ["string"],
+  "cuisineHints": ["string (optional)"]
+}`,
+    outputSchema: `{
+  "worker": "recipe-batch-generator",
+  "status": "success | warning | error",
+  "data": {
+    "recipes": [
+      {
+        "title_en": "string",
+        "title_ro": "string",
+        "category": "breakfast | lunch | dinner | snack",
+        "ingredients_en": [{"name": "string", "quantity": "string", "unit": "string"}],
+        "ingredients_ro": [{"name": "string", "quantity": "string", "unit": "string"}],
+        "prep_time_minutes": 0,
+        "difficulty": "easy | medium | hard",
+        "calories": 0,
+        "macros": {"protein": 0, "carbs": 0, "fats": 0},
+        "cuisine": "string",
+        "allergens": ["string"]
+      }
+    ],
+    "batchSize": 0
+  },
+  "notes": []
+}`,
+    enabled: true,
+  },
+  {
+    id: 'recipe-instruction',
+    name: 'Recipe Instruction Worker',
+    description: 'Generates detailed bilingual step-by-step cooking instructions for a given recipe.',
+    prompt:
+      'Generate detailed cooking instructions for the provided recipe in both Romanian and English. CRITICAL RULES: reference EVERY ingredient in the steps, include wash/peel/cut steps for vegetables, include preparation + heat/temp for proteins, minimum 5 steps easy / 6-8 medium / 8-10 hard, Romanian must be natural not literal translation. Return instructions_en, instructions_ro, substitutions_en, substitutions_ro, cooking_tips_en, cooking_tips_ro.',
+    inputSchema: `{
+  "titleEn": "string",
+  "titleRo": "string",
+  "ingredientsEn": [{"name": "string", "quantity": "string", "unit": "string"}],
+  "ingredientsRo": [{"name": "string", "quantity": "string", "unit": "string"}],
+  "prepTimeMinutes": "number",
+  "difficulty": "easy | medium | hard"
+}`,
+    outputSchema: `{
+  "worker": "recipe-instruction",
+  "status": "success | warning | error",
+  "data": {
+    "instructions_en": [{"step_index": 1, "text": "string"}],
+    "instructions_ro": [{"step_index": 1, "text": "string"}],
+    "substitutions_en": [{"for": "string", "substitute_with": "string", "note": "string"}],
+    "substitutions_ro": [{"for": "string", "substitute_with": "string", "note": "string"}],
+    "cooking_tips_en": ["string"],
+    "cooking_tips_ro": ["string"]
+  },
+  "notes": []
+}`,
+    enabled: true,
+  },
 ];
 
 export default function AIBrainSettings() {

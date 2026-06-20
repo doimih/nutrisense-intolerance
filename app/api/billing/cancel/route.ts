@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { AUTH_COOKIE_NAME } from "@/lib/auth/session";
 import { readSessionToken } from "@/lib/auth/sessionToken";
 import { getSubscriptionSnapshot, upsertSubscriptionSnapshot } from "@/lib/server/subscriptionStore";
-import { removeUserPlan } from "@/lib/server/authStore";
+import { removeUserPlan, getUserPlan } from "@/lib/server/authStore";
 import { getStripeServerClient } from "@/lib/server/stripe";
 
 export const runtime = "nodejs";
@@ -17,7 +17,17 @@ export async function POST(request: NextRequest) {
   const email = session.user.email.trim().toLowerCase();
   const snapshot = await getSubscriptionSnapshot(email);
 
-  if (!snapshot || (snapshot.status !== "active" && snapshot.status !== "trialing")) {
+  // If no snapshot but user has a plan set directly (e.g. manually granted), allow removal
+  if (!snapshot) {
+    const currentPlan = await getUserPlan(email);
+    if (!currentPlan) {
+      return NextResponse.json({ error: "No active subscription to cancel." }, { status: 400 });
+    }
+    await removeUserPlan(email);
+    return NextResponse.json({ ok: true, message: "Subscription cancelled." });
+  }
+
+  if (snapshot.status !== "active" && snapshot.status !== "trialing") {
     return NextResponse.json({ error: "No active subscription to cancel." }, { status: 400 });
   }
 

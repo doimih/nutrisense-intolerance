@@ -21,6 +21,8 @@ export async function GET(request: NextRequest) {
       filesUploaded: (e.metadata?.filesUploaded as number) ?? null,
       prefix: (e.metadata?.prefix as string) ?? null,
       schedule: (e.metadata?.schedule as string) ?? null,
+      type: (e.metadata?.type as string) ?? 'db',
+      deletedCount: (e.metadata?.deletedCount as number) ?? 0,
     }));
 
   return NextResponse.json({ history: backupEvents });
