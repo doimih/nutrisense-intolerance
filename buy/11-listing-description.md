@@ -10,19 +10,19 @@
 **Titlu A (beneficiu + AI):**
 ```
 AI-Powered Food Intolerance SaaS Platform — Next.js 14, 
-11-Worker AI Orchestrator, Full Admin Console, Stripe — Ready to Deploy
+11-Worker AI Orchestrator, Recipe Module, GEO Engine, Stripe — Ready to Deploy
 ```
 
 **Titlu B (cifre + specificitate):**
 ```
-NutriAID: Food Intolerance SaaS — 70+ API Routes, GPT-4o Orchestrator,
-Self-Healing AI, Stripe Billing, GDPR, White-Label Ready — €45K
+NutriAID: Food Intolerance SaaS — 90+ API Routes, GPT-4o Orchestrator,
+Recipes AI, GEO Personalisation, Stripe Billing, GDPR, White-Label — €45K
 ```
 
 **Titlu C (problema + solutie):**
 ```
-Complete Food Intolerance Platform — AI Symptom Correlator + 
-Rule-Based Fallback + Full Admin Console — Production Ready, 1350h Dev Work
+Complete Food Intolerance Platform — AI Symptom Correlator + Recipe Module +
+GEO Engine + Rule-Based Fallback + Full Admin Console — 1,650h Dev Work
 ```
 
 **Titlu D (marketplace Romanian/EN dual):**
@@ -46,9 +46,10 @@ bilingual RO/EN, and Docker deployment. 1,350h dev work. Ready to scale.
 **RO:**
 ```
 Platformă SaaS completă pentru intoleranțe alimentare. Orchestrator AI 
-cu 11 workeri specializați, auto-corecție, fallback rule-based, consolă 
-admin configurabilă zero-code, Stripe integrat, GDPR complet, bilingv 
-RO/EN, deploy Docker. 1.350h muncă dev. Gata de producție și scalare.
+cu 11 workeri specializați, modul rețete AI cu GEO personalizare, 
+auto-corecție, fallback rule-based, consolă admin zero-code, Stripe 
+integrat, GDPR complet, newsletter + Brevo + Early Adopter, bilingv 
+RO/EN, deploy Docker. 1.650h muncă dev. Gata de producție și scalare.
 ```
 
 ---
@@ -161,24 +162,29 @@ Justified by:
 
 ```
 ✅ Next.js 14 frontend + Next.js 15 backend admin console
-✅ Proprietary 11-worker AI orchestrator (GPT-4o → Gemini → rule-based)
-✅ Self-healing auto-correction with semantic medical validation
-✅ Complete zero-code admin console (AI, Stripe, pricing, users, email)
-✅ Full Stripe integration (checkout, portal, webhooks, 3 plans)
-✅ PostgreSQL 16 + Drizzle ORM (fully typed schema + migrations)
-✅ GDPR compliant (hard delete, data export, full legal pages)
-✅ Bilingual RO + EN (infrastructure + all emails + all UI copy)
-✅ PWA ready (installable on mobile, offline-capable)
-✅ 2FA for admins (TOTP — Google Authenticator, Authy)
-✅ Docker + Traefik production deployment (HTTPS, HSTS, certs)
-✅ 70+ API routes, 30+ pages, 1,350h estimated dev work
-✅ White-label ready (rebrand in <1 hour)
-✅ Self-hostable (no vendor lock-in)
-✅ AI Test Lab for live worker testing
-✅ Backup to S3-compatible storage (Hetzner, AWS, Cloudflare R2)
+✅ Orchestrator AI proprietar cu 11 workeri (GPT-4o → Gemini → rule-based)
+✅ Modul rețete AI complet: bilingv, GEO-personalizat, CookingMode, batch
+✅ Motor GEO: IP + CDN headers (Cloudflare/Vercel) + 28 țări europene
+✅ Auto-corecție self-healing cu validare semantică medicală
+✅ Admin console zero-code complet (AI, Stripe, prețuri, utilizatori, email)
+✅ Integrare Stripe completă (checkout, portal, webhooks, 3 planuri)
+✅ PostgreSQL 16 + Drizzle ORM (schema tipizată complet + migrări)
+✅ GDPR complet (ștergere hard, export date, pagini legale complete)
+✅ Newsletter + Brevo marketing automation + Early Adopter (growth suite)
+✅ TikTok Pixel server-side + Google Analytics
+✅ Portal achiziție public (/acquire) cu pachet due diligence
+✅ Bilingv RO + EN (infrastructură + emailuri + UI complet)
+✅ PWA instalabilă (mobile + desktop, parțial offline)
+✅ 2FA pentru admini (TOTP — Google Authenticator, Authy)
+✅ Deploy Docker + Traefik producție (HTTPS, HSTS, certificate auto)
+✅ 90+ route-uri API, 35+ pagini, 1.650h muncă estimată dev
+✅ White-label ready (rebranding în <1 oră)
+✅ Self-hostable (nicio dependență de vendor extern)
+✅ AI Test Lab pentru testare live workeri
+✅ Backup S3-compatible (Hetzner, AWS, Cloudflare R2)
 ✅ Rate limiting, CSP headers, HMAC webhook verification
 ✅ Vitest unit tests + E2E + smoke test suite
-✅ Full IP transfer (no licensing, no royalties)
+✅ Transfer IP complet (fără licențe, fără royalties)
 ```
 
 ---

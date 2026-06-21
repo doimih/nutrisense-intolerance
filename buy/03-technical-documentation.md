@@ -504,11 +504,35 @@ Prompturile implicite sunt bilingve (RO/EN) și descriu rolul exact al fiecărui
 | `/api/billing/cancel` | POST | Cookie | Anulare abonament |
 | `/api/billing/webhook` | POST | HMAC | Webhook Stripe |
 
-#### Altele
+#### Rețete
 | Endpoint | Metodă | Auth | Descriere |
 |---|---|---|---|
+| `/api/recipes/from-meal` | POST | Cookie | Generare rețetă AI din numele unei mese + GEO context |
+| `/api/recipes/generate-batch` | POST | Cookie | Generare batch rețete |
+| `/api/recipes/cleanup` | POST | Cookie | Curățare rețete invalide |
+| `/api/recipes/[id]` | GET | Cookie | Detalii rețetă specifică |
+
+#### Newsletter
+| Endpoint | Metodă | Auth | Descriere |
+|---|---|---|---|
+| `/api/newsletter/accept` | POST | Cookie | Opt-in newsletter (utilizator autentificat) |
+| `/api/newsletter/decline` | POST | Cookie | Opt-out newsletter |
+| `/api/newsletter/status` | GET | Cookie | Status consimțământ newsletter |
+| `/api/newsletter/subscribe-public` | POST | — | Abonare publică (footer form) |
+
+#### Early Adopter
+| Endpoint | Metodă | Auth | Descriere |
+|---|---|---|---|
+| `/api/early-adopter` | GET/POST | Cookie | Status și activare Early Adopter |
+| `/api/early-adopter/slots` | GET | — | Contor locuri rămase (public) |
+
+#### Tracking & Altele
+| Endpoint | Metodă | Auth | Descriere |
+|---|---|---|---|
+| `/api/tiktok/event` | POST | — | TikTok Pixel server-side event relay |
 | `/api/contact` | POST | reCAPTCHA | Formular contact |
 | `/api/runtime-settings` | GET | — | Config publică platformă |
+| `/api/acquisition/download` | POST | — | Download pachet achiziție |
 
 ### Endpoint-uri Backend Admin (`/api/superadmin/`)
 
@@ -563,8 +587,14 @@ CREATE TABLE users (
   salt TEXT NOT NULL,                    -- 64 bytes hex
   is_verified BOOLEAN NOT NULL DEFAULT FALSE,
   verified_at TEXT,
+  status TEXT NOT NULL DEFAULT 'active', -- 'active' | 'suspended'
   plan TEXT,                             -- 'basic' | 'pro' | 'pro_plus'
   trial_ends_at TEXT,                    -- ISO8601
+  newsletter_opt_in BOOLEAN,             -- NULL=never asked, TRUE=opted in, FALSE=opted out
+  newsletter_consent_at TEXT,            -- ISO8601 timestamp
+  newsletter_consent_source TEXT,        -- 'signup_popup' | 'footer_form'
+  language TEXT,                         -- 'ro' | 'en' — stored language preference
+  early_adopter BOOLEAN,                 -- TRUE = first 100 users, free Pro access
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
 );
@@ -617,6 +647,56 @@ CREATE TABLE guidance_history (
   prompt TEXT NOT NULL,
   monitoring_entries JSONB,
   result JSONB NOT NULL                -- GuidanceResult complet
+);
+```
+
+#### Tabelul `recipes`
+```sql
+CREATE TABLE recipes (
+  id TEXT PRIMARY KEY,
+  title_ro TEXT NOT NULL,
+  title_en TEXT NOT NULL,
+  category TEXT NOT NULL,              -- 'breakfast' | 'lunch' | 'dinner' | 'snack'
+  ingredients_ro JSONB NOT NULL,       -- {name, quantity, unit}[]
+  ingredients_en JSONB NOT NULL,
+  instructions_ro JSONB NOT NULL,      -- {step_index, text}[]
+  instructions_en JSONB NOT NULL,
+  prep_time_minutes INTEGER NOT NULL,
+  difficulty TEXT NOT NULL,            -- 'easy' | 'medium' | 'hard'
+  calories INTEGER,
+  macros JSONB,                        -- {protein, carbs, fats}
+  cuisine TEXT,
+  tags_ro JSONB,                       -- string[]
+  tags_en JSONB,
+  allergens JSONB,                     -- string[]
+  substitutions_ro JSONB,              -- {for, substitute_with, note}[]
+  substitutions_en JSONB,
+  cooking_tips_ro JSONB,               -- string[]
+  cooking_tips_en JSONB,
+  image_url TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+```
+
+#### Tabele `recipe_batches` și `recipe_usage`
+```sql
+CREATE TABLE recipe_batches (
+  id SERIAL PRIMARY KEY,
+  batch_number INTEGER NOT NULL,
+  target_count INTEGER NOT NULL,
+  generated_count INTEGER NOT NULL DEFAULT 0,
+  status TEXT NOT NULL DEFAULT 'pending', -- 'pending'|'running'|'completed'|'failed'
+  started_at TEXT,
+  finished_at TEXT
+);
+
+CREATE TABLE recipe_usage (
+  id SERIAL PRIMARY KEY,
+  recipe_id TEXT NOT NULL,
+  user_id TEXT NOT NULL,
+  used_at TEXT NOT NULL,
+  context TEXT                         -- 'meal_plan' | 'cooking_mode' | 'browse'
 );
 ```
 
@@ -742,4 +822,4 @@ Toate fișierele sunt type-checked cu `tsc --noEmit`. Zero erori TypeScript în 
 
 ---
 
-*Document generat: Iunie 2026 | NutriAID Platform v1.0 — prod branch*
+*Document generat: Iunie 2026 | NutriAID Platform v1.1 — prod branch*

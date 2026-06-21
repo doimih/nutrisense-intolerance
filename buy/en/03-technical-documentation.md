@@ -504,11 +504,35 @@ Default prompts are bilingual (RO/EN) and describe each worker's exact role, wha
 | `/api/billing/cancel` | POST | Cookie | Cancel subscription |
 | `/api/billing/webhook` | POST | HMAC | Stripe webhook |
 
-#### Other
+#### Recipes
 | Endpoint | Method | Auth | Description |
 |---|---|---|---|
+| `/api/recipes/from-meal` | POST | Cookie | AI recipe generation from meal name + GEO context |
+| `/api/recipes/generate-batch` | POST | Cookie | Batch recipe generation |
+| `/api/recipes/cleanup` | POST | Cookie | Remove invalid recipes |
+| `/api/recipes/[id]` | GET | Cookie | Specific recipe details |
+
+#### Newsletter
+| Endpoint | Method | Auth | Description |
+|---|---|---|---|
+| `/api/newsletter/accept` | POST | Cookie | Newsletter opt-in (authenticated user) |
+| `/api/newsletter/decline` | POST | Cookie | Newsletter opt-out |
+| `/api/newsletter/status` | GET | Cookie | Newsletter consent status |
+| `/api/newsletter/subscribe-public` | POST | — | Public subscription (footer form) |
+
+#### Early Adopter
+| Endpoint | Method | Auth | Description |
+|---|---|---|---|
+| `/api/early-adopter` | GET/POST | Cookie | Status and Early Adopter activation |
+| `/api/early-adopter/slots` | GET | — | Remaining slot counter (public) |
+
+#### Tracking & Other
+| Endpoint | Method | Auth | Description |
+|---|---|---|---|
+| `/api/tiktok/event` | POST | — | TikTok Pixel server-side event relay |
 | `/api/contact` | POST | reCAPTCHA | Contact form |
 | `/api/runtime-settings` | GET | — | Public platform config |
+| `/api/acquisition/download` | POST | — | Download acquisition package |
 
 ### Backend Admin Endpoints (`/api/superadmin/`)
 
@@ -563,8 +587,14 @@ CREATE TABLE users (
   salt TEXT NOT NULL,                    -- 64 bytes hex
   is_verified BOOLEAN NOT NULL DEFAULT FALSE,
   verified_at TEXT,
+  status TEXT NOT NULL DEFAULT 'active', -- 'active' | 'suspended'
   plan TEXT,                             -- 'basic' | 'pro' | 'pro_plus'
   trial_ends_at TEXT,                    -- ISO8601
+  newsletter_opt_in BOOLEAN,             -- NULL=never asked, TRUE=opted in, FALSE=opted out
+  newsletter_consent_at TEXT,            -- ISO8601 timestamp
+  newsletter_consent_source TEXT,        -- 'signup_popup' | 'footer_form'
+  language TEXT,                         -- 'ro' | 'en' — stored language preference
+  early_adopter BOOLEAN,                 -- TRUE = first 100 users, free Pro access
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
 );
@@ -617,6 +647,56 @@ CREATE TABLE guidance_history (
   prompt TEXT NOT NULL,
   monitoring_entries JSONB,
   result JSONB NOT NULL                -- complete GuidanceResult
+);
+```
+
+#### Table `recipes`
+```sql
+CREATE TABLE recipes (
+  id TEXT PRIMARY KEY,
+  title_ro TEXT NOT NULL,
+  title_en TEXT NOT NULL,
+  category TEXT NOT NULL,              -- 'breakfast' | 'lunch' | 'dinner' | 'snack'
+  ingredients_ro JSONB NOT NULL,       -- {name, quantity, unit}[]
+  ingredients_en JSONB NOT NULL,
+  instructions_ro JSONB NOT NULL,      -- {step_index, text}[]
+  instructions_en JSONB NOT NULL,
+  prep_time_minutes INTEGER NOT NULL,
+  difficulty TEXT NOT NULL,            -- 'easy' | 'medium' | 'hard'
+  calories INTEGER,
+  macros JSONB,                        -- {protein, carbs, fats}
+  cuisine TEXT,
+  tags_ro JSONB,                       -- string[]
+  tags_en JSONB,
+  allergens JSONB,                     -- string[]
+  substitutions_ro JSONB,              -- {for, substitute_with, note}[]
+  substitutions_en JSONB,
+  cooking_tips_ro JSONB,               -- string[]
+  cooking_tips_en JSONB,
+  image_url TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+```
+
+#### Tables `recipe_batches` and `recipe_usage`
+```sql
+CREATE TABLE recipe_batches (
+  id SERIAL PRIMARY KEY,
+  batch_number INTEGER NOT NULL,
+  target_count INTEGER NOT NULL,
+  generated_count INTEGER NOT NULL DEFAULT 0,
+  status TEXT NOT NULL DEFAULT 'pending', -- 'pending'|'running'|'completed'|'failed'
+  started_at TEXT,
+  finished_at TEXT
+);
+
+CREATE TABLE recipe_usage (
+  id SERIAL PRIMARY KEY,
+  recipe_id TEXT NOT NULL,
+  user_id TEXT NOT NULL,
+  used_at TEXT NOT NULL,
+  context TEXT                         -- 'meal_plan' | 'cooking_mode' | 'browse'
 );
 ```
 
