@@ -25,11 +25,113 @@ function estimateTDEE(profile: UserProfileContext): number | null {
   return Math.round(bmr * multiplier);
 }
 
+type GeoContext = { country: string; region: string; cuisine: string };
+
+const COUNTRY_GEO: Record<string, GeoContext> = {
+  GR: { country: "Greece", region: "Southern Europe", cuisine: "Greek/Mediterranean" },
+  RO: { country: "Romania", region: "Eastern Europe", cuisine: "Romanian/Mediterranean/Balkanic" },
+  HU: { country: "Hungary", region: "Central Europe", cuisine: "Hungarian/Central European" },
+  FR: { country: "France", region: "Western Europe", cuisine: "French/Mediterranean" },
+  DE: { country: "Germany", region: "Central Europe", cuisine: "German/Central European" },
+  AT: { country: "Austria", region: "Central Europe", cuisine: "Austrian/Central European" },
+  CH: { country: "Switzerland", region: "Central Europe", cuisine: "Swiss/Central European" },
+  ES: { country: "Spain", region: "Southern Europe", cuisine: "Spanish/Mediterranean" },
+  IT: { country: "Italy", region: "Southern Europe", cuisine: "Italian/Mediterranean" },
+  PL: { country: "Poland", region: "Eastern Europe", cuisine: "Polish/Slavic" },
+  CZ: { country: "Czech Republic", region: "Central Europe", cuisine: "Czech/Central European" },
+  SK: { country: "Slovakia", region: "Central Europe", cuisine: "Slovak/Central European" },
+  TR: { country: "Turkey", region: "Middle East/Europe", cuisine: "Turkish/Middle Eastern" },
+  PT: { country: "Portugal", region: "Western Europe", cuisine: "Portuguese/Mediterranean" },
+  NL: { country: "Netherlands", region: "Western Europe", cuisine: "Dutch/Western European" },
+  BE: { country: "Belgium", region: "Western Europe", cuisine: "Belgian/Western European" },
+  BG: { country: "Bulgaria", region: "Eastern Europe", cuisine: "Bulgarian/Balkanic" },
+  HR: { country: "Croatia", region: "Eastern Europe", cuisine: "Croatian/Mediterranean/Balkanic" },
+  RS: { country: "Serbia", region: "Eastern Europe", cuisine: "Serbian/Balkanic" },
+  UA: { country: "Ukraine", region: "Eastern Europe", cuisine: "Ukrainian/Slavic" },
+  CY: { country: "Cyprus", region: "Southern Europe", cuisine: "Cypriot/Mediterranean" },
+  MT: { country: "Malta", region: "Southern Europe", cuisine: "Maltese/Mediterranean" },
+  GB: { country: "United Kingdom", region: "Western Europe", cuisine: "British/International" },
+  IE: { country: "Ireland", region: "Western Europe", cuisine: "Irish/International" },
+  SE: { country: "Sweden", region: "Northern Europe", cuisine: "Swedish/Nordic" },
+  NO: { country: "Norway", region: "Northern Europe", cuisine: "Norwegian/Nordic" },
+  DK: { country: "Denmark", region: "Northern Europe", cuisine: "Danish/Nordic" },
+  FI: { country: "Finland", region: "Northern Europe", cuisine: "Finnish/Nordic" },
+};
+
+// In-memory IP→countryCode cache (process-lifetime, evicted after 1h)
+const ipGeoCache = new Map<string, { code: string; ts: number }>();
+
+async function resolveCountryFromIp(ip: string): Promise<string | null> {
+  if (!ip || ip === "127.0.0.1" || ip === "::1" || ip.startsWith("192.168.") || ip.startsWith("10.") || ip.startsWith("172.")) return null;
+
+  const cached = ipGeoCache.get(ip);
+  if (cached && Date.now() - cached.ts < 3_600_000) return cached.code;
+
+  try {
+    const res = await fetch(`http://ip-api.com/json/${ip}?fields=countryCode&lang=en`, {
+      signal: AbortSignal.timeout(2000),
+    });
+    if (!res.ok) return null;
+    const data = await res.json() as { countryCode?: string };
+    const code = data.countryCode?.toUpperCase() ?? null;
+    if (code) ipGeoCache.set(ip, { code, ts: Date.now() });
+    return code;
+  } catch {
+    return null;
+  }
+}
+
+function getClientIp(request: NextRequest): string | null {
+  const xff = request.headers.get("x-forwarded-for");
+  if (xff) return xff.split(",")[0].trim();
+  return request.headers.get("x-real-ip") ?? null;
+}
+
+async function detectGeoFromRequest(request: NextRequest): Promise<GeoContext> {
+  const fallback: GeoContext = { country: "International", region: "Western Europe/International", cuisine: "International/Mediterranean" };
+
+  // 1. CDN-injected headers (Cloudflare / Vercel) — instant, most reliable
+  const cdnCountry = (
+    request.headers.get("cf-ipcountry") ||
+    request.headers.get("x-vercel-ip-country") ||
+    ""
+  ).toUpperCase();
+  if (cdnCountry && COUNTRY_GEO[cdnCountry]) return COUNTRY_GEO[cdnCountry];
+
+  // 2. Real IP geolocation via ip-api.com (works with Traefik)
+  const ip = getClientIp(request);
+  if (ip) {
+    const code = await resolveCountryFromIp(ip);
+    if (code && COUNTRY_GEO[code]) return COUNTRY_GEO[code];
+    // Unknown country code but we have a code — return International
+    if (code) return fallback;
+  }
+
+  // 3. Last resort: Accept-Language (unreliable for travelers, but better than nothing)
+  const al = (request.headers.get("accept-language") ?? "").toLowerCase();
+  if (al.startsWith("el")) return COUNTRY_GEO.GR;
+  if (al.startsWith("ro")) return COUNTRY_GEO.RO;
+  if (al.startsWith("hu")) return COUNTRY_GEO.HU;
+  if (al.startsWith("fr")) return COUNTRY_GEO.FR;
+  if (al.startsWith("de")) return COUNTRY_GEO.DE;
+  if (al.startsWith("es")) return COUNTRY_GEO.ES;
+  if (al.startsWith("it")) return COUNTRY_GEO.IT;
+  if (al.startsWith("pl")) return COUNTRY_GEO.PL;
+  if (al.startsWith("cs") || al.startsWith("sk")) return COUNTRY_GEO.CZ;
+  if (al.startsWith("tr")) return COUNTRY_GEO.TR;
+  if (al.startsWith("pt")) return COUNTRY_GEO.PT;
+  if (al.startsWith("bg")) return COUNTRY_GEO.BG;
+  if (al.startsWith("hr")) return COUNTRY_GEO.HR;
+
+  return fallback;
+}
+
 function buildFromMealPrompt(
   name: string,
   ingredientHints: string[],
   lang: "ro" | "en",
-  profile?: UserProfileContext
+  profile?: UserProfileContext,
+  geo?: GeoContext
 ): string {
   const hintStr = ingredientHints.length > 0
     ? ingredientHints.join(", ")
@@ -52,6 +154,10 @@ function buildFromMealPrompt(
     ? `\nUSER PROFILE:\n${profileLines.map((l) => `- ${l}`).join("\n")}\n`
     : "";
 
+  const geoSection = geo && geo.country !== "International"
+    ? `\nUSER LOCATION: ${geo.country} (${geo.region})\nCUISINE CONTEXT: Prefer ${geo.cuisine} cuisine style. Use ingredients and cooking techniques typical for this region. Recipe titles and ingredients should reflect local food culture.\n`
+    : "";
+
   const calorieRule = mealCalorieTarget
     ? `10. Calories must be close to the user's meal target of ~${mealCalorieTarget} kcal (±15%). Adjust portion sizes accordingly.`
     : "10. Calories between 150 and 900. At least 4 ingredients.";
@@ -66,7 +172,7 @@ function buildFromMealPrompt(
     : `Each step in Romanian starts with "Pasul N:" and each step in English starts with "Step N:".`;
 
   return `Ești un bucătar profesionist și nutriționist pentru o platformă bilingvă (română + engleză).
-${profileSection}
+${profileSection}${geoSection}
 Utilizatorul a selectat masa: "${name}"${ingredientHints.length > 0 ? `. Ingrediente sugerate: ${hintStr}` : ""}.
 
 ${mealCalorieTarget ? `CALCUL PORȚIE: Gramajele ingredientelor trebuie calculate MATEMATIC astfel încât rețeta să atingă exact ~${mealCalorieTarget} kcal (±10%) — necesarul caloric al acestui utilizator pentru o masă principală, bazat pe profilul său fizic (TDEE ${tdee} kcal/zi).` : ""}
@@ -101,7 +207,7 @@ Returnează EXCLUSIV JSON valid — fără markdown, fără text în afara JSON:
   "prep_time_minutes": number,
   "calories": ${mealCalorieTarget ?? "number between 200-900"},
   "macros": {"protein": number, "carbs": number, "fats": number},
-  "cuisine": "Romanian" | "Mediterranean" | "Asian" | "...",
+  "cuisine": "${geo && geo.country !== "International" ? geo.cuisine.split("/")[0] : "Mediterranean"}" or any other cuisine matching the meal,
   "allergens": ["gluten", "dairy", "..."],
   "tags_en": ["high-protein", "gluten-free", "..."],
   "tags_ro": ["bogat în proteine", "fără gluten", "..."],
@@ -241,6 +347,8 @@ export async function POST(request: NextRequest) {
     intolerances: userProfile.intolerances,
   } : undefined;
 
+  const geoContext = await detectGeoFromRequest(request);
+
   // Normalize for cache lookup (remove diacritics, lowercase)
   function normalizeName(s: string) {
     return s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
@@ -301,7 +409,7 @@ export async function POST(request: NextRequest) {
   let savedId: string | null = null;
 
   try {
-    const prompt = buildFromMealPrompt(name, ingredientHints, lang, profileContext);
+    const prompt = buildFromMealPrompt(name, ingredientHints, lang, profileContext, geoContext);
     const internalSecret = process.env.INTERNAL_SYNC_SECRET;
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
