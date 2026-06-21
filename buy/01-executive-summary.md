@@ -66,11 +66,15 @@ Prețuri, texte, modele AI, chei API, SMTP, Stripe, PWA, 2FA — toate modificab
 | Caracteristică | NutriAID | Apps nutriție obișnuite |
 |---|---|---|
 | Orchestrator AI cu 11 workeri specializați | ✅ | ❌ |
+| Modul rețete AI bilingv cu GEO personalizare | ✅ | ❌ |
+| Motor GEO (IP + CDN headers, 28 țări) | ✅ | ❌ |
 | Auto-corecție și validare semantică | ✅ | ❌ |
 | Fallback rule-based (cost $0) | ✅ | ❌ |
 | Admin console complet configurabil | ✅ | ❌ |
 | Suport multi-model (GPT-4o, Gemini, Claude) | ✅ | ❌ |
 | GDPR complet (export + ștergere date) | ✅ | Parțial |
+| Newsletter + Brevo + Early Adopter (growth suite) | ✅ | ❌ |
+| TikTok Pixel server-side | ✅ | Rar |
 | White-label ready | ✅ | ❌ |
 | Bilingv RO + EN | ✅ | Rar |
 | Deploy Docker cu Traefik în <1 oră | ✅ | ❌ |
@@ -84,19 +88,23 @@ Prețuri, texte, modele AI, chei API, SMTP, Stripe, PWA, 2FA — toate modificab
 
 | Component | Timp estimat rebuild | Cost piață (€80/h senior dev) |
 |---|---|---|
-| Frontend Next.js 14 (30+ pagini, auth, billing) | 400h | €32.000 |
-| Backend Admin Console (70+ endpoint-uri, AI config) | 300h | €24.000 |
+| Frontend Next.js 14 (35+ pagini, auth, billing) | 420h | €33.600 |
+| Backend Admin Console (80+ endpoint-uri, AI config) | 300h | €24.000 |
 | Orchestrator AI + 11 workeri + supervisor | 200h | €16.000 |
 | Auto-corrector + validare semantică | 100h | €8.000 |
+| Modul rețete AI (DB, store, workers, API, UI, CookingMode) | 150h | €12.000 |
+| Motor GEO (IP + CDN + cache + 28 țări) | 20h | €1.600 |
+| Newsletter + Brevo + Early Adopter (growth suite) | 50h | €4.000 |
+| TikTok Pixel server-side + portal achiziție | 40h | €3.200 |
 | Sistem billing Stripe complet | 80h | €6.400 |
 | GDPR complet (export, ștergere, retenție) | 50h | €4.000 |
 | i18n bilingv (RO + EN) | 40h | €3.200 |
 | PWA, 2FA, reCAPTCHA, backup S3 | 60h | €4.800 |
 | Docker + Traefik + deployment | 40h | €3.200 |
-| QA, teste, smoke tests | 80h | €6.400 |
-| **TOTAL REBUILD** | **1.350h** | **€108.000** |
+| QA, teste, smoke tests | 100h | €8.000 |
+| **TOTAL REBUILD** | **1.650h** | **€132.000** |
 
-**Prețul de vânzare 45.000 € reprezintă 41% din costul de rebuild** — o achiziție excepțională pentru un produs funcțional, testat și gata de producție.
+**Prețul de vânzare 45.000 € reprezintă 34% din costul de rebuild** — o achiziție excepțională pentru un produs funcțional, testat și gata de producție.
 
 ### Multiplu SaaS
 La doar 500 utilizatori activi și MRR €7.500, valoarea la 5× MRR anual = **€450.000**. Prețul de 45.000 € este 0.1× din potențialul de 1 an.

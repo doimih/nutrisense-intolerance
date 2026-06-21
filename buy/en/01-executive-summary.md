@@ -66,11 +66,15 @@ Pricing, copy, AI models, API keys, SMTP, Stripe, PWA, 2FA — all modifiable fr
 | Feature | NutriAID | Typical Nutrition Apps |
 |---|---|---|
 | AI orchestrator with 11 specialised workers | ✅ | ❌ |
+| AI Recipe module — bilingual, GEO-personalised cuisine | ✅ | ❌ |
+| GEO engine (IP + CDN headers, 28 European countries) | ✅ | ❌ |
 | Auto-correction and semantic validation | ✅ | ❌ |
 | Rule-based fallback (cost $0) | ✅ | ❌ |
 | Fully configurable admin console | ✅ | ❌ |
 | Multi-model support (GPT-4o, Gemini, Claude) | ✅ | ❌ |
 | Full GDPR (export + data deletion) | ✅ | Partial |
+| Newsletter + Brevo + Early Adopter (growth suite) | ✅ | ❌ |
+| TikTok Pixel server-side tracking | ✅ | Rare |
 | White-label ready | ✅ | ❌ |
 | Bilingual RO + EN | ✅ | Rare |
 | Docker + Traefik deploy in <1 hour | ✅ | ❌ |
@@ -84,19 +88,23 @@ Pricing, copy, AI models, API keys, SMTP, Stripe, PWA, 2FA — all modifiable fr
 
 | Component | Estimated Rebuild Time | Market Cost (€80/h senior dev) |
 |---|---|---|
-| Next.js 14 Frontend (30+ pages, auth, billing) | 400h | €32,000 |
-| Backend Admin Console (70+ endpoints, AI config) | 300h | €24,000 |
+| Next.js 14 Frontend (35+ pages, auth, billing) | 420h | €33,600 |
+| Backend Admin Console (80+ endpoints, AI config) | 300h | €24,000 |
 | AI Orchestrator + 11 workers + supervisor | 200h | €16,000 |
 | Auto-corrector + semantic validation | 100h | €8,000 |
+| AI Recipe module (DB, store, workers, API, UI, CookingMode) | 150h | €12,000 |
+| GEO engine (IP + CDN + cache + 28 countries) | 20h | €1,600 |
+| Newsletter + Brevo + Early Adopter (growth suite) | 50h | €4,000 |
+| TikTok Pixel server-side + acquisition portal | 40h | €3,200 |
 | Full Stripe billing system | 80h | €6,400 |
 | Full GDPR (export, deletion, retention) | 50h | €4,000 |
 | Bilingual i18n (RO + EN) | 40h | €3,200 |
 | PWA, 2FA, reCAPTCHA, S3 backup | 60h | €4,800 |
 | Docker + Traefik + deployment | 40h | €3,200 |
-| QA, tests, smoke tests | 80h | €6,400 |
-| **TOTAL REBUILD** | **1,350h** | **€108,000** |
+| QA, tests, smoke tests | 100h | €8,000 |
+| **TOTAL REBUILD** | **1,650h** | **€132,000** |
 
-**The asking price of €45,000 represents 41% of the rebuild cost** — an exceptional acquisition for a fully functional, tested, production-ready product.
+**The asking price of €45,000 represents 34% of the rebuild cost** — an exceptional acquisition for a fully functional, tested, production-ready product.
 
 ### SaaS Multiple
 With just 500 active users and MRR of €7,500, value at 5× annual MRR = **€450,000**. The price of €45,000 is 0.1× of the 1-year potential.

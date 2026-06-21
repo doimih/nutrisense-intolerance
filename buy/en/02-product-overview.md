@@ -61,10 +61,39 @@ The end user logs daily meals consumed and symptoms experienced. Based on this d
 - Knowledge Hub: 9 informative articles (common symptoms, dietary guides, GDPR, etc.)
 - Complete legal pages: Privacy Policy, Terms, Cookies, Data Retention, Security Policy, Medical Disclaimer
 
+### AI Recipe Module
+- AI-generated recipes from a meal name: ingredients, steps, macros, allergens, substitutions, cooking tips
+- Bilingual: title, ingredients, and instructions in RO and EN simultaneously
+- GEO-personalisation: recipes adapted to local culinary style (28 European countries supported)
+- CookingMode: fullscreen step-by-step view with integrated timer
+- RecipeModal: detailed modal with all recipe information
+- Batch generation: mass generation pipeline for the recipe library
+- Usage tracking: per-user recipe usage events (context: meal_plan, cooking_mode, browse)
+
+### GEO Engine — Geographic Personalisation
+- IP geolocation via ip-api.com with in-memory cache (TTL 1h)
+- CDN headers: Cloudflare (`cf-ipcountry`) and Vercel (`x-vercel-ip-country`) — instant, no external call
+- `Accept-Language` fallback (13 languages supported)
+- 28 European countries mapped with region and local cuisine style
+- Applied to: recipe generation from meals, AI guidance orchestrator
+
+### Newsletter and Growth Suite
+- Newsletter popup on first visit (opt-in / opt-out)
+- Footer form for public subscription
+- Consent stored per user with source tracking (`signup_popup` / `footer_form`)
+- Brevo integration: marketing events (opt-in, opt-out, registration, plan upgrade)
+- Early Adopter programme: first 100 real users receive free Pro access
+- Early Adopter banner with remaining slot counter
+
+### Tracking and Acquisition
+- TikTok Pixel server-side: PageView, registration, checkout events
+- Public acquisition portal (`/acquire`): platform presentation for prospective buyers
+- Daily plan public page (`/daily-plan`)
+
 ### International
 - Full bilingual support: Romanian (default) + English
 - Language switcher in navbar and sidebar (🇷🇴/🇬🇧 button)
-- Persistent cookie (`ns_lang`) for language preference
+- Language preference stored in the user account and as a persistent cookie
 - Emails sent in the user's selected language
 - All emails (verification, welcome, password reset, account deletion) are bilingual
 
@@ -180,6 +209,7 @@ Each worker has a default system prompt in RO and EN. From the admin console, th
 - `/dashboard/guidance` — AI request form + results
 - `/dashboard/history` — Previous sessions timeline
 - `/dashboard/profile` — Profile, intolerances, physical data, billing
+- `/dashboard/recipes` — AI recipe library with CookingMode
 - `/dashboard/gdpr` — Data export + account deletion
 
 ---
@@ -190,22 +220,26 @@ Each worker has a default system prompt in RO and EN. From the admin console, th
 NutriAID
 ├── Frontend (Next.js 14, port 3000)
 │   ├── App Router + Middleware
-│   ├── Auth (JWT, email verification)
+│   ├── Auth (JWT, email verification, user status)
 │   ├── Billing (Stripe checkout + webhook)
-│   ├── Dashboard (monitoring, guidance, profile)
-│   ├── Public pages (landing, pricing, legal)
-│   └── i18n (RO/EN bilingual)
+│   ├── Dashboard (monitoring, guidance, history, profile, recipes)
+│   ├── Recipes Module (AI generation, CookingMode, batch, GEO)
+│   ├── Growth Suite (newsletter, early adopter, Brevo events)
+│   ├── Tracking (TikTok Pixel server-side, Google Analytics)
+│   ├── Public pages (landing, pricing, legal, acquire, daily-plan)
+│   └── i18n (RO/EN bilingual, language stored per user)
 │
 ├── Backend Admin Console (Next.js 15, port 4028)
-│   ├── AI Orchestrator (11 workers + supervisor)
+│   ├── AI Orchestrator (11 workers + supervisor + GEO context)
 │   ├── Auto-Corrector (GPT-4o → Gemini → rule-based)
 │   ├── Settings (email, stripe, AI, PWA, 2FA, reCAPTCHA)
-│   ├── User Management
+│   ├── User Management (+ status, newsletter, early adopter)
+│   ├── Visitor Sessions (demo accounts, time-limited)
 │   ├── Logs & Audit Trail
 │   └── AI Test Lab
 │
 └── Infrastructure
-    ├── PostgreSQL 16 (users, subscriptions, monitoring, guidance)
+    ├── PostgreSQL 16 (users, subscriptions, monitoring, guidance, recipes)
     ├── Traefik (HTTPS, routing, HSTS)
     ├── Docker Compose (container orchestration)
     └── S3 Backup (Hetzner Object Storage, optional)
@@ -215,4 +249,4 @@ Every module is independent, separately testable, and replaceable without affect
 
 ---
 
-*Document generated: June 2026 | NutriAID Platform v1.0 — prod branch*
+*Document generated: June 2026 | NutriAID Platform v1.1 — prod branch*

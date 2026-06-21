@@ -56,7 +56,7 @@ NutriAID Intolerances solves the core problem of food intolerance identification
 | AI — primary | GPT-4o (OpenAI) |
 | AI — fallback | Gemini 1.5 Pro |
 | Payments | Stripe (Subscriptions API) |
-| Email | Nodemailer / SMTP |
+| Email | Nodemailer / SMTP + Brevo (marketing automation) |
 | Admin console | Next.js 14 (standalone service, port 4028) |
 | PDF generation | PDFKit |
 | Authentication | JWT-based signed cookies (custom, no NextAuth) |
@@ -103,19 +103,24 @@ The **backend** (admin console) is a completely separate Next.js app. It manages
 
 | Area | Features |
 |---|---|
-| **Auth** | Register, email verification, login, logout, forgot/reset password, account deletion, GDPR data export |
-| **Dashboard** | Monitoring journal, AI guidance, history, profile |
+| **Auth** | Register, email verification, login, logout, forgot/reset password, account deletion, GDPR data export, user status (active/suspended) |
+| **Dashboard** | Monitoring journal, AI guidance, history, profile, recipes |
 | **Monitoring journal** | Log meals + symptoms per day, wellbeing score, reaction latency, notes |
-| **AI Guidance** | On-demand analysis: suspected foods, safe foods, meal recommendations, daily plan — gated by plan tier |
+| **AI Guidance** | On-demand analysis: suspected foods, safe foods, meal recommendations, daily plan — gated by plan tier; GEO-aware cuisine recommendations |
+| **Recipes** | AI-generated recipes from meal names — bilingual (RO/EN), GEO-personalised cuisine style, macros, allergens, substitutions, cooking tips; CookingMode step-by-step view; batch generation pipeline |
 | **History** | Timeline of past guidance sessions |
 | **PDF reports** | Download any guidance session as a PDF (Pro/Pro+) |
-| **Profile** | Edit name/email, dietary preferences, known intolerances, billing section |
+| **Profile** | Edit name/email, dietary preferences, known intolerances, physical data, billing section; onboarding wizard |
 | **Billing** | Trial status, active plan display, upgrade/cancel/billing portal (Stripe) |
 | **Pricing page** | Dynamic plan cards (prices from admin), direct Stripe checkout for logged-in users |
 | **Knowledge Hub** | 9 informational articles (symptoms, AI analysis, meal plans, GDPR, PDF reports) |
-| **Public pages** | Home, About, Why AI, FAQ, Contact, Trust |
+| **Public pages** | Home, About, Why AI, FAQ, Contact, Trust, Daily Plan, Acquisition portal |
 | **Legal** | Privacy policy, Terms, Cookies policy, Data retention, Security policy, Medical disclaimer |
 | **PWA** | Installable app, configurable name/colours/icons from admin |
+| **Newsletter** | Opt-in popup + footer form; consent stored per user with source tracking; Brevo marketing automation |
+| **Early Adopter** | First 100 real users receive free Pro access; slot counter API; banner component |
+| **GEO Engine** | IP geolocation (ip-api.com) + CDN headers (Cloudflare/Vercel) + Accept-Language fallback; 28 European countries mapped; cuisine personalisation for recipes and guidance |
+| **TikTok Pixel** | Server-side event tracking (PageView, registration, checkout) |
 
 ### Admin console (`localhost:4028`)
 
@@ -140,6 +145,8 @@ The **backend** (admin console) is a completely separate Next.js app. It manages
 | **Subscriptions** | Subscription records view |
 | **Security events** | Security log viewer |
 | **Stripe tools** | Validate connection + product/price IDs, sync prices from Stripe |
+| **Visitor sessions** | Demo visitor accounts — time-limited (10 min), IP-blocked 24h after use |
+| **Brevo events** | Internal endpoint for marketing automation event relay to Brevo |
 
 ---
 
@@ -168,12 +175,19 @@ Prices are configurable at any time from the admin console without redeployment.
 │   │   ├── guidance/           # AI guidance orchestration, history, PDF export
 │   │   ├── monitoring/         # journal entries CRUD
 │   │   ├── profile/            # user profile
+│   │   ├── recipes/            # AI recipe generation (from-meal, generate-batch, cleanup, [id])
+│   │   ├── newsletter/         # subscription, status, accept/decline, public subscribe
+│   │   ├── early-adopter/      # early adopter program + slot counter
+│   │   ├── tiktok/             # TikTok Pixel server-side events
 │   │   ├── contact/            # contact form
-│   │   └── internal/           # internal service-to-service routes
+│   │   ├── acquisition/        # acquisition portal download
+│   │   └── internal/           # internal service-to-service routes (brevo-events, db-export, etc.)
 │   ├── auth/                   # login, register, verify, forgot/reset pages
-│   ├── dashboard/              # protected area: monitoring, guidance, history, profile
+│   ├── dashboard/              # protected area: monitoring, guidance, history, profile, recipes
 │   ├── pricing/                # pricing page + PlanCheckoutButton component
 │   ├── knowledge-hub/          # 9 informational articles
+│   ├── acquire/                # acquisition portal (public)
+│   ├── daily-plan/             # daily meal plan page (public)
 │   ├── legal/                  # privacy, terms, cookies, data retention, security, medical disclaimer
 │   └── [public pages]/         # home, about, why-ai, faq, contact, trust
 │
@@ -190,9 +204,9 @@ Prices are configurable at any time from the admin console without redeployment.
 ├── lib/
 │   ├── auth/                   # session token creation/validation
 │   ├── billing/                # plan definitions, Stripe price ID resolution
-│   ├── db/                     # Drizzle client + schema
+│   ├── db/                     # Drizzle client + schema + migrations
 │   ├── i18n/                   # RO/EN translations, server/client helpers
-│   └── server/                 # authStore, subscriptionStore, email, runtimeSettings, stripe, guidance engine
+│   └── server/                 # authStore, subscriptionStore, email, runtimeSettings, stripe, guidance engine, recipes store
 ├── types/                      # TypeScript type definitions
 ├── public/                     # Static assets (PWA icons)
 ├── Dockerfile                  # Frontend container (multi-stage, Node 20 Alpine)
@@ -428,14 +442,17 @@ PostgreSQL 16. Schema managed with Drizzle ORM.
 
 | Table | Purpose |
 |---|---|
-| `users` | User accounts, plan assignment, verification state |
+| `users` | User accounts, plan assignment, verification state, status (active/suspended), newsletter consent, language preference, early adopter flag |
 | `verification_tokens` | Email verification tokens (24 h TTL) |
 | `password_reset_tokens` | Password reset tokens (1 h TTL) |
 | `subscriptions` | Stripe subscription snapshots per user (status, IDs, plan code) |
-| `user_profiles` | Dietary preferences and declared intolerances per user |
+| `user_profiles` | Dietary preferences, declared intolerances, physical data, onboarding completion |
 | `monitoring_entries` | Daily meal and symptom journal entries |
 | `user_problems` | Aggregated problem patterns for AI cross-user mining |
 | `guidance_history` | Full AI guidance session records with prompts and results |
+| `recipes` | AI-generated bilingual recipes (RO/EN): ingredients, instructions, macros, allergens, substitutions, tips, cuisine, tags |
+| `recipe_batches` | Batch generation job tracking (status, target count, generated count) |
+| `recipe_usage` | Per-user recipe usage events (context: meal_plan, cooking_mode, browse) |
 
 ### Push schema changes
 
@@ -447,7 +464,9 @@ npx drizzle-kit push
 
 ## Email
 
-Email is sent via SMTP using Nodemailer. Configure the SMTP server, credentials, and sender address in the admin console under **Settings → Email**.
+### Transactional Email (Nodemailer / SMTP)
+
+Transactional email is sent via SMTP using Nodemailer. Configure the SMTP server, credentials, and sender address in the admin console under **Settings → Email**.
 
 Supported email types:
 - Email address verification
@@ -457,6 +476,10 @@ Supported email types:
 - Deletion feedback
 
 **Fallback outbox:** if the SMTP server is unreachable, emails are queued to `data/email-outbox.json` and can be retried. The admin console shows queue status and diagnostics.
+
+### Marketing Email (Brevo)
+
+Newsletter and marketing automation events are relayed to Brevo via the internal `/api/internal/brevo-events` endpoint. Events include: newsletter opt-in, opt-out, new registration, and plan upgrade. Newsletter consent is stored per user in the `users` table with source tracking (`signup_popup` or `footer_form`).
 
 ---
 

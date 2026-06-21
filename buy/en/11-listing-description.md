@@ -38,9 +38,10 @@ Complete Admin Console, Stripe, GDPR — Production Ready
 **EN:**
 ```
 Full-stack food intolerance SaaS built on Next.js 14/15. Features a 
-proprietary 11-worker AI orchestrator with auto-correction, self-healing 
-fallback chain, complete admin console, Stripe billing, GDPR compliance, 
-bilingual RO/EN, and Docker deployment. 1,350h dev work. Ready to scale.
+proprietary 11-worker AI orchestrator, AI recipe module with GEO cuisine 
+personalisation, self-healing fallback chain, complete admin console, 
+Stripe billing, newsletter + Brevo growth suite, GDPR, bilingual RO/EN, 
+Docker deployment. 1,650h dev work. Ready to scale.
 ```
 
 ---
@@ -82,6 +83,34 @@ The platform features an 11-worker AI orchestrator:
 Each worker output is schema-validated, semantically validated 
 (no medical diagnoses, no absolute language), auto-corrected if invalid 
 (GPT-4o → Gemini → rule-based chain), and fully logged.
+
+## AI Recipe Module
+
+A fully independent recipe generation system:
+- Generates complete recipes from a meal name (bilingual RO + EN)
+- GEO-personalised: detects user country via IP (ip-api.com) or CDN 
+  headers (Cloudflare/Vercel) and adapts cuisine style accordingly
+- 28 European countries mapped: ingredients and cooking style match 
+  local food culture automatically
+- CookingMode: fullscreen step-by-step guided cooking with timer
+- Batch generation pipeline for pre-generating recipe libraries
+- 3 database tables: recipes, recipe_batches, recipe_usage
+
+## GEO Personalisation Engine
+
+- Layer 1: CDN headers (Cloudflare cf-ipcountry, Vercel x-vercel-ip-country) — zero latency
+- Layer 2: Real IP geolocation via ip-api.com (2s timeout, in-memory cache TTL 1h)
+- Layer 3: Accept-Language header fallback
+- Applied to both recipe generation and AI guidance orchestration
+
+## Growth Suite
+
+Built-in user acquisition and retention tools:
+- Newsletter popup (opt-in/opt-out) + footer form for public subscriptions
+- Consent stored per user with source tracking
+- Brevo marketing automation: events relay for segmented email campaigns
+- Early Adopter programme: first 100 real users get free Pro access
+- TikTok Pixel server-side tracking (PageView, registration, checkout)
 
 ## Self-Healing Layer
 
@@ -125,10 +154,10 @@ Estimated MRR with 300 paying users (Pro mix): €4,200/month.
 - Complete source code (frontend + backend)
 - Full IP transfer
 - Docker deployment files (Traefik-ready)
-- Database schema + migrations
+- Database schema + migrations (11 tables)
 - 13-document business due diligence pack
 - Setup documentation
-- Estimated rebuild cost: €108,000
+- Estimated rebuild cost: €132,000
 
 ## Why Now?
 
@@ -140,9 +169,9 @@ built, tested, and deployable in under 1 hour.
 ## Asking Price: €45,000
 
 Justified by:
-- 1,350 hours of senior development work (€108,000 rebuild cost)
+- 1,650 hours of senior development work (€132,000 rebuild cost)
 - Fully functional, tested, production-ready product
-- Proprietary AI architecture not available anywhere else
+- Proprietary AI architecture + recipe module + GEO engine not available anywhere else
 - Break-even at 200 Pro subscribers (~15 months typical)
 - ROI potential: €450,000+ at 1,000 subscribers (5× ARR)
 ```
@@ -154,16 +183,21 @@ Justified by:
 ```
 ✅ Next.js 14 frontend + Next.js 15 backend admin console
 ✅ Proprietary 11-worker AI orchestrator (GPT-4o → Gemini → rule-based)
+✅ AI Recipe module — bilingual (RO+EN), GEO-personalised, CookingMode, batch pipeline
+✅ GEO engine — IP + CDN headers (Cloudflare/Vercel) + 28 European countries
 ✅ Self-healing auto-correction with semantic medical validation
 ✅ Complete zero-code admin console (AI, Stripe, pricing, users, email)
 ✅ Full Stripe integration (checkout, portal, webhooks, 3 plans)
-✅ PostgreSQL 16 + Drizzle ORM (fully typed schema + migrations)
+✅ PostgreSQL 16 + Drizzle ORM (fully typed schema + 11 tables + migrations)
 ✅ GDPR compliant (hard delete, data export, full legal pages)
+✅ Newsletter + Brevo marketing automation + Early Adopter programme
+✅ TikTok Pixel server-side + Google Analytics
+✅ Public acquisition portal (/acquire) with due diligence package
 ✅ Bilingual RO + EN (infrastructure + all emails + all UI copy)
 ✅ PWA ready (installable on mobile, offline-capable)
 ✅ 2FA for admins (TOTP — Google Authenticator, Authy)
 ✅ Docker + Traefik production deployment (HTTPS, HSTS, certs)
-✅ 70+ API routes, 30+ pages, 1,350h estimated dev work
+✅ 90+ API routes, 35+ pages, 1,650h estimated dev work
 ✅ White-label ready (rebrand in <1 hour)
 ✅ Self-hostable (no vendor lock-in)
 ✅ AI Test Lab for live worker testing
