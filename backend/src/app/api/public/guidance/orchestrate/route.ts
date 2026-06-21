@@ -186,6 +186,7 @@ function detectGeoContext(lang: 'ro' | 'en', acceptLanguage: string): GeoContext
   if (lang === 'ro' || al.includes('ro')) {
     return { country: 'Romania', region: 'Eastern Europe', cuisine: 'Romanian/Mediterranean/Balkanic' };
   }
+  if (al.includes('el') || al.includes('gr')) return { country: 'Greece', region: 'Southern Europe', cuisine: 'Greek/Mediterranean' };
   if (al.includes('hu')) return { country: 'Hungary', region: 'Central Europe', cuisine: 'Hungarian/Central European' };
   if (al.includes('fr')) return { country: 'France', region: 'Western Europe', cuisine: 'French/Mediterranean' };
   if (al.includes('de')) return { country: 'DACH region', region: 'Central Europe', cuisine: 'German/Swiss/Austrian' };
@@ -193,6 +194,10 @@ function detectGeoContext(lang: 'ro' | 'en', acceptLanguage: string): GeoContext
   if (al.includes('it')) return { country: 'Italy', region: 'Southern Europe', cuisine: 'Italian/Mediterranean' };
   if (al.includes('pl')) return { country: 'Poland', region: 'Eastern Europe', cuisine: 'Polish/Slavic' };
   if (al.includes('cs') || al.includes('sk')) return { country: 'Czech/Slovak', region: 'Central Europe', cuisine: 'Central European/Slavic' };
+  if (al.includes('tr')) return { country: 'Turkey', region: 'Middle East/Europe', cuisine: 'Turkish/Middle Eastern' };
+  if (al.includes('pt')) return { country: 'Portugal', region: 'Western Europe', cuisine: 'Portuguese/Mediterranean' };
+  if (al.includes('bg')) return { country: 'Bulgaria', region: 'Eastern Europe', cuisine: 'Bulgarian/Balkanic' };
+  if (al.includes('hr')) return { country: 'Croatia', region: 'Eastern Europe', cuisine: 'Croatian/Mediterranean' };
   return { country: 'International', region: 'Western Europe/International', cuisine: 'International/Mediterranean' };
 }
 
